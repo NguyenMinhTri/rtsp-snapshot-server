@@ -1,0 +1,86 @@
+.background-sensor-active {
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid var(--state-sensor-normal)
+  }
+
+  .background-sensor-calif {
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid var(--state-sensor-calib)
+  }
+  .background-sensor-error {
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid var(--state-sensor-error);
+  }
+  .background-sensor-off{
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid var(--state-sensor-off);
+  }
+  .background-sensor-over{
+    background-color: white;
+    border-radius: 25px;
+    border: 2px solid var(--state-sensor-over);
+  }
+  .content-sensor-undefined{
+    color: green;
+    margin-left: 5%;
+  }
+  .content-sensor-OFF {
+    color: gray;
+    margin-left: 5%;
+  }
+  .content-sensor-0 {
+    color: green;
+    margin-left: 5%;
+  }
+
+  .content-sensor-1 {
+    color: yellow;
+    margin-left: 5%;
+  }
+  .content-more {
+    color: rgb(0, 6, 128);
+    margin-left: 5%;
+  }
+  .content-sensor-2 {
+    color: red;
+    margin-left: 5%;
+  }
+
+  
+  .title-sensor-active {
+    color: green;
+    margin-left: 5%;
+    margin-top: 5%;
+  }
+    
+  .title-sensor-calib {
+    color: yellow;
+    margin-left: 5%;
+    margin-top: 5%;
+  }
+  .title-sensor-error {
+    color: red;
+    margin-left: 5%;
+    margin-top: 5%;
+  }
+  .title-sensor-off {
+    color: grey;
+    margin-left: 5%;
+    margin-top: 5%;
+  }
+  .closeable {
+    z-index: 100;
+    position: relative;
+  }
+  
+  .close-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px 10px 10px 10px; 
+    cursor: pointer;
+  }

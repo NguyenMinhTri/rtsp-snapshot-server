@@ -1,0 +1,186 @@
+@use '../../scss/' as *;
+
+.auth_wrap {
+    background-color: var(--auth-page-color);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+}
+
+.auth_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    width: 870px;
+    border-radius: 10px;
+    box-shadow: 3px 4px 57px rgb(0, 0, 0, 0.4);
+    overflow: hidden;
+
+    @include tablet-large {
+        flex-direction: column;
+        width: 520px;
+
+    }
+
+    @include tablet {
+        flex-direction: column;
+        width: 450PX;
+
+    }
+    @include mobile {
+        flex-direction: column;
+        width: 90%;
+
+    }
+
+    @include desktop {
+        .bg_auth_wrap {
+
+            padding: 20px;
+            background-color: rgb(6, 107, 96);
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+
+            // height: 450px;
+            .bg_auth {
+                background-image: url('../../../public/image/login1.png');
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+
+                width: 80%;
+                height: 360px;
+            }
+        }
+    }
+
+    .auth_logo {
+        @include mobile {
+                width: 150px;
+            }
+    }
+
+
+
+    .login_register {
+        background-color: #fff;
+        width: 50%;
+
+        @include tablet-large {
+            height: 450px;
+            width: 100%;
+            flex-direction: column;
+
+        }
+
+        @include tablet {
+            height: 450px;
+            width: 100%;
+            flex-direction: column;
+
+        }
+        @include mobile {
+            height: 450px;
+            width: 100%;
+            flex-direction: column;
+
+        }
+    }
+}
+
+.form_login {
+    width: 100%;
+    padding: 0px 30px;
+
+    h1 {
+        text-align: center;
+        margin-bottom: 5px;
+        @include mobile {
+            font-size: 25px;
+            }
+    }
+    h3 {
+        text-align: center;
+        margin-bottom: 5px;
+        @include mobile {
+            font-size: 20px;
+            }
+    }
+    h6 {
+        text-align: center;
+
+    }
+    .form_input {
+        padding: 8px 0;
+    }
+
+    .break_auth {
+        text-align: center;
+        display: flex;
+        align-items: center;
+        margin: 8px 0;
+
+        .break_first,
+        .break_second {
+            width: 50%;
+            height: 2px;
+            background-color: #ccc;
+        }
+    }
+
+    .register_forgot {
+        display: flex;
+        padding-top: 10px;
+        justify-content: space-between;
+
+        .register {
+            cursor: pointer;
+
+            :hover {
+                color: red;
+            }
+        }
+
+        .register:hover {
+            color: var(--primary-color)
+        }
+
+        .forgot_pass {
+            cursor: pointer;
+
+        }
+
+        .forgot_pass:hover {
+            color: var(--primary-color)
+        }
+
+    }
+
+    .login_social {
+        margin-top: 10px;
+        // display: flex;
+        // justify-content: space-around;
+        // align-items: center;
+
+        &-gg {
+            // flex : 1;
+            margin-bottom: 10px;
+        }
+        &-sms {
+            // flex: 1;
+            // margin: 0 10px;
+            margin-bottom: 10px;
+        }
+        &-apple {
+            // flex: 1;
+            // margin-bottom: 10px;
+        }
+    }
+
+}

@@ -1,0 +1,35 @@
+@use '../../../scss/' as *;
+
+.header {
+    background-color: var(--primary-color) !important;
+    
+    @include mobile {
+
+        .header_title {
+            font-size: 16px;
+            
+        }
+    }
+
+    .header_username {
+        margin-left: 10px;
+        font-size: 20px;
+
+        @include mobile {
+            font-size: 16px;
+            display: none;
+
+        }
+    }
+    .header_mail {
+        margin-top: 5px;
+        margin-left: 10px;
+        font-size: 12px;
+
+        @include mobile {
+            font-size: 10px;
+            display: none;
+
+        }
+    }
+}

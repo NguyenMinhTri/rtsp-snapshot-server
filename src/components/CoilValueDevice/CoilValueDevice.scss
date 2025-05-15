@@ -1,0 +1,87 @@
+.coil_state-normal {
+    border: 1px solid blue;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px blue;
+    background-color: cyan;
+    color: blue;
+}
+
+.coil_state-error {
+    border: 1px solid red;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px red;
+    background-color: red;
+    color: white;
+}
+
+.coil_state-calib {
+    border: 1px solid yellow;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px yellow;
+    background-color: transparent;
+    color: yellow;
+}
+
+.coil_state-off {
+    border: 1px solid gray;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px gray;
+    background-color: transparent;
+    color: gray;
+}
+.sensor_state_alarm-hide {
+    color: transparent;
+}
+.sensor_state_alarm-off {
+    color: white;
+}
+.sensor_state_alarm-on {
+    color: red;
+}
+
+.sensor_item {
+    overflow: hidden; /* Ngăn chặn nội dung tràn ra ngoài */
+    white-space: nowrap; /* Buộc nội dung hiển thị trên cùng một dòng */
+    // justify-content: space-between;
+    // align-items: center;
+    // flex-direction: column;
+    &-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    &-name {
+        font-size: 15px;
+        word-wrap: break-word; /* Tự động wrap các từ khi vượt kích thước */
+        white-space: normal; /* Cho phép xuống dòng */
+    }
+
+    &-value {
+        font-size: 30px;
+        font-weight: 700;
+    }
+    &-chart {
+        // background-color: #fff;
+        height: 50px;
+    }
+}
+
+.expand {
+    animation: expandText 3s infinite; /* Áp dụng hiệu ứng scale */
+}
+
+@keyframes expandText {
+    0% {
+        transform: scale(1); /* Kích thước ban đầu */
+    }
+    50% {
+        transform: scale(1.2); /* Kích thước phóng to */
+    }
+    100% {
+        transform: scale(1); /* Trở về kích thước ban đầu */
+    }
+}

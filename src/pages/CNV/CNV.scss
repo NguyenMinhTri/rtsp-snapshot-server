@@ -1,0 +1,75 @@
+.home_page {
+    padding: 10px;
+
+    .home_map {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #ccc;
+        box-shadow: 1px 1px 12px rgb(0, 0, 0, 0.17);
+    }
+
+    .home_chart {
+        border: 1px solid #ccc;
+        // height: 100%;
+        height: 100%;
+        min-height: 500px;
+        border-radius: 10px;
+        box-shadow: 1px 1px 12px rgb(0, 0, 0, 0.17);
+    }
+
+    .home_chart_date {
+        border: 1px solid #ccc;
+        padding: 10px;
+        // height: 100%;
+        border-radius: 10px;
+        box-shadow: 1px 1px 12px rgb(0, 0, 0, 0.17);
+    }
+}
+
+.borderd-content {
+    border: 1px solid #088f81;
+    border-radius: 4px;
+    height: 100%;
+    width: 100%;
+
+    position: relative;
+}
+
+.borderd-content .title {
+    margin: -10px 0 0 10px;
+    background: #088f81;
+    padding: 3px;
+    color: white;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: bold;
+    position: absolute;
+}
+
+.borderd-content .content {
+    padding: 10px;
+}
+.grid-margin {
+    height: "1vh";
+    padding-top: 1.5rem;
+}
+
+.message-note {
+    word-wrap: break-word;
+}
+
+.pid {
+    margin-top: 4vh;
+    width: 100%;
+    height: 50vh;
+    position: relative;
+}
+.pid2 {
+
+    width: 100%;
+    height: 56vh;
+    position: relative;
+}
+p {
+    white-space: pre-line;
+}

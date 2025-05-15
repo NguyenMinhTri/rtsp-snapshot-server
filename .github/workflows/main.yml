@@ -1,0 +1,49 @@
+name: Deploy IOT-Monitoring
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14.x'
+
+    - name: Install dependencies
+      run: |
+        npm install
+
+    - name: Build React app
+      run: |
+        npm run build
+
+    - name: Copy files to server
+      uses: appleboy/scp-action@master
+      with:
+        host: '34.142.128.197'
+        username: 'root'
+        password: '13520918'
+        source: './iot_monitoring/'
+        target: '/var/www/'
+
+    # - name: SSH into server and deploy
+    #   uses: appleboy/ssh-action@master
+    #   with:
+    #     host: '27.71.238.29'
+    #     username: 'root'
+    #     password: 'Loctn@123'
+    #     script: |
+    #       cd /var/www/iot_monitoring
+    #       npm install
+    #       npm run start
+
+    - name: Start Nginx
+      run: sudo service nginx restart

@@ -1,0 +1,17 @@
+@use '../../scss/' as *;
+
+
+
+.detail_chart {
+    text-align: center;
+    font-size: 25px;
+    margin: 20px 0;
+    text-transform: uppercase;
+
+    @include mobile {
+        font-size: 16px;
+    }
+    @include tablet {
+        font-size: 18px;
+    }
+}

@@ -1,0 +1,26 @@
+.side_bar {
+    background-color: var(--side-color);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    .side_icon {
+        color : var(--side-icon-color);
+    }
+        .side_icon:hover {
+            color :white;
+            background-color: var(--side-icon-hover-color);
+            padding : 10px; 
+            border-radius: 8px;
+            transition: all linear 0.1s;
+        }
+    .side_text {
+        color: var(--side-icon-color);
+    }
+    &-list {
+        // flex: 1
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-content: space-between;
+    }
+}

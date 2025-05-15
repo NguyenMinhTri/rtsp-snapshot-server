@@ -1,0 +1,16 @@
+.my_table {
+    table {
+        border-collapse: collapse;
+    }
+
+    th {
+        background-color: rgb(245, 244, 244);
+        font-weight: 600;
+    }
+
+    td,
+    th {
+        border: 1.2px solid #ccc;
+        padding: 8px;
+    }
+}

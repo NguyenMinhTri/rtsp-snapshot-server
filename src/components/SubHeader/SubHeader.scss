@@ -1,0 +1,17 @@
+@use '../../scss/' as * ;
+.sub_header_wrapper {
+    border: 1.5px solid #ccc;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: white;
+    font-weight: 600;
+    border-radius: 3px;
+
+    .sub_text {
+        font-size: 18px;
+        text-transform: uppercase;
+        @include mobile {
+        font-size: 13px;
+        }
+    }
+}

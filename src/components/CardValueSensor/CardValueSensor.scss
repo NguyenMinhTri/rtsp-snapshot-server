@@ -1,0 +1,79 @@
+.sensor_state-normal {
+    border: 1px solid var(--state-sensor-normal);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px var(--state-sensor-normal);
+    background-color: var(--state-sensor-normal);
+    color: white;
+}
+
+.sensor_state-error {
+    border: 1px solid var(--state-sensor-error);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px var(--state-sensor-error);
+    background-color: var(--state-sensor-error);
+    color: white;
+}
+
+.sensor_state-calib {
+    border: 1px solid var(--state-sensor-calib);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px var(--state-sensor-calib);
+    background-color: var(--state-sensor-calib);
+    color: white;
+}
+
+.sensor_state-off {
+    border: 1px solid var(--state-sensor-off);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px var(--state-sensor-off);
+    background-color: var(--state-sensor-off);
+    color: white;
+}
+
+.sensor_state-over {
+    border: 1px solid var(--state-sensor-over);
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 1px 1px 12px var(--state-sensor-over);
+    background-color: var(--state-sensor-over);
+    color: white;
+}
+.sensor_state_alarm-hide {
+    color: transparent;
+}
+.sensor_state_alarm-off {
+    color: white;
+}
+.sensor_state_alarm-on {
+    color: red;
+}
+
+.sensor_item {
+    overflow: hidden; /* Ngăn chặn nội dung tràn ra ngoài */
+    white-space: nowrap; /* Buộc nội dung hiển thị trên cùng một dòng */
+    // justify-content: space-between;
+    // align-items: center;
+    // flex-direction: column;
+    height: 100%;
+    &-wrap {
+        display: flex;
+
+       
+    }
+    &-name {
+        font-size: 20px;
+    }
+
+    &-value {
+        font-size: 30px;
+        font-weight: 700;
+    }
+    &-chart {
+        // background-color: #fff;
+   
+    }
+}

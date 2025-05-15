@@ -1,0 +1,11 @@
+.search_page {
+    padding: 10px;
+}
+
+
+.btn_export-excel:disabled,
+.btn_export-excel[disabled] {
+    border: 1px solid #999999;
+    background-color: #cccccc;
+    color: white;
+}
