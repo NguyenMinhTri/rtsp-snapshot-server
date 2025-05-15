@@ -3838,7 +3838,7 @@ function CNV() {
                             text={
                                 valueSelect
                                     ? `${valueSelect.label}`
-                                    : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                    : "HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
 

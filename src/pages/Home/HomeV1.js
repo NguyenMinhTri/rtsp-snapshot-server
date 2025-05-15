@@ -2154,7 +2154,7 @@ function HomeV1() {
                             text={
                                 valueSelect
                                     ? `GIÁM SÁT DỮ LIỆU ${valueSelect.label}`
-                                    : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                    : "HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
 
