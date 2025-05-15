@@ -2,7 +2,7 @@ name: Deploy IOT-Monitoring
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
