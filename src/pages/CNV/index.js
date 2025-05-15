@@ -2473,7 +2473,7 @@ function CNV() {
                         <SubHeader
                             text={
                                 valueSelect
-                                    ? `GIÁM SÁT DỮ LIỆU ${valueSelect.label}`
+                                    ? `${valueSelect.label}`
                                     : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
@@ -3837,7 +3837,7 @@ function CNV() {
                         <SubHeader
                             text={
                                 valueSelect
-                                    ? `GIÁM SÁT DỮ LIỆU ${valueSelect.label}`
+                                    ? `${valueSelect.label}`
                                     : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
