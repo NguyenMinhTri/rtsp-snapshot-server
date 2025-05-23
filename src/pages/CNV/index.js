@@ -528,9 +528,9 @@ function CNV() {
                     Index: highAlarm.Index,
                 });
             }
-            else {
+           
                 sensorSetting['HighAlarmSetting'] = newSensorObject.AlarmSetting.HighAlarmSetting
-            }
+
 
         }
         if (
@@ -566,11 +566,10 @@ function CNV() {
                     Index: lowAlarm.Index,
                 });
             }
-            else{
 
                 sensorSetting['LowAlarmSetting'] = newSensorObject.AlarmSetting.LowAlarmSetting
             
-            }
+            
 
         }
         if (
@@ -602,9 +601,9 @@ function CNV() {
                     Index: delayTime.Index,
                 });
             }
-            else {
+          
                 sensorSetting['DelayTime'] = newSensorObject.AlarmSetting.DelayTime;
-            }
+            
         }
         sensorSetting['Name']=newSensorObject.sensor;
         sensorSetting['GroupName']=newSensorObject.GroupName;

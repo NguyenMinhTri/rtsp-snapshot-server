@@ -23,3 +23,5 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 /public/image/happytime-rtsp-server-x64/happytime-rtsp-server-x64/*.dll
+
+/iot_monitoring
