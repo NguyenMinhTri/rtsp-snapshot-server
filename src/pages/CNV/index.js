@@ -91,36 +91,36 @@ import { useDispatch } from "react-redux";
 import { chooseSensorAction } from "../../redux/reducer/chooseSensorChart";
 let email = localStorage.getItem("loginEmail");
 
- // Function to subscribe/unsubscribe token to/from a topic
- const subscribeTokenToTopic = async (token,topic, isSub,) => {
+// Function to subscribe/unsubscribe token to/from a topic
+const subscribeTokenToTopic = async (token, topic, isSub,) => {
     if (!token) {
-      console.error("No token available for subscription.");
-      return;
+        console.error("No token available for subscription.");
+        return;
     }
 
     try {
-      const response = await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/subscribe-to-topic", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token: token,
-          topic: topic,
-          isSub: isSub,
-        }),
-      });
+        const response = await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/subscribe-to-topic", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                token: token,
+                topic: topic,
+                isSub: isSub,
+            }),
+        });
 
-      if (response.ok) {
-        console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
-       
-      } else {
-        console.error("Failed to subscribe/unsubscribe.");
-      }
+        if (response.ok) {
+            console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
+
+        } else {
+            console.error("Failed to subscribe/unsubscribe.");
+        }
     } catch (err) {
-      console.error("Error while subscribing/unsubscribing:", err);
+        console.error("Error while subscribing/unsubscribing:", err);
     }
-  };
+};
 async function handleAuthStateChanged() {
     return new Promise((resolve, reject) => {
         const auth = getAuth();
@@ -304,14 +304,14 @@ function CNV() {
                 // To calculate the no. of days between two dates 
                 let Difference_In_Days = (Difference_In_Time / (1000 * 3600 * 24)).toFixed(0);
                 // 
-                if(typeof content.NumberOfDays  !== "undefined" && content.NumberOfDays  !== "0"){
+                if (typeof content.NumberOfDays !== "undefined" && content.NumberOfDays !== "0") {
                     let licenseDays = Number(content.NumberOfDays) - Difference_In_Days
-                
+
                     licenseDays = licenseDays < 0 ? 0 : licenseDays;
                     //Toast("success", `Số ngày còn lại ${licenseDays}`);
                     setLicenseDay(licenseDays);
                 }
-          
+
             }
             if (typeof content.AlarmMessage !== "undefined" && content.AlarmMessage !== "") {
                 setLicenseMessage(content.AlarmMessage);
@@ -412,11 +412,11 @@ function CNV() {
         };
         commnanData["RS485-Commands"] = [];
         let deviceID = valueSelect.id;
-        for(let index = 0; index < rs485DataSetting.length;index++){
-            if(rs485DataSetting[index].MemoryType === 6 || rs485DataSetting[index].MemoryType === 10){
-                let valueTemp = Number( rs485DataSetting[index].Value);
-                if(typeof rs485DataSetting[index].Scale !== "undefined"){
-                    valueTemp = Number( rs485DataSetting[index].Value)/Number(rs485DataSetting[index].Scale.toFixed(1));
+        for (let index = 0; index < rs485DataSetting.length; index++) {
+            if (rs485DataSetting[index].MemoryType === 6 || rs485DataSetting[index].MemoryType === 10) {
+                let valueTemp = Number(rs485DataSetting[index].Value);
+                if (typeof rs485DataSetting[index].Scale !== "undefined") {
+                    valueTemp = Number(rs485DataSetting[index].Value) / Number(rs485DataSetting[index].Scale.toFixed(1));
 
                 }
                 commnanData["RS485-Commands"].push({
@@ -424,16 +424,16 @@ function CNV() {
                     SlaveId: rs485DataSetting[index].SlaveId,
                     FunctionCode: rs485DataSetting[index].Type === "int" ? 6 : 16,
                     DataLength: rs485DataSetting[index].Type === "int" ? 1 : 2,
-                    CSDeviceId:"",
-                    Scale:typeof rs485DataSetting[index].Scale !== "undefined" ? rs485DataSetting[index].Scale  : 1,
+                    CSDeviceId: "",
+                    Scale: typeof rs485DataSetting[index].Scale !== "undefined" ? rs485DataSetting[index].Scale : 1,
                     Type: rs485DataSetting[index].Type,
-                    Value:Number( valueTemp),
+                    Value: Number(valueTemp),
                     Name: rs485DataSetting[index].Name,
                     Index: rs485DataSetting[index].Index,
                 });
             }
         }
-        
+
         const token = Cookies.get("auth_token");
         const rawResponse = await fetch(
             "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/handleCoilDevice",
@@ -492,101 +492,122 @@ function CNV() {
         let commnanData = {
 
         };
+        let sensorSetting = {};
+       
         commnanData["RS485-Commands"] = [];
         let deviceID = valueSelect.id;
         if (
             newSensorObject.AlarmSetting.HighAlarmSetting !==
             oldSensorValue.AlarmSetting.HighAlarmSetting
         ) {
-            let highAlarm = fullRS485Data.RS485Data.filter(function (item) {
-                return (
-                    item.Name.includes("HighAlarmSetting") &&
-                    item.Name.includes(newSensorObject.sensor)
-                );
-            })[0];
+            let highAlarm =Array.isArray(fullRS485Data?.RS485Data)
+                ? fullRS485Data.RS485Data.find(item =>
+                    item?.Name?.includes("HighAlarmSetting") &&
+                    item?.Name?.includes(newSensorObject?.sensor)
+                )
+                : undefined;
+            if (typeof highAlarm !== "undefined") {
+                if (typeof highAlarm.Location !== "undefined") {
+                    deviceID = highAlarm.Location;
+                }
+                commnanData["RS485-Commands"].push({
+                    Address: highAlarm.Address,
+                    SlaveId: highAlarm.SlaveId,
+                    FunctionCode: 16,
+                    DataLength: newSensorObject.Type === "int" ? 1 : 2,
+                    CSDeviceId:
+                        typeof highAlarm.CSLocation !== "undefined"
+                            ? highAlarm.CSLocation
+                            : "",
+                    Type: highAlarm.Type,
 
-            if (typeof highAlarm.Location !== "undefined") {
-                deviceID = highAlarm.Location;
+                    Value: newSensorObject.Type === "int"
+                        ? Math.round(parseInt(newSensorObject.AlarmSetting.HighAlarmSetting) / newSensorObject.Scale)
+                        : newSensorObject.AlarmSetting.HighAlarmSetting,
+                    Name: highAlarm.Name,
+                    Index: highAlarm.Index,
+                });
             }
-            commnanData["RS485-Commands"].push({
-                Address: highAlarm.Address,
-                SlaveId: highAlarm.SlaveId,
-                FunctionCode: 16,
-                DataLength:newSensorObject.Type === "int" ? 1 : 2,
-                CSDeviceId:
-                    typeof highAlarm.CSLocation !== "undefined"
-                        ? highAlarm.CSLocation
-                        : "",
-                Type:  highAlarm.Type,
-            
-                Value: newSensorObject.Type === "int"
-    ? Math.round(parseInt(newSensorObject.AlarmSetting.HighAlarmSetting) / newSensorObject.Scale)
-    : newSensorObject.AlarmSetting.HighAlarmSetting,
-                Name: highAlarm.Name,
-                Index: highAlarm.Index,
-            });
+            else {
+                sensorSetting['HighAlarmSetting'] = newSensorObject.AlarmSetting.HighAlarmSetting
+            }
+
         }
         if (
             newSensorObject.AlarmSetting.LowAlarmSetting !==
             oldSensorValue.AlarmSetting.LowAlarmSetting
         ) {
-            let lowAlarm = fullRS485Data.RS485Data.filter(function (item) {
-                return (
-                    item.Name.includes("LowAlarmSetting") &&
-                    item.Name.includes(newSensorObject.sensor)
-                );
-            })[0];
-            if (typeof lowAlarm.Location !== "undefined") {
-                deviceID = lowAlarm.Location;
-            }
-            commnanData["RS485-Commands"].push({
-                Address: lowAlarm.Address,
-                SlaveId: lowAlarm.SlaveId,
-                FunctionCode: 16,
-                DataLength:newSensorObject.Type === "int" ? 1 : 2,
-                CSDeviceId:
-                    typeof lowAlarm.CSLocation !== "undefined"
-                        ? lowAlarm.CSLocation
-                        : "",
-                Type: lowAlarm.Type,
-           
+            let lowAlarm =Array.isArray(fullRS485Data?.RS485Data)
+                ? fullRS485Data.RS485Data.find(item =>
+                    item?.Name?.includes("LowAlarmSetting") &&
+                    item?.Name?.includes(newSensorObject?.sensor)
+                )
+                : undefined;
+            if (typeof lowAlarm !== "undefined") {
+                if (typeof lowAlarm.Location !== "undefined") {
+                    deviceID = lowAlarm.Location;
+                }
+                commnanData["RS485-Commands"].push({
+                    Address: lowAlarm.Address,
+                    SlaveId: lowAlarm.SlaveId,
+                    FunctionCode: 16,
+                    DataLength: newSensorObject.Type === "int" ? 1 : 2,
+                    CSDeviceId:
+                        typeof lowAlarm.CSLocation !== "undefined"
+                            ? lowAlarm.CSLocation
+                            : "",
+                    Type: lowAlarm.Type,
 
-                Value: newSensorObject.Type === "int"
-                ? Math.round(parseInt(newSensorObject.AlarmSetting.LowAlarmSetting) / newSensorObject.Scale)
-                : newSensorObject.AlarmSetting.LowAlarmSetting,
-                Name: lowAlarm.Name,
-                Index: lowAlarm.Index,
-            });
+
+                    Value: newSensorObject.Type === "int"
+                        ? Math.round(parseInt(newSensorObject.AlarmSetting.LowAlarmSetting) / newSensorObject.Scale)
+                        : newSensorObject.AlarmSetting.LowAlarmSetting,
+                    Name: lowAlarm.Name,
+                    Index: lowAlarm.Index,
+                });
+            }
+            else{
+
+                sensorSetting['LowAlarmSetting'] = newSensorObject.AlarmSetting.LowAlarmSetting
+            
+            }
+
         }
         if (
             newSensorObject.AlarmSetting.DelayTime !==
             oldSensorValue.AlarmSetting.DelayTime
         ) {
-            let delayTime = fullRS485Data.RS485Data.filter(function (item) {
-                return (
-                    item.Name.includes("DelayTime") &&
-                    item.Name.includes(newSensorObject.sensor)
-                );
-            })[0];
-            if (typeof delayTime.Location !== "undefined") {
-                deviceID = delayTime.Location;
+          let delayTime = Array.isArray(fullRS485Data?.RS485Data)
+                ? fullRS485Data.RS485Data.find(item =>
+                    item?.Name?.includes("DelayTime") &&
+                    item?.Name?.includes(newSensorObject?.sensor)
+                )
+                : undefined;
+            if (typeof delayTime !== "undefined") {
+                if (typeof delayTime.Location !== "undefined") {
+                    deviceID = delayTime.Location;
+                }
+                commnanData["RS485-Commands"].push({
+                    Address: delayTime.Address,
+                    SlaveId: delayTime.SlaveId,
+                    FunctionCode: 6,
+                    DataLength: 1,
+                    CSDeviceId:
+                        typeof delayTime.CSLocation !== "undefined"
+                            ? delayTime.CSLocation
+                            : "",
+                    Type: delayTime.Type,
+                    Value: newSensorObject.AlarmSetting.DelayTime,
+                    Name: delayTime.Name,
+                    Index: delayTime.Index,
+                });
             }
-            commnanData["RS485-Commands"].push({
-                Address: delayTime.Address,
-                SlaveId: delayTime.SlaveId,
-                FunctionCode: 6,
-                DataLength: 1,
-                CSDeviceId:
-                    typeof delayTime.CSLocation !== "undefined"
-                        ? delayTime.CSLocation
-                        : "",
-                Type: delayTime.Type,
-                Value: newSensorObject.AlarmSetting.DelayTime,
-                Name: delayTime.Name,
-                Index: delayTime.Index,
-            });
+            else {
+                sensorSetting['DelayTime'] = newSensorObject.AlarmSetting.DelayTime;
+            }
         }
-
+        sensorSetting['Name']=newSensorObject.sensor;
+        sensorSetting['GroupName']=newSensorObject.GroupName;
         const token = Cookies.get("auth_token");
         const rawResponse = await fetch(
             "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/handleCoilDevice",
@@ -600,6 +621,7 @@ function CNV() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
+                    sensorsetting:sensorSetting,
                     message: JSON.stringify(commnanData),
                     deviceId: deviceID,
                     IsDemoUI:
@@ -617,6 +639,10 @@ function CNV() {
                 "Thay đổi giá trị hoặc điều khiển thất bại. Vui lòng thử lại"
             );
         } else {
+            oldSensorValue.AlarmSetting.DelayTime = newSensorObject.AlarmSetting.DelayTime;
+            oldSensorValue.AlarmSetting.LowAlarmSetting = newSensorObject.AlarmSetting.LowAlarmSetting;
+            oldSensorValue.AlarmSetting.HighAlarmSetting = newSensorObject.AlarmSetting.HighAlarmSetting;
+
             Toast("success", "Tín hiệu gửi đi thành công.");
         }
     };
@@ -1152,14 +1178,14 @@ function CNV() {
                                         payload.notification.title
                                             .toLowerCase()
                                             .includes("err") || payload.notification.title
-                                            .toLowerCase()
-                                            .includes("alarm") ||
+                                                .toLowerCase()
+                                                .includes("alarm") ||
                                             payload.notification.body
                                                 .toLowerCase()
-                                                .includes("err")  ||
-                                                payload.notification.body
-                                                    .toLowerCase()
-                                                    .includes("alarm")
+                                                .includes("err") ||
+                                            payload.notification.body
+                                                .toLowerCase()
+                                                .includes("alarm")
                                             ? "error"
                                             : "error",
                                         payload.notification.title +
@@ -1255,18 +1281,18 @@ function CNV() {
                             debugger;
                             Toast(
                                 payload.notification.title
-                                .toLowerCase()
-                                .includes("err") || payload.notification.title
-                                .toLowerCase()
-                                .includes("alarm") ||
-                                payload.notification.body
                                     .toLowerCase()
-                                    .includes("err")  ||
+                                    .includes("err") || payload.notification.title
+                                        .toLowerCase()
+                                        .includes("alarm") ||
+                                    payload.notification.body
+                                        .toLowerCase()
+                                        .includes("err") ||
                                     payload.notification.body
                                         .toLowerCase()
                                         .includes("alarm")
-                                ? "error"
-                                : "error",
+                                    ? "error"
+                                    : "error",
                                 payload.notification.title +
                                 ": " +
                                 payload.notification.body
@@ -1402,7 +1428,7 @@ function CNV() {
         }
         if (valueSelect) {
             console.log({ valueSelect });
-            let isEnglish =  localStorage.getItem("EnglishLanguage");
+            let isEnglish = localStorage.getItem("EnglishLanguage");
             setIsEnglishLanguage(typeof isEnglish === "undefined" ? true : isEnglish);
             setFullRS485Data(undefined);
             setFullRS485DataPrevios(undefined);
@@ -1421,7 +1447,7 @@ function CNV() {
                     } else {
                         setIsDeviceOffline(false);
                     }
-                    
+
                     setFullRS485Data({ ...newData });
                     setFullRS485DataPrevios({ ...newData });
                     let { RS485Data, Location, LastTime, Ip } = newData;
@@ -1697,7 +1723,7 @@ function CNV() {
             // cho thiết bị có cảm nhiều cảm biến realtime
             if (
                 !valueSelect.id.includes("_") &&
-                valueSelect.id !==("A-OMWATER-1") && valueSelect.id !==("A-BIENTAN-1")
+                valueSelect.id !== ("A-OMWATER-1") && valueSelect.id !== ("A-BIENTAN-1")
             ) {
                 for (let i = 0; i < listSensor.length; i++) {
                     let lstSensor = [];
@@ -1808,9 +1834,9 @@ function CNV() {
             // btnExportExcel.current.innerHTML = 'Export Excel';
         }
     };
-    
-    
-    
+
+
+
     const handleExportHistoryCNV = async (e) => {
         setStartDate(startDateTemp);
         setEndDate(endDateTemp);
@@ -1837,7 +1863,7 @@ function CNV() {
             endDate
         );
         try {
-            
+
             // window.open(
             //     `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web-cnv?startDate=${start}&endDate=${end}`
             // );
@@ -1845,26 +1871,26 @@ function CNV() {
             // btnExportExcel.current.disabled = true;
             //  btnExportExcel.current.innerHTML = 'Waiting...';
             setLoaded(false);
-            const response =  await  axios({
+            const response = await axios({
                 url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web-cnv?startDate=${start}&endDate=${end}`, //your url
                 method: 'GET',
                 responseType: 'blob', // important
             });
-             
-                // create file link in browser's memory
-                const href = URL.createObjectURL(response.data);
-            
-                // create "a" HTML element with href to file & click
-                const link = document.createElement('a');
-                link.href = href;
-                link.setAttribute('download', `Historic_Analysis_${startDate}_${endDate}.xlsx`); //or any other extension
-                document.body.appendChild(link);
-                link.click();
-            
-                // clean up "a" element & remove ObjectURL
-                document.body.removeChild(link);
-                URL.revokeObjectURL(href);
-                setLoaded(true);
+
+            // create file link in browser's memory
+            const href = URL.createObjectURL(response.data);
+
+            // create "a" HTML element with href to file & click
+            const link = document.createElement('a');
+            link.href = href;
+            link.setAttribute('download', `Historic_Analysis_${startDate}_${endDate}.xlsx`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(href);
+            setLoaded(true);
 
         } catch (err) {
             setLoaded(true);
@@ -1912,7 +1938,7 @@ function CNV() {
             endDate
         );
         try {
-            
+
             // window.open(
             //     `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web-cnv?startDate=${start}&endDate=${end}`
             // );
@@ -1920,26 +1946,26 @@ function CNV() {
             // btnExportExcel.current.disabled = true;
             //  btnExportExcel.current.innerHTML = 'Waiting...';
             setLoaded(false);
-            const response =  await  axios({
+            const response = await axios({
                 url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/history-khi-nam-phuong?startDate=${start}&endDate=${end}`, //your url
                 method: 'GET',
                 responseType: 'blob', // important
             });
-             
-                // create file link in browser's memory
-                const href = URL.createObjectURL(response.data);
-            
-                // create "a" HTML element with href to file & click
-                const link = document.createElement('a');
-                link.href = href;
-                link.setAttribute('download', `Historic_Analysis_${startDate}_${endDate}.xlsx`); //or any other extension
-                document.body.appendChild(link);
-                link.click();
-            
-                // clean up "a" element & remove ObjectURL
-                document.body.removeChild(link);
-                URL.revokeObjectURL(href);
-                setLoaded(true);
+
+            // create file link in browser's memory
+            const href = URL.createObjectURL(response.data);
+
+            // create "a" HTML element with href to file & click
+            const link = document.createElement('a');
+            link.href = href;
+            link.setAttribute('download', `Historic_Analysis_${startDate}_${endDate}.xlsx`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(href);
+            setLoaded(true);
 
         } catch (err) {
             setLoaded(true);
@@ -2012,7 +2038,7 @@ function CNV() {
         }
     };
     const handleConfirmCNVToExcel = async (newSensorObject, oldSensorValue) => {
-        
+
 
         Toast("info", "Vui lòng chờ trong ít phút", 5000);
         //check xem thời gian gần nhất hay thời gian quá khư +-3 '
@@ -2020,7 +2046,7 @@ function CNV() {
         var endC = moment(newSensorObject.ReportFormData.historyDate);
 
         const totalMinute = endC.diff(startC, "minutes");
-        if (totalMinute < 3 && totalMinute > -3){
+        if (totalMinute < 3 && totalMinute > -3) {
 
 
             // window.open(
@@ -2028,29 +2054,29 @@ function CNV() {
             //     `
             // );
             setLoaded(false);
-            const response =  await  axios({
+            const response = await axios({
                 url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-certificate-cnv?customerName=${newSensorObject.ReportFormData.customerName}&facilityNo=${newSensorObject.ReportFormData.facilityNo}&tankNo=${newSensorObject.ReportFormData.tankNo}&product=${newSensorObject.ReportFormData.product}&productDate=${newSensorObject.ReportFormData.productDate}&deliverDate=${newSensorObject.ReportFormData.deliverDate}&IsC6H6=${newSensorObject.ReportFormData.IsC6H6}&IsCO2=${newSensorObject.ReportFormData.IsCO2}&IsH2O=${newSensorObject.ReportFormData.IsH2O}&IsH2S=${newSensorObject.ReportFormData.IsH2S}&IsO2=${newSensorObject.ReportFormData.IsO2}&IsN2=${newSensorObject.ReportFormData.IsN2}&IsTHC=${newSensorObject.ReportFormData.IsTHC}`, //your url
                 method: 'GET',
                 responseType: 'blob', // important
             });
-             
-                // create file link in browser's memory
-                const href = URL.createObjectURL(response.data);
-            
-                // create "a" HTML element with href to file & click
-                const link = document.createElement('a');
-                link.href = href;
-                link.setAttribute('download', `Certificate_${newSensorObject.ReportFormData.historyDate}.xlsx`); //or any other extension
-                document.body.appendChild(link);
-                link.click();
-            
-                // clean up "a" element & remove ObjectURL
-                document.body.removeChild(link);
-                URL.revokeObjectURL(href);
-                setLoaded(true);
-        }  
+
+            // create file link in browser's memory
+            const href = URL.createObjectURL(response.data);
+
+            // create "a" HTML element with href to file & click
+            const link = document.createElement('a');
+            link.href = href;
+            link.setAttribute('download', `Certificate_${newSensorObject.ReportFormData.historyDate}.xlsx`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(href);
+            setLoaded(true);
+        }
         else {
-            
+
             let { startDate: start1, endDate: end1 } = subTract7Hour(
                 newSensorObject.ReportFormData.historyDate,
                 newSensorObject.ReportFormData.historyDate
@@ -2059,28 +2085,28 @@ function CNV() {
                 start1,
                 end1
             );
-            
+
             setLoaded(false);
-            const response =  await  axios({
-                url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-certificate-history-cnv?customerName=${newSensorObject.ReportFormData.customerName}&facilityNo=${newSensorObject.ReportFormData.facilityNo}&tankNo=${newSensorObject.ReportFormData.tankNo}&product=${newSensorObject.ReportFormData.product}&productDate=${newSensorObject.ReportFormData.productDate}&deliverDate=${newSensorObject.ReportFormData.deliverDate}&IsC6H6=${newSensorObject.ReportFormData.IsC6H6}&IsCO2=${newSensorObject.ReportFormData.IsCO2}&IsH2O=${newSensorObject.ReportFormData.IsH2O}&IsH2S=${newSensorObject.ReportFormData.IsH2S}&IsO2=${newSensorObject.ReportFormData.IsO2}&IsN2=${newSensorObject.ReportFormData.IsN2}&IsTHC=${newSensorObject.ReportFormData.IsTHC}&HistoryDateStart=${start}&HistoryDateEnd=${end}`  , //your url
+            const response = await axios({
+                url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-certificate-history-cnv?customerName=${newSensorObject.ReportFormData.customerName}&facilityNo=${newSensorObject.ReportFormData.facilityNo}&tankNo=${newSensorObject.ReportFormData.tankNo}&product=${newSensorObject.ReportFormData.product}&productDate=${newSensorObject.ReportFormData.productDate}&deliverDate=${newSensorObject.ReportFormData.deliverDate}&IsC6H6=${newSensorObject.ReportFormData.IsC6H6}&IsCO2=${newSensorObject.ReportFormData.IsCO2}&IsH2O=${newSensorObject.ReportFormData.IsH2O}&IsH2S=${newSensorObject.ReportFormData.IsH2S}&IsO2=${newSensorObject.ReportFormData.IsO2}&IsN2=${newSensorObject.ReportFormData.IsN2}&IsTHC=${newSensorObject.ReportFormData.IsTHC}&HistoryDateStart=${start}&HistoryDateEnd=${end}`, //your url
                 method: 'GET',
                 responseType: 'blob', // important
             });
-             
-                // create file link in browser's memory
-                const href = URL.createObjectURL(response.data);
-            
-                // create "a" HTML element with href to file & click
-                const link = document.createElement('a');
-                link.href = href;
-                link.setAttribute('download', `Certificate_${newSensorObject.ReportFormData.historyDate}.xlsx`); //or any other extension
-                document.body.appendChild(link);
-                link.click();
-            
-                // clean up "a" element & remove ObjectURL
-                document.body.removeChild(link);
-                URL.revokeObjectURL(href);
-                setLoaded(true);
+
+            // create file link in browser's memory
+            const href = URL.createObjectURL(response.data);
+
+            // create "a" HTML element with href to file & click
+            const link = document.createElement('a');
+            link.href = href;
+            link.setAttribute('download', `Certificate_${newSensorObject.ReportFormData.historyDate}.xlsx`); //or any other extension
+            document.body.appendChild(link);
+            link.click();
+
+            // clean up "a" element & remove ObjectURL
+            document.body.removeChild(link);
+            URL.revokeObjectURL(href);
+            setLoaded(true);
             // window.open(
             //     `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-certificate-history-cnv?customerName=${newSensorObject.ReportFormData.customerName}&facilityNo=${newSensorObject.ReportFormData.facilityNo}&tankNo=${newSensorObject.ReportFormData.tankNo}&product=${newSensorObject.ReportFormData.product}&productDate=${newSensorObject.ReportFormData.productDate}&deliverDate=${newSensorObject.ReportFormData.deliverDate}&IsC6H6=${newSensorObject.ReportFormData.IsC6H6}&IsCO2=${newSensorObject.ReportFormData.IsCO2}&IsH2O=${newSensorObject.ReportFormData.IsH2O}&IsH2S=${newSensorObject.ReportFormData.IsH2S}&IsO2=${newSensorObject.ReportFormData.IsO2}&IsN2=${newSensorObject.ReportFormData.IsN2}&IsTHC=${newSensorObject.ReportFormData.IsTHC}&HistoryDateStart=${start}&HistoryDateEnd=${end}`
             // );
@@ -2240,9 +2266,10 @@ function CNV() {
                     sensor: a,
                     value: b,
                     unit: v2.Unit,
-                    IsModify:v2.IsModify,
-                    Type:v2.Type,
-                    Scale:v2.Scale,
+                    IsModify: v2.IsModify,
+                    Type: v2.Type,
+                    Scale: v2.Scale,
+                    GroupName: v2.GroupName,
                     HighAlarmSetting: v2.HighAlarmSetting,
                     LowAlarmSetting: v2.LowAlarmSetting,
                     DelayTime: v2.DelayTime,
@@ -2413,20 +2440,20 @@ function CNV() {
         }
     };
     function getLiquidName(id) {
-        if(id === 0) return "LIN";
-        if(id === 1) return "LOX";
-        if(id === 2) return "LAR";
-        if(id === 3) return "LN2O";
-        if(id === 4) return "LCO2";
-        if(id === 5) return "LNG";
+        if (id === 0) return "LIN";
+        if (id === 1) return "LOX";
+        if (id === 2) return "LAR";
+        if (id === 3) return "LN2O";
+        if (id === 4) return "LCO2";
+        if (id === 5) return "LNG";
         return "Undefined";
     }
     function getUnitName(id) {
-        if(id === 0) return "bar";
-        if(id === 1) return "kg/cm2";
-        if(id === 2) return "Mpa";
-        if(id === 3) return "PSI";
-      
+        if (id === 0) return "bar";
+        if (id === 1) return "kg/cm2";
+        if (id === 2) return "Mpa";
+        if (id === 3) return "PSI";
+
         return "Undefined";
     }
     return (
@@ -2448,14 +2475,14 @@ function CNV() {
                 item={selectedCNVDialog}
                 onConfirm={handleConfirmCNVToExcel}
             />
-            { typeof fullRS485Data !== "undefined" && valueSelect && valueSelect.id.includes("A-CNV-3")?
-            <CNVDialogSetting
-                isEnglish = {isEnglishLanguage}
-                deviceId={valueSelect.id}
-                open={isOpenDialogCNVSetting}
-                handleClose={CNVDialogSettingClose}
-                onConfirm={handleConfirmCNVSetting}
-            /> :<div></div>
+            {typeof fullRS485Data !== "undefined" && valueSelect && valueSelect.id.includes("A-CNV-3") ?
+                <CNVDialogSetting
+                    isEnglish={isEnglishLanguage}
+                    deviceId={valueSelect.id}
+                    open={isOpenDialogCNVSetting}
+                    handleClose={CNVDialogSettingClose}
+                    onConfirm={handleConfirmCNVSetting}
+                /> : <div></div>
             }
             <ConfirmationDialog
                 isNoButton={isNoButton}
@@ -2473,7 +2500,7 @@ function CNV() {
                         <SubHeader
                             text={
                                 valueSelect
-                                    ? `${valueSelect.label}`
+                                    ? `GIÁM SÁT DỮ LIỆU ${valueSelect.label}`
                                     : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
@@ -2522,12 +2549,12 @@ function CNV() {
                                         value={valueSelect.label}
                                         inputValue={inputValue}
                                         onInputChange={(event, newInputValue) => {
-                    try {
-                        setInputValue(newInputValue);
-                    } catch (error) {
-                        console.error('Error in onInputChange:', error);
-                    }
-                }}
+                                            try {
+                                                setInputValue(newInputValue);
+                                            } catch (error) {
+                                                console.error('Error in onInputChange:', error);
+                                            }
+                                        }}
                                         renderInput={(params) => (
                                             <TextField
                                                 {...params}
@@ -2603,390 +2630,389 @@ function CNV() {
                                         {IsDemoUI === false ? <div className="borderd-content">
 
                                             <div className="content">
-                                            {
-                                                valueSelect &&  valueSelect.id.includes("A-CNV-3") ?
-                                                <Grid container justify="center">
-                                                    <Grid item xs={3}>
-                                                        <div style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
-                                                            <img
-                                                                src={'/image/cnv-logo.png'}
-                                                                alt="Clickable Image"
-                                                                width={"50%"}
+                                                {
+                                                    valueSelect && valueSelect.id.includes("A-CNV-3") ?
+                                                        <Grid container justify="center">
+                                                            <Grid item xs={3}>
+                                                                <div style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
+                                                                    <img
+                                                                        src={'/image/cnv-logo.png'}
+                                                                        alt="Clickable Image"
+                                                                        width={"50%"}
 
-                                                                style={{ cursor: 'pointer' }}
-                                                            />
-                                                        </div>
-
-                                                    </Grid>
-
-                                                    <Grid item xs={6} justify="center" >
-                                                        <Grid container spacing={2} alignItems="center">
-                                                            <Grid item xs={12}>
-                                                                <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw' }}>
-                                                                    {/* Text content here */}
-                                                                    <div style={{ color: "blue", fontWeight: 'bold' }}>{isEnglishLanguage? "LIQUID LEVEL & PRESSURE":"MỨC LỎNG VÀ ÁP SUẤT BỒN"}</div>
-
+                                                                        style={{ cursor: 'pointer' }}
+                                                                    />
                                                                 </div>
-                                                            </Grid>
-                                                        </Grid>
 
-                                                    </Grid>
-
-                                                    <Grid item xs={3}>
-                                                        <Grid container spacing={2} alignItems="center">
-                                                            <Grid item xs={12}>
-                                                                <div style={{ height: "10vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
-                                                                    <Button
-                                                                        style={{ marginRight: "1vh" }}
-                                                                        variant="contained"
-                                                                        color="primary"
-                                                                        sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
-                                                                        onClick={()=>{
-                                                                            
-                                                                            localStorage.setItem("EnglishLanguage",false)
-                                                                            setIsEnglishLanguage(false); 
-                                                                        }}
-                                                                    >
-                                                                        VN
-                                                                    </Button>
-                                                                    <Button
-                                                                        sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
-                                                                        variant="contained"
-                                                                        color="primary"
-                                                                        onClick={()=>{
-                                                                     
-                                                                            localStorage.setItem("EnglishLanguage",true)
-                                                                            setIsEnglishLanguage(true); 
-                                                                        }}
-                                                                    >
-                                                                        EN
-                                                                    </Button>
-                                                                </div>
-                                                            </Grid>
-                                                            <Grid item xs={12}>
-                                                                <DateTimeTextField />
                                                             </Grid>
 
-                                                        </Grid>
-                                                    </Grid>
+                                                            <Grid item xs={6} justify="center" >
+                                                                <Grid container spacing={2} alignItems="center">
+                                                                    <Grid item xs={12}>
+                                                                        <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw' }}>
+                                                                            {/* Text content here */}
+                                                                            <div style={{ color: "blue", fontWeight: 'bold' }}>{isEnglishLanguage ? "LIQUID LEVEL & PRESSURE" : "MỨC LỎNG VÀ ÁP SUẤT BỒN"}</div>
 
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                        <Grid item xs={5}>
-                                                        </Grid>
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ? "Tank Serial No.:":"Sê-ri bồn:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <div><TextField 
-                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[0].Value:''}
-                                                            InputProps={{
-                                                                 readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                            }} id="outlined-basic" variant="outlined" /></div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                        </Grid>
-                                                    </Grid>
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                                        </div>
+                                                                    </Grid>
+                                                                </Grid>
 
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ?"Fluid:":"Môi chất:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <div><TextField id="outlined-basic" 
-                                                            value = {typeof fullRS485Data !== "undefined" ? getLiquidName(fullRS485Data.RS485Data[10].Value):''}
-                                                            InputProps={{
-                                                                 readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                            }} variant="outlined" /></div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                            <div></div>
-                                                        </Grid>
-                                                    </Grid>
+                                                            </Grid>
 
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                        <Grid item xs={5}>
-                                                        </Grid>
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ?"Liquid level:":"Mức lỏng:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
+                                                            <Grid item xs={3}>
+                                                                <Grid container spacing={2} alignItems="center">
+                                                                    <Grid item xs={12}>
+                                                                        <div style={{ height: "10vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
+                                                                            <Button
+                                                                                style={{ marginRight: "1vh" }}
+                                                                                variant="contained"
+                                                                                color="primary"
+                                                                                sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
+                                                                                onClick={() => {
 
-                                                            <div>
-                                                                <TextField id="outlined-basic" 
-                                                                value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[1].Value:''}
-                                                                InputProps={{
-                                                                     readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                                }} variant="outlined" />
+                                                                                    localStorage.setItem("EnglishLanguage", false)
+                                                                                    setIsEnglishLanguage(false);
+                                                                                }}
+                                                                            >
+                                                                                VN
+                                                                            </Button>
+                                                                            <Button
+                                                                                sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
+                                                                                variant="contained"
+                                                                                color="primary"
+                                                                                onClick={() => {
 
-                                                            </div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                            <div>(%)</div>
-                                                        </Grid>
-                                                    </Grid>
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                                                    localStorage.setItem("EnglishLanguage", true)
+                                                                                    setIsEnglishLanguage(true);
+                                                                                }}
+                                                                            >
+                                                                                EN
+                                                                            </Button>
+                                                                        </div>
+                                                                    </Grid>
+                                                                    <Grid item xs={12}>
+                                                                        <DateTimeTextField />
+                                                                    </Grid>
 
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ?"Weight:":"Khối lượng:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <div><TextField id="outlined-basic" 
-                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[2].Value:''}
-                                                            InputProps={{
-                                                                 readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                            }} variant="outlined" /></div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                            <div>(kg)</div>
-                                                        </Grid>
-                                                    </Grid>
+                                                                </Grid>
+                                                            </Grid>
 
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                        <Grid item xs={5}>
-                                                        </Grid>
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ?"Pressure:":"Áp suất:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <div><TextField id="outlined-basic" 
-                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[5].Value:''}
-                                                            InputProps={{
-                                                                 readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                            }} variant="outlined" /></div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                            <div>({ typeof fullRS485Data !== "undefined" ? getUnitName(fullRS485Data.RS485Data[6].Value):''})</div>
-                                                        </Grid>
-                                                    </Grid>
-                                                    <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                                <Grid item xs={5}>
+                                                                </Grid>
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Tank Serial No.:" : "Sê-ri bồn:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <div><TextField
+                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[0].Value : ''}
+                                                                        InputProps={{
+                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                        }} id="outlined-basic" variant="outlined" /></div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                </Grid>
+                                                            </Grid>
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
 
-                                                        <Grid item xs={2}>
-                                                            <div>{isEnglishLanguage ?"Volume:":"Thể tích:"}</div>
-                                                        </Grid>
-                                                        <Grid item xs={3}>
-                                                            <div><TextField width={'1.4vw'} id="outlined-basic" 
-                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[4].Value:''}
-                                                            InputProps={{
-                                                                 readOnly: true,style: {fontSize:'1.4vw', fontWeight:'bold' }
-                                                            }} variant="outlined" /></div>
-                                                        </Grid>
-                                                        <Grid item xs={1}>
-                                                            <div>(m3)</div>
-                                                        </Grid>
-                                                    </Grid>
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Fluid:" : "Môi chất:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <div><TextField id="outlined-basic"
+                                                                        value={typeof fullRS485Data !== "undefined" ? getLiquidName(fullRS485Data.RS485Data[10].Value) : ''}
+                                                                        InputProps={{
+                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                        }} variant="outlined" /></div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <div></div>
+                                                                </Grid>
+                                                            </Grid>
+
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                                <Grid item xs={5}>
+                                                                </Grid>
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Liquid level:" : "Mức lỏng:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+
+                                                                    <div>
+                                                                        <TextField id="outlined-basic"
+                                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[1].Value : ''}
+                                                                            InputProps={{
+                                                                                readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                            }} variant="outlined" />
+
+                                                                    </div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <div>(%)</div>
+                                                                </Grid>
+                                                            </Grid>
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Weight:" : "Khối lượng:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <div><TextField id="outlined-basic"
+                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[2].Value : ''}
+                                                                        InputProps={{
+                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                        }} variant="outlined" /></div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <div>(kg)</div>
+                                                                </Grid>
+                                                            </Grid>
+
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+                                                                <Grid item xs={5}>
+                                                                </Grid>
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Pressure:" : "Áp suất:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <div><TextField id="outlined-basic"
+                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[5].Value : ''}
+                                                                        InputProps={{
+                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                        }} variant="outlined" /></div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <div>({typeof fullRS485Data !== "undefined" ? getUnitName(fullRS485Data.RS485Data[6].Value) : ''})</div>
+                                                                </Grid>
+                                                            </Grid>
+                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
+
+                                                                <Grid item xs={2}>
+                                                                    <div>{isEnglishLanguage ? "Volume:" : "Thể tích:"}</div>
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <div><TextField width={'1.4vw'} id="outlined-basic"
+                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[4].Value : ''}
+                                                                        InputProps={{
+                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
+                                                                        }} variant="outlined" /></div>
+                                                                </Grid>
+                                                                <Grid item xs={1}>
+                                                                    <div>(m3)</div>
+                                                                </Grid>
+                                                            </Grid>
 
 
 
-                                                    <Grid container spacing={2} alignItems="center">
-                                                        <Grid item xs={12}>
-                                                            <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
-                                                                <Button
-                                                                    style={{ marginRight: "1vh" }}
-                                                                    variant="contained"
-                                                                    color="primary"
-                                                                    onClick={
-                                                                        handleSettingCNV
+                                                            <Grid container spacing={2} alignItems="center">
+                                                                <Grid item xs={12}>
+                                                                    <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
+                                                                        <Button
+                                                                            style={{ marginRight: "1vh" }}
+                                                                            variant="contained"
+                                                                            color="primary"
+                                                                            onClick={
+                                                                                handleSettingCNV
+                                                                            }
+                                                                        >
+
+                                                                            {isEnglishLanguage ? "Set up" : "Cài đặt"}
+                                                                        </Button>
+                                                                        <Button
+                                                                            variant="contained"
+                                                                            color="primary"
+                                                                            onClick={
+                                                                                openAlarmLink
+                                                                            }
+                                                                        >
+
+                                                                            {isEnglishLanguage ? "Alarm" : "Cảnh báo"}
+                                                                        </Button>
+                                                                    </div>
+                                                                </Grid>
+
+
+                                                            </Grid>
+
+
+                                                        </Grid> :
+                                                        <Grid
+                                                            className="grid-margin"
+                                                            container
+                                                            spacing={1.0}
+                                                        >
+                                                            {dataSensor &&
+                                                                dataSensor.length > 0 ? (
+                                                                dataSensor[0].map(
+                                                                    (v, index) => {
+                                                                        return (
+                                                                            <Grid
+                                                                                key={
+                                                                                    index
+                                                                                }
+                                                                                item
+                                                                                xl={
+                                                                                    dataSensor[0]
+                                                                                        .length ==
+                                                                                        1
+                                                                                        ? 12
+                                                                                        : 3
+                                                                                }
+                                                                                lg={
+                                                                                    dataSensor[0]
+                                                                                        .length ==
+                                                                                        1
+                                                                                        ? 12
+                                                                                        : 3
+                                                                                }
+                                                                                md={
+                                                                                    dataSensor[0]
+                                                                                        .length ==
+                                                                                        1
+                                                                                        ? 12
+                                                                                        : 6
+                                                                                }
+                                                                                sm={12}
+                                                                                xs={12}
+                                                                            >
+                                                                                <div
+                                                                                    style={{
+                                                                                        height: "100%",
+                                                                                    }}
+                                                                                    onClick={() => {
+
+                                                                                        v.IsModify === true ? onClickSensorDevice(
+                                                                                            v
+                                                                                        ) : null
+                                                                                    }
+                                                                                    }
+                                                                                >
+                                                                                    {!isRerenderCard ? <CardValueSensor
+                                                                                        alarmSetting={
+                                                                                            v.AlarmSetting
+                                                                                        }
+                                                                                        label={
+                                                                                            v.sensor
+                                                                                        }
+                                                                                        lastTime={
+                                                                                            dataChange.last_time
+                                                                                        }
+                                                                                        deviceId={
+                                                                                            valueSelect.id +
+                                                                                            v.sensor
+                                                                                        }
+                                                                                        value={
+                                                                                            v.value.split(
+                                                                                                "*"
+                                                                                            )[0]
+                                                                                        }
+                                                                                        unit={` ${" "} ${typeof v.unit ===
+                                                                                                "undefined"
+                                                                                                ? ""
+                                                                                                : v.unit
+                                                                                            }`}
+                                                                                        state={styleForCard(
+                                                                                            v.value
+                                                                                        )}
+                                                                                        fillColor={
+                                                                                            "red"
+                                                                                        }
+                                                                                    /> : <CircularProgress color="success" />}
+                                                                                </div>
+                                                                            </Grid>
+                                                                        );
                                                                     }
-                                                                >
-                                                                
-                                                                    {isEnglishLanguage ?"Set up":"Cài đặt"}
-                                                                </Button>
-                                                                <Button
-                                                                    variant="contained"
-                                                                    color="primary"
-                                                                    onClick={
-                                                                        openAlarmLink
-                                                                    }
-                                                                >
-                                                                   
-                                                                    {isEnglishLanguage ?"Alarm":"Cảnh báo"}
-                                                                </Button>
-                                                            </div>
-                                                        </Grid>
-
-
-                                                    </Grid>
-
-
-                                                </Grid> :              
-                                                <Grid
-                                                    className="grid-margin"
-                                                    container
-                                                    spacing={1.0}
-                                                >
-                                                    {dataSensor &&
-                                                    dataSensor.length > 0 ? (
-                                                        dataSensor[0].map(
-                                                            (v, index) => {
-                                                                return (
+                                                                )
+                                                            ) : (
+                                                                <>
                                                                     <Grid
-                                                                        key={
-                                                                            index
-                                                                        }
                                                                         item
-                                                                        xl={
-                                                                            dataSensor[0]
-                                                                                .length ==
-                                                                            1
-                                                                                ? 12
-                                                                                : 3
-                                                                        }
-                                                                        lg={
-                                                                            dataSensor[0]
-                                                                                .length ==
-                                                                            1
-                                                                                ? 12
-                                                                                : 3
-                                                                        }
-                                                                        md={
-                                                                            dataSensor[0]
-                                                                                .length ==
-                                                                            1
-                                                                                ? 12
-                                                                                : 6
-                                                                        }
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
                                                                         sm={12}
                                                                         xs={12}
                                                                     >
-                                                                        <div
-                                                                            style={{
-                                                                                height: "100%",
-                                                                            }}
-                                                                            onClick={() =>{
-                                                                      
-                                                                               v.IsModify === true ? onClickSensorDevice(
-                                                                                    v
-                                                                                ): null
-                                                                            }
-                                                                            }
-                                                                        >
-                                                                           { !isRerenderCard ? <CardValueSensor
-                                                                                alarmSetting={
-                                                                                    v.AlarmSetting
-                                                                                }
-                                                                                label={
-                                                                                    v.sensor
-                                                                                }
-                                                                                lastTime={
-                                                                                    dataChange.last_time
-                                                                                }
-                                                                                deviceId={
-                                                                                    valueSelect.id +
-                                                                                    v.sensor
-                                                                                }
-                                                                                value={
-                                                                                    v.value.split(
-                                                                                        "*"
-                                                                                    )[0]
-                                                                                }
-                                                                                unit={` ${" "} ${
-                                                                                    typeof v.unit ===
-                                                                                    "undefined"
-                                                                                        ? ""
-                                                                                        : v.unit
-                                                                                }`}
-                                                                                state={styleForCard(
-                                                                                    v.value
-                                                                                )}
-                                                                                fillColor={
-                                                                                    "red"
-                                                                                }
-                                                                            /> :     <CircularProgress color="success" />}
-                                                                        </div>
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
                                                                     </Grid>
-                                                                );
-                                                            }
-                                                        )
-                                                    ) : (
-                                                        <>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                            <Grid
-                                                                item
-                                                                xl={3}
-                                                                lg={4}
-                                                                md={6}
-                                                                sm={12}
-                                                                xs={12}
-                                                            >
-                                                                <Skeleton
-                                                                    animation="wave"
-                                                                    variant="rounded"
-                                                                    height={170}
-                                                                ></Skeleton>
-                                                            </Grid>
-                                                        </>
-                                                    )}
-                                                </Grid>
-                                            }
+                                                                    <Grid
+                                                                        item
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
+                                                                        sm={12}
+                                                                        xs={12}
+                                                                    >
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
+                                                                    </Grid>
+                                                                    <Grid
+                                                                        item
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
+                                                                        sm={12}
+                                                                        xs={12}
+                                                                    >
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
+                                                                    </Grid>
+                                                                    <Grid
+                                                                        item
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
+                                                                        sm={12}
+                                                                        xs={12}
+                                                                    >
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
+                                                                    </Grid>
+                                                                    <Grid
+                                                                        item
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
+                                                                        sm={12}
+                                                                        xs={12}
+                                                                    >
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
+                                                                    </Grid>
+                                                                    <Grid
+                                                                        item
+                                                                        xl={3}
+                                                                        lg={4}
+                                                                        md={6}
+                                                                        sm={12}
+                                                                        xs={12}
+                                                                    >
+                                                                        <Skeleton
+                                                                            animation="wave"
+                                                                            variant="rounded"
+                                                                            height={170}
+                                                                        ></Skeleton>
+                                                                    </Grid>
+                                                                </>
+                                                            )}
+                                                        </Grid>
+                                                }
                                             </div>
                                         </div> : <div></div>}
                                     </Grid>
@@ -3000,20 +3026,20 @@ function CNV() {
                                                 "undefined" &&
                                                 dataSensor[0].length > 0
                                                 ? dataCoil[0].length > 0
-                                                    ? (dataSensor[0].length == 1? 10:4)
+                                                    ? (dataSensor[0].length == 1 ? 10 : 4)
                                                     : 0
                                                 : 12
                                         }
                                     >
                                         {dataCoil &&
                                             dataCoil.length > 0 &&
-                                            dataCoil[0].length > 0 &&  dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length &&(
+                                            dataCoil[0].length > 0 && dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length && (
                                                 <div className="borderd-content">
                                                     <div className="title">
-                                                     
+
                                                     </div>
                                                     <div className="content">
-                                                        {typeof fullRS485Data !== "undefined"&& fullRS485Data.IsPIDAnimation ? (
+                                                        {typeof fullRS485Data !== "undefined" && fullRS485Data.IsPIDAnimation ? (
                                                             <>
                                                                 <IFrameSVG valueSelectId={valueSelect.id} />
                                                             </>
@@ -3675,48 +3701,48 @@ function CNV() {
                                                                     }
                                                                 />
                                                             </Grid>
-                                                            {valueSelect.id===
+                                                            {valueSelect.id ===
                                                                 "A-OMWATER-1"
-                                                            ? (
-                                                                <Grid
-                                                                    item
-                                                                    xs={3}
-                                                                >
-                                                                    <MyButton
-                                                                        icon={
-                                                                            null
-                                                                        }
-                                                                        name={
-                                                                            "Xuất Excel"
-                                                                        }
-                                                                        onClick={
-                                                                            handleExportExcel
-                                                                        }
-                                                                    />
-                                                                    <MyButton
-                                                                        icon={
-                                                                            null
-                                                                        }
-                                                                        name={
-                                                                            "Xuất ISO"
-                                                                        }
-                                                                        onClick={
-                                                                            handleExportExcelISO
-                                                                        }
-                                                                    />
-                                                                    <MyButton
-                                                                        icon={
-                                                                            null
-                                                                        }
-                                                                        name={
-                                                                            "Xuất OPRP ISO"
-                                                                        }
-                                                                        onClick={
-                                                                            handleExportExcelISO2
-                                                                        }
-                                                                    />
-                                                                </Grid>
-                                                            ) :
+                                                                ? (
+                                                                    <Grid
+                                                                        item
+                                                                        xs={3}
+                                                                    >
+                                                                        <MyButton
+                                                                            icon={
+                                                                                null
+                                                                            }
+                                                                            name={
+                                                                                "Xuất Excel"
+                                                                            }
+                                                                            onClick={
+                                                                                handleExportExcel
+                                                                            }
+                                                                        />
+                                                                        <MyButton
+                                                                            icon={
+                                                                                null
+                                                                            }
+                                                                            name={
+                                                                                "Xuất ISO"
+                                                                            }
+                                                                            onClick={
+                                                                                handleExportExcelISO
+                                                                            }
+                                                                        />
+                                                                        <MyButton
+                                                                            icon={
+                                                                                null
+                                                                            }
+                                                                            name={
+                                                                                "Xuất OPRP ISO"
+                                                                            }
+                                                                            onClick={
+                                                                                handleExportExcelISO2
+                                                                            }
+                                                                        />
+                                                                    </Grid>
+                                                                ) :
 
                                                                 valueSelect.id.includes(
                                                                     "CONG-NGHIEP-VIET-2"
@@ -3749,9 +3775,9 @@ function CNV() {
                                                                         />
 
                                                                     </Grid>
-                                                                ) :   valueSelect.id.includes(
+                                                                ) : valueSelect.id.includes(
                                                                     "A-KHINAMPHUONG-1"
-                                                                ) ?  (
+                                                                ) ? (
                                                                     <Grid
                                                                         item
                                                                         xs={3}
@@ -3768,7 +3794,7 @@ function CNV() {
                                                                             }
                                                                         />
                                                                     </Grid>
-                                                                ):(
+                                                                ) : (
                                                                     <Grid
                                                                         item
                                                                         xs={3}
@@ -3837,8 +3863,8 @@ function CNV() {
                         <SubHeader
                             text={
                                 valueSelect
-                                    ? `${valueSelect.label}`
-                                    : "HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                    ? `GIÁM SÁT DỮ LIỆU ${valueSelect.label}`
+                                    : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                             }
                         />
 
