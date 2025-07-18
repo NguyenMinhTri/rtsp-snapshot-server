@@ -1723,6 +1723,7 @@ function CNV() {
             if (
                 !valueSelect.id.includes("_") &&
                 valueSelect.id !== ("A-OMWATER-1") && valueSelect.id !== ("A-BIENTAN-1")
+                && valueSelect.id !== ("A-TEDCO-1")
             ) {
                 for (let i = 0; i < listSensor.length; i++) {
                     let lstSensor = [];
