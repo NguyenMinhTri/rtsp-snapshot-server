@@ -110,7 +110,7 @@ const subscribeTokenToTopic = async (token, topic, isSub,) => {
                 isSub: isSub,
             }),
         });
-
+        debugger;
         if (response.ok) {
             console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
 
@@ -1719,12 +1719,14 @@ function CNV() {
         );
         try {
             setLoaded(false);
+              debugger;
             // cho thiết bị có cảm nhiều cảm biến realtime
             if (
                 !valueSelect.id.includes("_") &&
                 valueSelect.id !== ("A-OMWATER-1") && valueSelect.id !== ("A-BIENTAN-1")
                 && valueSelect.id !== ("A-TEDCO-1")
             ) {
+                  debugger;
                 for (let i = 0; i < listSensor.length; i++) {
                     let lstSensor = [];
                     lstSensor.push(listSensor[i]);
@@ -1773,6 +1775,7 @@ function CNV() {
                     }
                 }
             } else {
+                  debugger;
                 //dành cho datalogger hoặc dữ liệu theo thời gian
                 const res = await axios.get(
                     valueSelect.id.includes("IUH")
@@ -1912,7 +1915,7 @@ function CNV() {
         }
     };
     const handleExportHistoryNamPhuong = async (e) => {
-        debugger;
+      
         setStartDate(startDateTemp);
         setEndDate(endDateTemp);
         var startC = moment(startDateTemp);
