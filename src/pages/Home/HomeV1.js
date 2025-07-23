@@ -1024,7 +1024,7 @@ function HomeV1() {
         const interval = setInterval(() => {
             window.location.reload();
             // reload the component here
-        }, 3600000); // reload every hour
+        }, 10800000); // reload every hour
 
         return () => clearInterval(interval);
     }, []);
