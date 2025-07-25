@@ -1569,7 +1569,7 @@ function HomeV1() {
             if (
                 !valueSelect.id.includes("_") &&
                 !valueSelect.id.includes("A-OMWATER-1") &&  !valueSelect.id.includes("A-BIENTAN-1")
-                &&  !valueSelect.id.includes("A-TEDCO-1")
+                &&  !valueSelect.id.includes("A-TEDCO-1") 
             ) {
                 for (let i = 0; i < listSensor.length; i++) {
                     let lstSensor = [];
@@ -3043,7 +3043,7 @@ function HomeV1() {
                                                         style={{}}
                                                     >
                                                         {/* <div> */}
-                                                          { valueSelect.id.includes("_") ? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor}/>
+                                                          { valueSelect.id.includes("_") || valueSelect.id.includes("CONG-NGHIEP-VIET-2") || valueSelect.id.includes("A-TEDCO-1") || valueSelect.id.includes("A-BIENTAN-1")? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor}/>
                                                           
                                                           :    <div className="home_chart">
                                                             <MainChart
