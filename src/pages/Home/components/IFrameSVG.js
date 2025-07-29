@@ -10,7 +10,7 @@ import {
     Tooltip,
 } from "@mui/material";
 import "../Home.scss";
-function IFrameSVG({ valueSelectId }) {
+function IFrameSVG({ url }) {
     const [open, setOpen] = useState(false);
 
     const handleClickOpen = () => {
@@ -44,13 +44,13 @@ function IFrameSVG({ valueSelectId }) {
                 </Tooltip>
                 <iframe
                     className="pid"
-                    src={`https://storage.googleapis.com/weatherstationiotdaiviet.appspot.com/PID/${valueSelectId}.html`}
+                    src={url}
                 ></iframe>
 
                 <Dialog fullWidth={true} maxWidth={"xl"} open={open} onClose={handleClose}>
                     <iframe
                         style={{ height: "100vh" }}
-                        src={`https://storage.googleapis.com/weatherstationiotdaiviet.appspot.com/PID/${valueSelectId}.html`}
+                        src={url}
                     ></iframe>
 
                     <DialogActions>

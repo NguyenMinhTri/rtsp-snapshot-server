@@ -84,6 +84,7 @@ import { TIME_DEVICE_OFF } from "../../constants";
 import { handleGetSettingThreshold } from "../../utils/handleGetSettingThreshold";
 import CameraChild from "../Camera/CameraChild";
 import IFrameSVG from "../Home/components/IFrameSVG";
+import IFrameSVGWrapper from "../Home/components/IFrameSVGWrapper";
 import IFrameExcelCheckList from "../Home/components/IFrameExcelCheckList";
 import CameraDialog from "../Home/components/CameraDialog";
 import ChartTab from "../../components/ChartTab";
@@ -1420,7 +1421,7 @@ function CNV() {
     // get data from firebase
     useEffect(() => {
         if (valueSelect) {
-            debugger;
+       
             fetchDataNote();
             // lay du lieu license
             fetchLicense();
@@ -1446,7 +1447,7 @@ function CNV() {
                     } else {
                         setIsDeviceOffline(false);
                     }
-
+                        
                     setFullRS485Data({ ...newData });
                     setFullRS485DataPrevios({ ...newData });
                     let { RS485Data, Location, LastTime, Ip } = newData;
@@ -1476,6 +1477,15 @@ function CNV() {
                     let dateC = moment(LastTime.slice(0, -1)).format(
                         "MM/DD/YYYY"
                     );
+                    //    debugger;
+                    // if(typeof newData !== "undefined" && typeof newData.IsPIDAnimation !== "undefined" && newData.IsPIDAnimation){
+                    //     debugger;
+                    //     const response = await fetch(`https://storage.googleapis.com/weatherstationiotdaiviet.appspot.com/PID/${Location}.html`);
+                    //     if (response.status === 404) {
+                    //             fullRS485Data.IsPIDAnimation = false
+                    //     }
+                    // }
+        
                     let dateP = moment(Date()).format("MM/DD/YYYY");
 
                     let compare = compareDate(dateC, dateP);
@@ -2614,21 +2624,22 @@ function CNV() {
                                     {/* <Grid item xs={4}>
                             <Item>xs=4</Item>
                         </Grid> */}
-
                                     <Grid
-                                        item
-                                        sx={{ my: 1 }}
-                                        xs={
-                                            typeof dataSensor[0] !==
-                                                "undefined" &&
-                                                dataSensor[0].length > 0
-                                                ? dataCoil[0].length > 0
-                                                    ? dataSensor[0].length == 1
-                                                        ? 2
-                                                        : 8
-                                                    : 12
-                                                : 0
-                                        }
+                                    item
+                                    sx={{ my: 1 }}
+                                    xs={
+                                        typeof dataSensor[0] !== "undefined" && dataSensor[0].length > 0
+                                        ? dataCoil[0].length > 0
+                                            ? dataSensor[0].length === 1
+                                            ? 2
+                                            : dataSensor[0].length === 2
+                                            ? 3
+                                            : dataSensor[0].length === 3
+                                            ? 4
+                                            : 8
+                                            : 12
+                                        : 0
+                                    }
                                     >
                                         {IsDemoUI === false ? <div className="borderd-content">
 
@@ -2849,34 +2860,38 @@ function CNV() {
                                                                 dataSensor[0].map(
                                                                     (v, index) => {
                                                                         return (
-                                                                            <Grid
-                                                                                key={
-                                                                                    index
-                                                                                }
-                                                                                item
-                                                                                xl={
-                                                                                    dataSensor[0]
-                                                                                        .length ==
-                                                                                        1
-                                                                                        ? 12
-                                                                                        : 3
-                                                                                }
-                                                                                lg={
-                                                                                    dataSensor[0]
-                                                                                        .length ==
-                                                                                        1
-                                                                                        ? 12
-                                                                                        : 3
-                                                                                }
-                                                                                md={
-                                                                                    dataSensor[0]
-                                                                                        .length ==
-                                                                                        1
-                                                                                        ? 12
-                                                                                        : 6
-                                                                                }
-                                                                                sm={12}
-                                                                                xs={12}
+                                                       <Grid
+                                                            key={index}
+                                                            item
+                                                            xl={
+                                                                dataSensor[0]?.length === 1
+                                                                ? 12
+                                                                : dataSensor[0]?.length === 2
+                                                                ? 6
+                                                                : dataSensor[0]?.length === 3
+                                                                ? 4
+                                                                : 3
+                                                            }
+                                                            lg={
+                                                                dataSensor[0]?.length === 1
+                                                                ? 12
+                                                                : dataSensor[0]?.length === 2
+                                                                ? 6
+                                                                : dataSensor[0]?.length === 3
+                                                                ? 4
+                                                                : 3
+                                                            }
+                                                            md={
+                                                                dataSensor[0]?.length === 1
+                                                                ? 12
+                                                                : dataSensor[0]?.length === 2
+                                                                ? 6
+                                                                : dataSensor[0]?.length === 3
+                                                                ? 4
+                                                                : 6
+                                                            }
+                                                            sm={12}
+                                                            xs={12}
                                                                             >
                                                                                 <div
                                                                                     style={{
@@ -3021,18 +3036,22 @@ function CNV() {
                                     </Grid>
 
 
-                                    <Grid
-                                        item
-                                        sx={{ my: 1 }}
-                                        xs={
-                                            typeof dataSensor[0] !==
-                                                "undefined" &&
-                                                dataSensor[0].length > 0
-                                                ? dataCoil[0].length > 0
-                                                    ? (dataSensor[0].length == 1 ? 10 : 4)
-                                                    : 0
-                                                : 12
-                                        }
+                                <Grid
+                                    item
+                                    sx={{ my: 1 }}
+                                    xs={
+                                        typeof dataSensor[0] !== "undefined" && dataSensor[0].length > 0
+                                        ? dataCoil[0]?.length > 0
+                                            ? dataSensor[0].length === 1
+                                            ? 10
+                                            : dataSensor[0].length === 2
+                                            ? 9
+                                            : dataSensor[0].length === 3
+                                            ? 8
+                                            : 4 // fallback nếu length > 3
+                                            : 0
+                                        : 12
+                                    }
                                     >
                                         {dataCoil &&
                                             dataCoil.length > 0 &&
@@ -3044,7 +3063,7 @@ function CNV() {
                                                     <div className="content">
                                                         {typeof fullRS485Data !== "undefined" && fullRS485Data.IsPIDAnimation ? (
                                                             <>
-                                                                <IFrameSVG valueSelectId={valueSelect.id} />
+                                                                <IFrameSVGWrapper valueSelectId={valueSelect.id} />
                                                             </>
 
                                                         ) : (
