@@ -2641,9 +2641,9 @@ function CNV() {
                                         : 0
                                     }
                                     >
-                                        {IsDemoUI === false ? <div className="borderd-content">
+                                        {IsDemoUI === false ? <div className={dataSensor[0] !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
 
-                                            <div className="content">
+                                           <div  className={dataSensor[0] !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
                                                 {
                                                     valueSelect && valueSelect.id.includes("A-CNV-3") ?
                                                         <Grid container justify="center">
@@ -2935,6 +2935,7 @@ function CNV() {
                                                                                         fillColor={
                                                                                             "red"
                                                                                         }
+                                                                     
                                                                                     /> : <CircularProgress color="success" />}
                                                                                 </div>
                                                                             </Grid>
@@ -3036,7 +3037,7 @@ function CNV() {
                                     </Grid>
 
 
-                                <Grid
+                                <Grid 
                                     item
                                     sx={{ my: 1 }}
                                     xs={
@@ -3057,9 +3058,7 @@ function CNV() {
                                             dataCoil.length > 0 &&
                                             dataCoil[0].length > 0 && dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length && (
                                                 <div className="borderd-content">
-                                                    <div className="title">
-
-                                                    </div>
+        
                                                     <div className="content">
                                                         {typeof fullRS485Data !== "undefined" && fullRS485Data.IsPIDAnimation ? (
                                                             <>
@@ -4004,6 +4003,7 @@ function CNV() {
                                                                     fillColor={
                                                                         "#C3F8FF"
                                                                     }
+                                                             
                                                                 />
                                                             </Grid>
                                                         );
