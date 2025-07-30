@@ -90,6 +90,7 @@ import CameraDialog from "../Home/components/CameraDialog";
 import ChartTab from "../../components/ChartTab";
 import { useDispatch } from "react-redux";
 import { chooseSensorAction } from "../../redux/reducer/chooseSensorChart";
+
 let email = localStorage.getItem("loginEmail");
 
 // Function to subscribe/unsubscribe token to/from a topic
@@ -631,9 +632,9 @@ function CNV() {
             }
         );
         let content = await rawResponse.clone().json();
-
+        debugger;
         // console.log(content);
-        if (!JSON.stringify(content).includes("RS485")) {
+        if (!JSON.stringify(content).includes("RS485") && !fullRS485Data.IsDemoUI) {
             Toast(
                 "error",
                 "Thay đổi giá trị hoặc điều khiển thất bại. Vui lòng thử lại"
@@ -915,9 +916,9 @@ function CNV() {
         );
 
         let content = await rawResponse.clone().json();
-
+        debugger;
         // console.log(content);
-        if (!JSON.stringify(content).includes("RS485")) {
+        if (!JSON.stringify(content).includes("RS485") && !fullRS485Data.IsDemoUI) {
             Toast(
                 "error",
                 "Thay đổi giá trị hoặc điều khiển thất bại. Vui lòng thử lại"
@@ -1027,7 +1028,7 @@ function CNV() {
         content = await rawResponse.clone().json();
 
         // console.log(content);
-        if (!JSON.stringify(content).includes("RS485")) {
+        if (!JSON.stringify(content).includes("RS485")&& !fullRS485Data.IsDemoUI) {
             Toast(
                 "error",
                 "Thay đổi giá trị hoặc điều khiển thất bại. Vui lòng thử lại"
@@ -2641,7 +2642,7 @@ function CNV() {
                                         : 0
                                     }
                                     >
-                                        {IsDemoUI === false ? <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
+                                       <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
 
                                            <div  className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
                                                 {
@@ -3033,7 +3034,7 @@ function CNV() {
                                                         </Grid>
                                                 }
                                             </div>
-                                        </div> : <div></div>}
+                                        </div> 
                                     </Grid>
 
 
@@ -3288,8 +3289,8 @@ function CNV() {
                                 <Grid container spacing={1.5}>
                                     <Grid
                                         item
-                                        xl={IsDemoUI ? 10 : 2}
-                                        lg={IsDemoUI ? 10 : 2}
+                                        xl={2}
+                                        lg={2}
                                         md={12}
                                         sm={12}
                                         xs={12}
@@ -3584,7 +3585,7 @@ function CNV() {
                                                     : 10
                                         }
                                     >
-                                        {licenseLockLV1 === true || IsDemoUI === true ? <div></div> : <Grid container spacing={0.5}>
+                                        {licenseLockLV1 === true? <div></div> : <Grid container spacing={0.5}>
                                             {valueSelect ? (
                                                 <>
                                                     <Grid
