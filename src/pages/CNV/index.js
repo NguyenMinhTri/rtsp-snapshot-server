@@ -3054,7 +3054,7 @@ function CNV() {
                                         : 12
                                     }
                                     >
-                                        {dataCoil &&  dataCoil[0].length  &&
+                                        {dataCoil &&
                                             dataCoil.length > 0 &&
                                             dataCoil[0].length > 0 && dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length && (
                                                 <div className="borderd-content">
