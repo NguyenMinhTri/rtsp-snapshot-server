@@ -2641,9 +2641,9 @@ function CNV() {
                                         : 0
                                     }
                                     >
-                                        {IsDemoUI === false ? <div className={dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
+                                        {IsDemoUI === false ? <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
 
-                                           <div  className={dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
+                                           <div  className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
                                                 {
                                                     valueSelect && valueSelect.id.includes("A-CNV-3") ?
                                                         <Grid container justify="center">
