@@ -2628,7 +2628,7 @@ function CNV() {
                                     item
                                     sx={{ my: 1 }}
                                     xs={
-                                        typeof dataSensor[0] !== "undefined" && dataSensor[0].length > 0
+                                        typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
                                         ? dataCoil[0].length > 0
                                             ? dataSensor[0].length === 1
                                             ? 2
@@ -2641,9 +2641,9 @@ function CNV() {
                                         : 0
                                     }
                                     >
-                                        {IsDemoUI === false ? <div className={dataSensor[0] !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
+                                        {IsDemoUI === false ? <div className={dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
 
-                                           <div  className={dataSensor[0] !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
+                                           <div  className={dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
                                                 {
                                                     valueSelect && valueSelect.id.includes("A-CNV-3") ?
                                                         <Grid container justify="center">
@@ -3041,7 +3041,7 @@ function CNV() {
                                     item
                                     sx={{ my: 1 }}
                                     xs={
-                                        typeof dataSensor[0] !== "undefined" && dataSensor[0].length > 0
+                                        typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
                                         ? dataCoil[0]?.length > 0
                                             ? dataSensor[0].length === 1
                                             ? 10
@@ -3054,7 +3054,7 @@ function CNV() {
                                         : 12
                                     }
                                     >
-                                        {dataCoil &&
+                                        {dataCoil &&  dataCoil[0].length  &&
                                             dataCoil.length > 0 &&
                                             dataCoil[0].length > 0 && dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length && (
                                                 <div className="borderd-content">
