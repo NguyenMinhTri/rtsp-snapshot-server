@@ -1191,34 +1191,38 @@ function CNV() {
                                             : "error",
                                         payload.notification.title +
                                         ": " +
-                                        payload.notification.body
+                                        payload.notification.body, 5000, () => {
+                                            if (
+                                                typeof listDevice[deviceID] !==
+                                                "undefined"
+                                            ) {
+                                                AsyncLocalStorage.setItem(
+                                                    "home_station",
+                                                    JSON.stringify({
+                                                        id: deviceID,
+                                                        label: listDevice[deviceID][
+                                                            "FullName"
+                                                        ],
+                                                    })
+                                                ).then(() => {
+                                                    setValueSelect({
+                                                        id: deviceID,
+                                                        label: listDevice[deviceID][
+                                                            "FullName"
+                                                        ],
+                                                    });
+                                                    setCameraList(
+                                                        listDevice[deviceID][
+                                                        "cameraList"
+                                                        ]
+                                                    );
+                                                });
+                                            }
+
+                                        }
+                                        
                                     );
-                                    if (
-                                        typeof listDevice[deviceID] !==
-                                        "undefined"
-                                    ) {
-                                        AsyncLocalStorage.setItem(
-                                            "home_station",
-                                            JSON.stringify({
-                                                id: deviceID,
-                                                label: listDevice[deviceID][
-                                                    "FullName"
-                                                ],
-                                            })
-                                        ).then(() => {
-                                            setValueSelect({
-                                                id: deviceID,
-                                                label: listDevice[deviceID][
-                                                    "FullName"
-                                                ],
-                                            });
-                                            setCameraList(
-                                                listDevice[deviceID][
-                                                "cameraList"
-                                                ]
-                                            );
-                                        });
-                                    }
+
                                     console.log(
                                         "Receive foreground: ",
                                         payload
@@ -1261,25 +1265,8 @@ function CNV() {
                 .then((currentToken) => {
                     if (currentToken) {
                         onMessage(messaging, (payload) => {
-                            let deviceID = payload.data.status;
-                            if (typeof listDevice[deviceID] !== "undefined") {
-                                AsyncLocalStorage.setItem(
-                                    "home_station",
-                                    JSON.stringify({
-                                        id: deviceID,
-                                        label: listDevice[deviceID]["FullName"],
-                                    })
-                                ).then(() => {
-                                    setValueSelect({
-                                        id: deviceID,
-                                        label: listDevice[deviceID]["FullName"],
-                                    });
-                                    setCameraList(
-                                        listDevice[deviceID]["cameraList"]
-                                    );
-                                });
-                            }
-                            debugger;
+
+
                             Toast(
                                 payload.notification.title
                                     .toLowerCase()
@@ -1296,7 +1283,27 @@ function CNV() {
                                     : "error",
                                 payload.notification.title +
                                 ": " +
-                                payload.notification.body
+                                payload.notification.body, 5000,() => {
+                                    let deviceID = payload.data.status;
+                                    if (typeof listDevice[deviceID] !== "undefined") {
+                                        AsyncLocalStorage.setItem(
+                                            "home_station",
+                                            JSON.stringify({
+                                                id: deviceID,
+                                                label: listDevice[deviceID]["FullName"],
+                                            })
+                                        ).then(() => {
+                                            setValueSelect({
+                                                id: deviceID,
+                                                label: listDevice[deviceID]["FullName"],
+                                            });
+                                            setCameraList(
+                                                listDevice[deviceID]["cameraList"]
+                                            );
+                                        });
+                                    }
+                                }
+                             
                             );
                             console.log("Receive foreground: ", payload);
                         });
