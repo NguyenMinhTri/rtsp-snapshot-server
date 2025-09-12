@@ -1457,6 +1457,9 @@ function CNV() {
                     setFullRS485Data({ ...newData });
                     setFullRS485DataPrevios({ ...newData });
                     let { RS485Data, Location, LastTime, Ip } = newData;
+                    if (typeof RS485Data === "undefined") {
+                        RS485Data = [];
+                    }
                     if (typeof newData.DeviceType !== "undefined")
                         setDeviceType(newData.DeviceType);
                     if (typeof newData.IsDemoUI !== "undefined")
@@ -1483,14 +1486,6 @@ function CNV() {
                     let dateC = moment(LastTime.slice(0, -1)).format(
                         "MM/DD/YYYY"
                     );
-                    //    debugger;
-                    // if(typeof newData !== "undefined" && typeof newData.IsPIDAnimation !== "undefined" && newData.IsPIDAnimation){
-                    //     debugger;
-                    //     const response = await fetch(`https://storage.googleapis.com/weatherstationiotdaiviet.appspot.com/PID/${Location}.html`);
-                    //     if (response.status === 404) {
-                    //             fullRS485Data.IsPIDAnimation = false
-                    //     }
-                    // }
         
                     let dateP = moment(Date()).format("MM/DD/YYYY");
 
@@ -3590,7 +3585,8 @@ function CNV() {
                                                     : 10
                                         }
                                     >
-                                        {licenseLockLV1 === true? <div></div> : <Grid container spacing={0.5}>
+                                        {licenseLockLV1 !== true && (  typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0) ?
+                                        <Grid container spacing={0.5}>
                                             {valueSelect ? (
                                                 <>
                                                     <Grid
@@ -3858,7 +3854,7 @@ function CNV() {
                                                     ></Skeleton>
                                                 </Grid>
                                             )}
-                                        </Grid>}
+                                        </Grid>:<div></div> }
                                     </Grid>
                                     {cameraList.length > 0 && licenseLockLV1 === false ? (
                                         <Grid
