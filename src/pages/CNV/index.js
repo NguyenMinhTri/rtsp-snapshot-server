@@ -184,8 +184,11 @@ function CNV() {
     };
 
     const addTextToList = () => {
-        if (inputText.trim() !== "") {
-            let userTemp = user;
+        if (!user) return;
+        const raw = inputText.trim();
+        if (raw !== "") {
+            const userTemp = user;
+            const contentStr = `${userTemp.displayName}(${userTemp.email}): ${raw}`;
             fetch(
                 "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/create-note",
                 {
@@ -197,65 +200,50 @@ function CNV() {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify({
-                        content: inputText,
-                        deviceId: valueSelect.id,
-                        userName: userTemp.displayName + `(${userTemp.email})`,
+                        content: raw,
+                        deviceId: valueSelect?.id,
+                        userName: `${userTemp.displayName}(${userTemp.email})`,
                     }),
                 }
-            );
-            inputText =
-                userTemp.displayName + `(${userTemp.email}): ` + inputText;
+            ).catch(() => {});
             const newMessage = {
-                name: userTemp.displayName + `(${userTemp.email})`,
-                content: inputText,
+                name: `${userTemp.displayName}(${userTemp.email})`,
+                content: contentStr,
                 timestamp: moment(new Date())
                     .add(0, "h")
                     .format("YYYY/MM/DD HH:mm"),
             };
-            setTextList([newMessage, ...textList]);
+            setTextList((prev) => [newMessage, ...prev]);
             setInputText("");
         }
     };
     async function fetchDataNote() {
-        //  textList = [];
-        // setTextList([]);
-        while (textList.length != 0) {
-            textList.shift();
-        }
-        let deviceIdTemp = valueSelect.id;
-        var requestOptions = {
-            method: "GET",
-            redirect: "follow",
-        };
-
-        fetch(
-            valueSelect.id.includes("NNV")
+        try {
+            setTextList([]);
+            const deviceIdTemp = valueSelect?.id;
+            if (!deviceIdTemp) return;
+            const url = deviceIdTemp.includes("NNV")
                 ? `https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/get-note?deviceId=${deviceIdTemp}`
-                : `https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/get-note-tpn?locationId=${deviceIdTemp}`,
-            requestOptions
-        )
-            .then((response) => response.text())
-            .then((result) => {
-                result = JSON.parse(result);
-
-                for (let i = 0; i < result.length; i++) {
-                    const newMessage = {
-                        name: result[i].UserName,
-                        content: result[i].Content,
-                        Image: result[i].Image,
-                        timestamp: moment(
-                            valueSelect.id.includes("NNV")
-                                ? result[i].CreateTime.value
-                                : result[i].CreateTime.value.replace("Z", "")
-                        )
-                            .add(0, "h")
-                            .format("YYYY/MM/DD HH:mm"),
-                    };
-                    textList.push(newMessage);
-                }
-                setTextList([...textList]);
-            })
-            .catch((error) => console.log("error", error));
+                : `https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/get-note-tpn?locationId=${deviceIdTemp}`;
+            const res = await fetch(url, { method: "GET", redirect: "follow" });
+            const text = await res.text();
+            const result = JSON.parse(text || "[]");
+            const mapped = (Array.isArray(result) ? result : []).map((r) => ({
+                name: r.UserName,
+                content: r.Content,
+                Image: r.Image,
+                timestamp: moment(
+                    deviceIdTemp.includes("NNV")
+                        ? r?.CreateTime?.value
+                        : (r?.CreateTime?.value || "").replace("Z", "")
+                )
+                    .add(0, "h")
+                    .format("YYYY/MM/DD HH:mm"),
+            }));
+            setTextList(mapped);
+        } catch (error) {
+            console.log("error", error);
+        }
     }
 
 

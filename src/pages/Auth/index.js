@@ -64,7 +64,7 @@ async function handleAuthStateChanged() {
     }
   
     if (isLoggedIn) {
-      return userObj.email.includes("datalogger") || userObj.email.includes("tttservice") ? <Navigate to="/generality" replace />:  <Navigate to="/home" replace />;
+      return userObj.email !== null && (userObj.email.includes("datalogger") || userObj.email.includes("tttservice")) ? <Navigate to="/generality" replace />:  <Navigate to="/home" replace />;
     }
   
     return (
