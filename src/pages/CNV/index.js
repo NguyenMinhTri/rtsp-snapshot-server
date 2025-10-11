@@ -1723,7 +1723,7 @@ function CNV() {
             if (
                 !valueSelect.id.includes("_") &&
                 valueSelect.id !== ("A-OMWATER-1") && valueSelect.id !== ("A-BIENTAN-1")
-                && valueSelect.id !== ("A-TEDCO-1") &&  valueSelect.id !== ("A-MASSAN-1")
+                && valueSelect.id !== ("A-TEDCO-1") &&  valueSelect.id !== ("A-TEMP-NP-1")
             ) {
                   debugger;
                 for (let i = 0; i < listSensor.length; i++) {
@@ -3607,7 +3607,7 @@ function CNV() {
                                                         style={{}}
                                                     >
                                                         {/* <div> */}
-                                                        {valueSelect.id.includes("_") || valueSelect.id.includes("CONG-NGHIEP-VIET-2") || valueSelect.id.includes("A-TEDCO-1") || valueSelect.id.includes("A-BIENTAN-1") || valueSelect.id.includes("A-MASSAN-1")? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor} />
+                                                        {valueSelect.id.includes("_") || valueSelect.id.includes("CONG-NGHIEP-VIET-2") || valueSelect.id.includes("A-TEDCO-1") || valueSelect.id.includes("A-BIENTAN-1") || valueSelect.id.includes("A-TEMP-NP-1")? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor} />
 
                                                             : <div className="home_chart">
                                                                 <MainChart
