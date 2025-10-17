@@ -161,7 +161,7 @@ function CameraChild({ cameraList, resDialog }) {
                                     playsInline
                                     loop
                                     muted
-                                    src={"https://rtsp-camera.iotdaiviet.com/video?tagid="+v.replace("[ip]",ipCamera)}
+                                    src={"https://rtsp-mp4.vercel.app/api/video?tagid="+v.replace("[ip]",ipCamera)}
                                     alt="Camera"
                                 />
                      

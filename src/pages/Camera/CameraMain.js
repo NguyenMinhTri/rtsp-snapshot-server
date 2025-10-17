@@ -158,7 +158,7 @@ function CameraMain({ cameraList }) {
                                         padding: "0em 0em 0 0em",
                                         objectFit: "contain",
                                     }}
-                                    src={"https://rtsp-camera.iotdaiviet.com/video?tagid="+v.replace("[ip]",ipCamera)}
+                                    src={"https://rtsp-mp4.vercel.app/api/video?tagid="+v.replace("[ip]",ipCamera)}
                                     alt="Camera"
                                 />
                             </Grid>
@@ -185,7 +185,7 @@ function CameraMain({ cameraList }) {
                                     playsInline
                                     loop
                                     muted
-                                    src={"https://rtsp-camera.iotdaiviet.com/video?tagid="+v.replace("[ip]",ipCamera)}
+                                    src={" https://rtsp-mp4.vercel.app/api/video?tagid="+v.replace("[ip]",ipCamera)}
                                      alt="Camera"
                                 />
                             </Grid>

@@ -204,7 +204,7 @@ function Camera() {
                                     loop
                                         // src={v.replace("[ip]",ipCamera)}
                                         alt={valueSelect.label}
-                                          src={"https://rtsp-camera.iotdaiviet.com/video?tagid="+v.replace("[ip]",ipCamera)}
+                                          src={"https://rtsp-mp4.vercel.app/api/video?tagid="+v.replace("[ip]",ipCamera)}
                                  
                                     />
                                 </Grid>
