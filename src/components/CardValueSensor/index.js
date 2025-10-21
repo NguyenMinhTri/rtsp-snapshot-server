@@ -39,8 +39,9 @@ export default function CardValueSensor({
         }
     }, [deviceId, label]);
     useEffect(() => {
-      
-        if(typeof deviceId === "undefined"|| !deviceId.includes("_")){
+        debugger;
+        if(typeof deviceId === "undefined"||( !deviceId.includes("_") && !deviceId.includes("HCM"))){
+                    debugger;
             let chartConfig = {
                 type: "line",
                 data: {
@@ -160,7 +161,7 @@ export default function CardValueSensor({
                             {"HL: " + alarmSetting.HighAlarmSetting}
                         </div>
                     ) : (
-                 typeof deviceId !=="undefined" &&     deviceId.includes("_")?<div></div>:   <div className={`sensor_state_alarm-hide`}>...</div>
+                 typeof deviceId !=="undefined" &&     (deviceId.includes("_") || deviceId.includes("HCM"))?<div></div>:   <div className={`sensor_state_alarm-hide`}>...</div>
                     )}
                     {typeof alarmSetting.LowAlarmSetting !== "undefined" ? (
                         <div className="sensor_item-name">
@@ -169,7 +170,7 @@ export default function CardValueSensor({
                     ) : typeof alarmSetting.DelayTime !== "undefined" ? (
                         ""
                     ) : (
-                        typeof deviceId !=="undefined" &&        deviceId.includes("_")?<div></div>:  <div className={`sensor_state_alarm-hide`}>...</div>
+                        typeof deviceId !=="undefined" &&        (deviceId.includes("_") || deviceId.includes("HCM"))?<div></div>:  <div className={`sensor_state_alarm-hide`}>...</div>
                     )}
                     {typeof alarmSetting.DelayTime !== "undefined" ? (
                         <div className="sensor_item-name">
@@ -177,17 +178,17 @@ export default function CardValueSensor({
                                 alarmSetting.DelayTime}
                         </div>
                     ) : (
-                        typeof deviceId !=="undefined" &&           deviceId.includes("_")?<div></div>:   <div className={`sensor_state_alarm-hide`}>...</div>
+                        typeof deviceId !=="undefined" &&           (deviceId.includes("_") || deviceId.includes("HCM"))?<div></div>:   <div className={`sensor_state_alarm-hide`}>...</div>
                     )}
                     {typeof alarmSetting.LowAlarmSetting === "undefined" &&
                     alarmSetting.DelayTime !== "undefined" ? (
-                        typeof deviceId !=="undefined" &&     deviceId.includes("_")?<div></div>:  <div className={`sensor_state_alarm-hide`}>...</div>
+                        typeof deviceId !=="undefined" &&     (deviceId.includes("_") || deviceId.includes("HCM"))?<div></div>:  <div className={`sensor_state_alarm-hide`}>...</div>
                     ) : (
                         ""
                     )}
                 </div>
             </div>
-           { typeof deviceId !=="undefined" &&  deviceId.includes("_")?<div></div>: <div>
+           { typeof deviceId !=="undefined" &&  (deviceId.includes("_") || deviceId.includes("HCM"))?<div></div>: <div>
                 <div>
                     <canvas ref={chartRef} />
                 </div>
