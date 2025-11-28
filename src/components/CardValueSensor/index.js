@@ -94,21 +94,21 @@ export default function CardValueSensor({
   let isErrorLV1 = false;
   
   // LV2 HIGH
-  if (AL.IsAlarmHigh && value > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+  if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined" ) && value > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
     isErrorLV2 = true;
 
   // LV2 LOW
-  if (AL.IsAlarmLow && value < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+  else if (AL.IsAlarmLow && value < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
     isErrorLV2 = true;
 
   // LV1 HIGH
   if (AL.IsAlarmHigh1 && value > AL.HighAlarmSetting1) isErrorLV1 = true;
 
   // LV1 LOW
-  if (AL.IsAlarmLow1 && value < AL.LowAlarmSetting1) isErrorLV1 = true;
+  else if (AL.IsAlarmLow1 && value < AL.LowAlarmSetting1) isErrorLV1 = true;
 
   let finalState = state !== "off" && isErrorLV2 ? "error" : state;
-  if (isErrorLV2 !== true && isErrorLV1 === true) {
+  if (isErrorLV2 !== true && isErrorLV1 === true &&  state !== "off" ) {
     finalState = 'calib';
   }
   
