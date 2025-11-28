@@ -42,7 +42,7 @@ export default function CardValueSensor({
   // Individual sound control for this sensor
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
     const saved = localStorage.getItem(`sensor-sound-${deviceId}`);
-    return saved !== null ? saved === "true" : true; // Default to enabled
+    return saved !== null ? saved === "true" : false; // Default to enabled
   });
 
   // Save sound preference
