@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
-import CardValueSensor from "../../components/CardValueSensor";
+import CardValueSensor from "../../components/CardValueSensor/CardValueSensor";
 import CoilValueDevice from "../../components/CoilValueDevice";
 import TextField from "@mui/material/TextField";
 

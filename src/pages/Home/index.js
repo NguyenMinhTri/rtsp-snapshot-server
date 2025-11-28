@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Toast from "../../utils/toasts";
 import { readDataByStation } from "../Setting/actions";
 import HomeV1 from "./HomeV1";
-import CNV from "../CNV";
+import CNV from "../HomePage/HomePage";
 function Home() {
     const navigate = useNavigate();
     const deviceUser = localStorage.getItem("device_user");

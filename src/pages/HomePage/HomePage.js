@@ -5,7 +5,7 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import CardValueSensor from "../../components/CardValueSensor";
+import CardValueSensor from "../../components/CardValueSensor/CardValueSensor";
 import CoilValueDevice from "../../components/CoilValueDevice";
 
 import SensorGridOptimized from "../SensorGridOptimized/SensorGridOptimized";
@@ -28,7 +28,7 @@ import SubHeader from "../../components/SubHeader";
 import compareDate from "../../utils/compare_date";
 import { getUniqueListBy } from "../../utils/function";
 import Toast from "../../utils/toasts";
-import "./CNV.scss";
+import "./HomePage.scss";
 
 import { getToken, onMessage } from "firebase/messaging";
 import AsyncLocalStorage from "../../utils/async_localstorage";

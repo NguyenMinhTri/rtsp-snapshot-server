@@ -1,11 +1,28 @@
-// Updated CardValueSensor component
-// Enhanced with responsive design and better unit display
-
+// Updated CardValueSensor component with global sound control to prevent overlapping
 import React, { useState, useEffect, useRef } from "react";
-import SensorsIcon from "@mui/icons-material/Sensors";
-import SensorsOffIcon from "@mui/icons-material/SensorsOff";
+import { IconButton, Tooltip } from "@mui/material";
+import VolumeUpIcon from "@mui/icons-material/VolumeUp";
+import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import "./CardValueSensor.scss";
 import Chart from "chart.js/auto";
+
+// ----- GLOBAL ALARM AUDIO AND STATE (Singleton) -----
+if (!window.globalAlarmAudio) {
+  window.globalAlarmAudio = new Audio("https://storage.googleapis.com/weatherstationiotdaiviet.appspot.com/Sounds/alarm.mp3");
+  window.globalAlarmAudio.loop = true;
+  window.globalAlarmAudio.volume = 0.5;
+}
+
+if (!window.globalAlarmState) {
+  window.globalAlarmState = {
+    playing: false,
+    interactionListener: false,
+  };
+}
+
+if (!window.globalAlarmingSensors) {
+  window.globalAlarmingSensors = new Set();
+}
 
 export default function CardValueSensor({
   label,
@@ -17,10 +34,91 @@ export default function CardValueSensor({
   deviceId,
   lastTime,
   scaleFactor = 1,
-  cardsPerRow = 4, // NEW: cards per row for responsive sizing
+  cardsPerRow = 4,
 }) {
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
+  
+  // Individual sound control for this sensor
+  const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem(`sensor-sound-${deviceId}`);
+    return saved !== null ? saved === "true" : true; // Default to enabled
+  });
+
+  // Save sound preference
+  useEffect(() => {
+    localStorage.setItem(`sensor-sound-${deviceId}`, isSoundEnabled);
+  }, [isSoundEnabled, deviceId]);
+
+  // Check alarm state and update global alarm
+  useEffect(() => {
+    const AL = alarmSetting || {};
+    let isErrorLV2 = false;
+    
+    // LV2 HIGH
+    if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined") && 
+        value > AL.HighAlarmSetting && 
+        (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+      isErrorLV2 = true;
+    }
+    // LV2 LOW
+    else if (AL.IsAlarmLow && 
+             value < AL.LowAlarmSetting && 
+             (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+      isErrorLV2 = true;
+    }
+
+    const shouldAlarm = isErrorLV2 && isSoundEnabled && state !== "off";
+
+    if (shouldAlarm) {
+      if (!window.globalAlarmingSensors.has(deviceId)) {
+        window.globalAlarmingSensors.add(deviceId);
+        if (window.globalAlarmingSensors.size > 0 && !window.globalAlarmState.playing) {
+          window.globalAlarmAudio.play()
+            .then(() => {
+              window.globalAlarmState.playing = true;
+            })
+            .catch(err => {
+              console.log("Audio play error:", err);
+              if (!window.globalAlarmState.interactionListener) {
+                window.globalAlarmState.interactionListener = true;
+                const playOnInteract = () => {
+                  if (window.globalAlarmingSensors.size > 0 && !window.globalAlarmState.playing) {
+                    window.globalAlarmAudio.play()
+                      .then(() => {
+                        window.globalAlarmState.playing = true;
+                      })
+                      .catch(console.error);
+                  }
+                };
+                document.addEventListener('click', playOnInteract, { once: true });
+              }
+            });
+        }
+      }
+    } else {
+      if (window.globalAlarmingSensors.has(deviceId)) {
+        window.globalAlarmingSensors.delete(deviceId);
+        if (window.globalAlarmingSensors.size === 0 && window.globalAlarmState.playing) {
+          window.globalAlarmAudio.pause();
+          window.globalAlarmAudio.currentTime = 0;
+          window.globalAlarmState.playing = false;
+        }
+      }
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (window.globalAlarmingSensors.has(deviceId)) {
+        window.globalAlarmingSensors.delete(deviceId);
+        if (window.globalAlarmingSensors.size === 0 && window.globalAlarmState.playing) {
+          window.globalAlarmAudio.pause();
+          window.globalAlarmAudio.currentTime = 0;
+          window.globalAlarmState.playing = false;
+        }
+      }
+    };
+  }, [value, alarmSetting, isSoundEnabled, state, deviceId]);
 
   // RESET chart when device changes
   useEffect(() => {
@@ -117,6 +215,7 @@ export default function CardValueSensor({
   const valueScale = valueLength > 6 ? 0.7 : valueLength > 5 ? 0.8 : valueLength > 4 ? 0.9 : 1;
   
   if (typeof alarmSetting === "undefined") return <div></div>;
+  
   function formatValue(val) {
     const num = parseFloat(val);
     if (isNaN(num)) return val;
@@ -124,14 +223,17 @@ export default function CardValueSensor({
     const str = val.toString();
     const parts = str.split(".");
 
-    // Nếu có phần thập phân và >= 2 số sau dấu chấm ⇒ toFixed(2)
     if (parts.length > 1 && parts[1].length >= 2) {
       return num.toFixed(2);
     }
 
-    // Ngược lại giữ nguyên
     return val;
   }
+
+  const toggleSound = () => {
+    setIsSoundEnabled(prev => !prev);
+  };
+
   return (
     <div 
       className={`sensor_item sensor_state-${finalState}`}
@@ -143,11 +245,34 @@ export default function CardValueSensor({
     >
       <div className="sensor_item-wrap">
         <div>
-          <div className="sensor_item-name">{label}</div>
+          <div className="sensor_item-header">
+            <div className="sensor_item-name">{label}</div>
+{(AL.HighAlarmSetting !== "" && AL.HighAlarmSetting !== undefined) ||
+(AL.LowAlarmSetting !== "" && AL.LowAlarmSetting !== undefined) ? (
+  <Tooltip title={isSoundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}>
+    <IconButton
+      onClick={(e) => {
+        e.stopPropagation();
+        toggleSound();
+      }}
+      size="small"
+      className={`sensor-sound-toggle ${isSoundEnabled ? "enabled" : "disabled"}`}
+    >
+      {isSoundEnabled ? (
+        <VolumeUpIcon fontSize="small" />
+      ) : (
+        <VolumeOffIcon fontSize="small" />
+      )}
+    </IconButton>
+  </Tooltip>
+) : null}
+
+
+          </div>
 
           <div className="sensor_item-value">
             <p>
-              <span className="value-number">{  (deviceId.includes("_") || deviceId.includes("HCM"))
+              <span className="value-number">{(deviceId.includes("_") || deviceId.includes("HCM"))
                   ? formatValue(value)
                   : value
               }</span>
