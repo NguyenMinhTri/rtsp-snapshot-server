@@ -10,10 +10,10 @@ import MyChart from '../MyChart/SubChart';
 
 export default function CoilValueDevice({ label, value, unit, state, fillColor = '#0E5E6F' ,isHighAlarm, item}) {
     return (
-        <div className={`sensor_item coil_state-${ value == "1"?  `${isHighAlarm ? "error":"normal"}`: `${isHighAlarm?"normal" :"off"}`}`}>
-            <div className="sensor_item-wrap">
+        <div className={`coil_item coil_state-${ value == "1"?  `${isHighAlarm ? "error":"normal"}`: `${isHighAlarm?"normal" :"off"}`}`}>
+            <div className="coil_item-wrap">
                 <div>
-                    <div  className="sensor_item-name">{label}</div>
+                    <div  className="coil_item-name">{label}</div>
 
                     <div>
                     {isHighAlarm !== true ? (
@@ -22,7 +22,7 @@ export default function CoilValueDevice({ label, value, unit, state, fillColor =
                          <Check style={{ color: value == "1" ? "blue" :"gray"}} sx={{ fontSize: 60 }} />
                     ) : (
                         value == "0" ? <Check style={{ color:  "blue" }} sx={{ fontSize: 60 }} /> :
-                        <WarningIcon style={{ color: value == "1" ? "yellow" :"gray"}} sx={{ fontSize: 20 }} />
+                        <WarningIcon style={{ color: value == "1" ? "yellow" :"gray"}} sx={{ fontSize: 60 }} />
                     )}
                 </div>
                 </div>

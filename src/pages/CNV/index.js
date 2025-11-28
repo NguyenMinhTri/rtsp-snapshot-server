@@ -8,6 +8,7 @@ import TextField from "@mui/material/TextField";
 import CardValueSensor from "../../components/CardValueSensor";
 import CoilValueDevice from "../../components/CoilValueDevice";
 
+import SensorGridOptimized from "../SensorGridOptimized/SensorGridOptimized";
 import { Backdrop, CircularProgress, Skeleton } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import axios from "axios";
@@ -112,7 +113,7 @@ const subscribeTokenToTopic = async (token, topic, isSub,) => {
                 isSub: isSub,
             }),
         });
-        debugger;
+        
         if (response.ok) {
             console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
 
@@ -595,6 +596,21 @@ function CNV() {
                 sensorSetting['DelayTime'] = newSensorObject.AlarmSetting.DelayTime;
             
         }
+        if(typeof newSensorObject.AlarmSetting.LowAlarmSetting1 !== "undefined")
+            sensorSetting['LowAlarmSetting1'] = newSensorObject.AlarmSetting.LowAlarmSetting1;
+        if(typeof newSensorObject.AlarmSetting.HighAlarmSetting1 !== "undefined")
+        sensorSetting['HighAlarmSetting1'] = newSensorObject.AlarmSetting.HighAlarmSetting1;
+
+        if(typeof newSensorObject.AlarmSetting.IsAlarmLow !== "undefined")
+            sensorSetting['IsAlarmLow'] = newSensorObject.AlarmSetting.IsAlarmLow;
+        if(typeof newSensorObject.AlarmSetting.IsAlarmLow1 !== "undefined")
+            sensorSetting['IsAlarmLow1'] = newSensorObject.AlarmSetting.IsAlarmLow1;
+
+        if(typeof newSensorObject.AlarmSetting.IsAlarmHigh !== "undefined")
+            sensorSetting['IsAlarmHigh'] = newSensorObject.AlarmSetting.IsAlarmHigh;
+        if(typeof newSensorObject.AlarmSetting.IsAlarmHigh1 !== "undefined")
+            sensorSetting['IsAlarmHigh1'] = newSensorObject.AlarmSetting.IsAlarmHigh1;
+
         sensorSetting['Name']=newSensorObject.sensor;
         sensorSetting['GroupName']=newSensorObject.GroupName;
         const token = Cookies.get("auth_token");
@@ -2319,6 +2335,7 @@ function CNV() {
             Toast("error", "Bạn không có quyền cài đặt");
             return;
         }
+        debugger;
         setSelectedSensor(myObject);
         setIsNoButton(false);
         setTitleDialog(myObject.sensor);
@@ -2421,7 +2438,8 @@ function CNV() {
         }, 500);
     }, [valueSelect]);
     //style for card
-    const styleForCard = (value) => {
+    const styleForCard = (value, AL) => {
+        debugger;
         let stateSensor = value.split("*")[1];
         let statusStation = value.split("*")[2];
         if (statusStation === "STATION_OFF") {
@@ -2431,6 +2449,29 @@ function CNV() {
         } else if (stateSensor === "2") {
             return "error";
         } else if (stateSensor === "0") {
+                    if(typeof AL !== "undefined"){
+            debugger;            
+            let isErrorLV2 = false;
+            let isErrorLV1 = false;
+            let valueSensor = parseFloat(value.split("*")[0]);
+            // LV2 HIGH
+            if (AL.IsAlarmHigh && valueSensor > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+                isErrorLV2 = true;
+
+            // LV2 LOW
+            if (AL.IsAlarmLow && valueSensor < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+                isErrorLV2 = true;
+
+            // LV1 HIGH
+            if (AL.IsAlarmHigh1 && valueSensor > AL.HighAlarmSetting1) isErrorLV1 = true;
+
+            // LV1 LOW
+            if (AL.IsAlarmLow1 && valueSensor < AL.LowAlarmSetting1) isErrorLV1 = true;
+            if( isErrorLV2){
+                return "error";
+            }
+
+        }
             return "normal";
 
         } else if (stateSensor === "5") {
@@ -2839,187 +2880,14 @@ function CNV() {
 
 
                                                         </Grid> :
-                                                        <Grid
-                                                            className="grid-margin"
-                                                            container
-                                                            spacing={1.0}
-                                                        >
-                                                            {dataSensor &&
-                                                                dataSensor.length > 0 ? (
-                                                                dataSensor[0].map(
-                                                                    (v, index) => {
-                                                                        return (
-                                                       <Grid
-                                                            key={index}
-                                                            item
-                                                            xl={
-                                                                dataSensor[0]?.length === 1
-                                                                ? 12
-                                                                : dataSensor[0]?.length === 2
-                                                                ? 6
-                                                                : dataSensor[0]?.length === 3
-                                                                ? 4
-                                                                : 3
-                                                            }
-                                                            lg={
-                                                                dataSensor[0]?.length === 1
-                                                                ? 12
-                                                                : dataSensor[0]?.length === 2
-                                                                ? 6
-                                                                : dataSensor[0]?.length === 3
-                                                                ? 4
-                                                                : 3
-                                                            }
-                                                            md={
-                                                                dataSensor[0]?.length === 1
-                                                                ? 12
-                                                                : dataSensor[0]?.length === 2
-                                                                ? 6
-                                                                : dataSensor[0]?.length === 3
-                                                                ? 4
-                                                                : 6
-                                                            }
-                                                            sm={12}
-                                                            xs={12}
-                                                                            >
-                                                                                <div
-                                                                                    style={{
-                                                                                        height: "100%",
-                                                                                    }}
-                                                                                    onClick={() => {
-
-                                                                                        v.IsModify === true ? onClickSensorDevice(
-                                                                                            v
-                                                                                        ) : null
-                                                                                    }
-                                                                                    }
-                                                                                >
-                                                                                    {!isRerenderCard ? <CardValueSensor
-                                                                                        alarmSetting={
-                                                                                            v.AlarmSetting
-                                                                                        }
-                                                                                        label={
-                                                                                            v.sensor
-                                                                                        }
-                                                                                        lastTime={
-                                                                                            dataChange.last_time
-                                                                                        }
-                                                                                        deviceId={
-                                                                                            valueSelect.id +
-                                                                                            v.sensor
-                                                                                        }
-                                                                                        value={
-                                                                                            v.value.split(
-                                                                                                "*"
-                                                                                            )[0]
-                                                                                        }
-                                                                                        unit={` ${" "} ${typeof v.unit ===
-                                                                                                "undefined"
-                                                                                                ? ""
-                                                                                                : v.unit
-                                                                                            }`}
-                                                                                        state={styleForCard(
-                                                                                            v.value
-                                                                                        )}
-                                                                                        fillColor={
-                                                                                            "red"
-                                                                                        }
-                                                                     
-                                                                                    /> : <CircularProgress color="success" />}
-                                                                                </div>
-                                                                            </Grid>
-                                                                        );
-                                                                    }
-                                                                )
-                                                            ) : (
-                                                                <>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                    <Grid
-                                                                        item
-                                                                        xl={3}
-                                                                        lg={4}
-                                                                        md={6}
-                                                                        sm={12}
-                                                                        xs={12}
-                                                                    >
-                                                                        <Skeleton
-                                                                            animation="wave"
-                                                                            variant="rounded"
-                                                                            height={170}
-                                                                        ></Skeleton>
-                                                                    </Grid>
-                                                                </>
-                                                            )}
-                                                        </Grid>
+                                                        <SensorGridOptimized
+                                                        dataSensor={dataSensor}
+                                                        dataChange={dataChange}
+                                                        valueSelect={valueSelect}
+                                                        isRerenderCard={isRerenderCard}
+                                                        onClickSensorDevice={onClickSensorDevice}
+                                                        styleForCard={styleForCard}
+                                                        />
                                                 }
                                             </div>
                                         </div> 

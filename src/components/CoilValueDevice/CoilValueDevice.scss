@@ -33,17 +33,17 @@
     background-color: transparent;
     color: gray;
 }
-.sensor_state_alarm-hide {
+.coil_state_alarm-hide {
     color: transparent;
 }
-.sensor_state_alarm-off {
+.coil_state_alarm-off {
     color: white;
 }
-.sensor_state_alarm-on {
+.coil_state_alarm-on {
     color: red;
 }
 
-.sensor_item {
+.coil_item {
     overflow: hidden; /* Ngăn chặn nội dung tràn ra ngoài */
     white-space: nowrap; /* Buộc nội dung hiển thị trên cùng một dòng */
     // justify-content: space-between;
