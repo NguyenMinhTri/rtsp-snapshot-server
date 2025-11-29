@@ -2661,7 +2661,7 @@ function CNV() {
                                         typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
                                         ? dataCoil[0].length > 0
                                             ? dataSensor[0].length === 1
-                                            ? 2
+                                            ? 3
                                             : dataSensor[0].length === 2
                                             ? 3
                                             : dataSensor[0].length === 3
@@ -2901,7 +2901,7 @@ function CNV() {
                                         typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
                                         ? dataCoil[0]?.length > 0
                                             ? dataSensor[0].length === 1
-                                            ? 10
+                                            ? 9
                                             : dataSensor[0].length === 2
                                             ? 9
                                             : dataSensor[0].length === 3
