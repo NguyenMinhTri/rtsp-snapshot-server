@@ -43,6 +43,7 @@ import styled, { css } from "styled-components";
 import { makeStyles } from "@material-ui/styles";
 import { Button, Paper, Typography } from "@mui/material";
 import DateTimeTextField from "../../components/DateTimeTextField"
+import CNVDisplayComponent from "../../components/CNVDisplayComponent/CNVDisplayComponent";
 const useStyles = makeStyles((theme) => ({
     container: {
         display: "flex",
@@ -113,7 +114,7 @@ const subscribeTokenToTopic = async (token, topic, isSub,) => {
                 isSub: isSub,
             }),
         });
-        
+
         if (response.ok) {
             console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
 
@@ -206,7 +207,7 @@ function CNV() {
                         userName: `${userTemp.displayName}(${userTemp.email})`,
                     }),
                 }
-            ).catch(() => {});
+            ).catch(() => { });
             const newMessage = {
                 name: `${userTemp.displayName}(${userTemp.email})`,
                 content: contentStr,
@@ -484,14 +485,14 @@ function CNV() {
 
         };
         let sensorSetting = {};
-       
+
         commnanData["RS485-Commands"] = [];
         let deviceID = valueSelect.id;
         if (
             newSensorObject.AlarmSetting.HighAlarmSetting !==
             oldSensorValue.AlarmSetting.HighAlarmSetting
         ) {
-            let highAlarm =Array.isArray(fullRS485Data?.RS485Data)
+            let highAlarm = Array.isArray(fullRS485Data?.RS485Data)
                 ? fullRS485Data.RS485Data.find(item =>
                     item?.Name?.includes("HighAlarmSetting") &&
                     item?.Name?.includes(newSensorObject?.sensor)
@@ -519,8 +520,8 @@ function CNV() {
                     Index: highAlarm.Index,
                 });
             }
-           
-                sensorSetting['HighAlarmSetting'] = newSensorObject.AlarmSetting.HighAlarmSetting
+
+            sensorSetting['HighAlarmSetting'] = newSensorObject.AlarmSetting.HighAlarmSetting
 
 
         }
@@ -528,7 +529,7 @@ function CNV() {
             newSensorObject.AlarmSetting.LowAlarmSetting !==
             oldSensorValue.AlarmSetting.LowAlarmSetting
         ) {
-            let lowAlarm =Array.isArray(fullRS485Data?.RS485Data)
+            let lowAlarm = Array.isArray(fullRS485Data?.RS485Data)
                 ? fullRS485Data.RS485Data.find(item =>
                     item?.Name?.includes("LowAlarmSetting") &&
                     item?.Name?.includes(newSensorObject?.sensor)
@@ -558,16 +559,16 @@ function CNV() {
                 });
             }
 
-                sensorSetting['LowAlarmSetting'] = newSensorObject.AlarmSetting.LowAlarmSetting
-            
-            
+            sensorSetting['LowAlarmSetting'] = newSensorObject.AlarmSetting.LowAlarmSetting
+
+
 
         }
         if (
             newSensorObject.AlarmSetting.DelayTime !==
             oldSensorValue.AlarmSetting.DelayTime
         ) {
-          let delayTime = Array.isArray(fullRS485Data?.RS485Data)
+            let delayTime = Array.isArray(fullRS485Data?.RS485Data)
                 ? fullRS485Data.RS485Data.find(item =>
                     item?.Name?.includes("DelayTime") &&
                     item?.Name?.includes(newSensorObject?.sensor)
@@ -592,27 +593,27 @@ function CNV() {
                     Index: delayTime.Index,
                 });
             }
-          
-                sensorSetting['DelayTime'] = newSensorObject.AlarmSetting.DelayTime;
-            
-        }
-        if(typeof newSensorObject.AlarmSetting.LowAlarmSetting1 !== "undefined")
-            sensorSetting['LowAlarmSetting1'] = newSensorObject.AlarmSetting.LowAlarmSetting1;
-        if(typeof newSensorObject.AlarmSetting.HighAlarmSetting1 !== "undefined")
-        sensorSetting['HighAlarmSetting1'] = newSensorObject.AlarmSetting.HighAlarmSetting1;
 
-        if(typeof newSensorObject.AlarmSetting.IsAlarmLow !== "undefined")
+            sensorSetting['DelayTime'] = newSensorObject.AlarmSetting.DelayTime;
+
+        }
+        if (typeof newSensorObject.AlarmSetting.LowAlarmSetting1 !== "undefined")
+            sensorSetting['LowAlarmSetting1'] = newSensorObject.AlarmSetting.LowAlarmSetting1;
+        if (typeof newSensorObject.AlarmSetting.HighAlarmSetting1 !== "undefined")
+            sensorSetting['HighAlarmSetting1'] = newSensorObject.AlarmSetting.HighAlarmSetting1;
+
+        if (typeof newSensorObject.AlarmSetting.IsAlarmLow !== "undefined")
             sensorSetting['IsAlarmLow'] = newSensorObject.AlarmSetting.IsAlarmLow;
-        if(typeof newSensorObject.AlarmSetting.IsAlarmLow1 !== "undefined")
+        if (typeof newSensorObject.AlarmSetting.IsAlarmLow1 !== "undefined")
             sensorSetting['IsAlarmLow1'] = newSensorObject.AlarmSetting.IsAlarmLow1;
 
-        if(typeof newSensorObject.AlarmSetting.IsAlarmHigh !== "undefined")
+        if (typeof newSensorObject.AlarmSetting.IsAlarmHigh !== "undefined")
             sensorSetting['IsAlarmHigh'] = newSensorObject.AlarmSetting.IsAlarmHigh;
-        if(typeof newSensorObject.AlarmSetting.IsAlarmHigh1 !== "undefined")
+        if (typeof newSensorObject.AlarmSetting.IsAlarmHigh1 !== "undefined")
             sensorSetting['IsAlarmHigh1'] = newSensorObject.AlarmSetting.IsAlarmHigh1;
 
-        sensorSetting['Name']=newSensorObject.sensor;
-        sensorSetting['GroupName']=newSensorObject.GroupName;
+        sensorSetting['Name'] = newSensorObject.sensor;
+        sensorSetting['GroupName'] = newSensorObject.GroupName;
         const token = Cookies.get("auth_token");
         const rawResponse = await fetch(
             "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/handleCoilDevice",
@@ -626,10 +627,10 @@ function CNV() {
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    sensorsetting:sensorSetting,
+                    sensorsetting: sensorSetting,
                     message: JSON.stringify(commnanData),
                     deviceId: deviceID,
-                    IsDemoUI:false,
+                    IsDemoUI: false,
                 }),
             }
         );
@@ -1030,7 +1031,7 @@ function CNV() {
         content = await rawResponse.clone().json();
 
         // console.log(content);
-        if (!JSON.stringify(content).includes("RS485")&& !fullRS485Data.IsDemoUI) {
+        if (!JSON.stringify(content).includes("RS485") && !fullRS485Data.IsDemoUI) {
             Toast(
                 "error",
                 "Thay đổi giá trị hoặc điều khiển thất bại. Vui lòng thử lại"
@@ -1222,7 +1223,7 @@ function CNV() {
                                             }
 
                                         }
-                                        
+
                                     );
 
                                     console.log(
@@ -1285,7 +1286,7 @@ function CNV() {
                                     : "error",
                                 payload.notification.title +
                                 ": " +
-                                payload.notification.body, 5000,() => {
+                                payload.notification.body, 5000, () => {
                                     let deviceID = payload.data.status;
                                     if (typeof listDevice[deviceID] !== "undefined") {
                                         AsyncLocalStorage.setItem(
@@ -1305,7 +1306,7 @@ function CNV() {
                                         });
                                     }
                                 }
-                             
+
                             );
                             console.log("Receive foreground: ", payload);
                         });
@@ -1431,7 +1432,7 @@ function CNV() {
     // get data from firebase
     useEffect(() => {
         if (valueSelect) {
-       
+
             fetchDataNote();
             // lay du lieu license
             fetchLicense();
@@ -1457,7 +1458,7 @@ function CNV() {
                     } else {
                         setIsDeviceOffline(false);
                     }
-                        
+
                     setFullRS485Data({ ...newData });
                     setFullRS485DataPrevios({ ...newData });
                     let { RS485Data, Location, LastTime, Ip } = newData;
@@ -1490,7 +1491,7 @@ function CNV() {
                     let dateC = moment(LastTime.slice(0, -1)).format(
                         "MM/DD/YYYY"
                     );
-        
+
                     let dateP = moment(Date()).format("MM/DD/YYYY");
 
                     let compare = compareDate(dateC, dateP);
@@ -1734,14 +1735,14 @@ function CNV() {
         );
         try {
             setLoaded(false);
-              debugger;
+            debugger;
             // cho thiết bị có cảm nhiều cảm biến realtime
             if (
                 !valueSelect.id.includes("_") &&
                 valueSelect.id !== ("A-OMWATER-1") && valueSelect.id !== ("A-BIENTAN-1")
-                && valueSelect.id !== ("A-TEDCO-1") &&  valueSelect.id !== ("A-TEMP-NP-1")  &&  valueSelect.id !== ("HCM")
+                && valueSelect.id !== ("A-TEDCO-1") && valueSelect.id !== ("A-TEMP-NP-1") && valueSelect.id !== ("HCM")
             ) {
-                  debugger;
+                debugger;
                 for (let i = 0; i < listSensor.length; i++) {
                     let lstSensor = [];
                     lstSensor.push(listSensor[i]);
@@ -1790,7 +1791,7 @@ function CNV() {
                     }
                 }
             } else {
-                  debugger;
+                debugger;
                 //dành cho datalogger hoặc dữ liệu theo thời gian
                 const res = await axios.get(
                     valueSelect.id.includes("IUH")
@@ -1930,7 +1931,7 @@ function CNV() {
         }
     };
     const handleExportHistoryNamPhuong = async (e) => {
-      
+
         setStartDate(startDateTemp);
         setEndDate(endDateTemp);
         var startC = moment(startDateTemp);
@@ -2439,7 +2440,7 @@ function CNV() {
     }, [valueSelect]);
     //style for card
     const styleForCard = (value, AL) => {
-        debugger;
+
         let stateSensor = value.split("*")[1];
         let statusStation = value.split("*")[2];
         if (statusStation === "STATION_OFF") {
@@ -2449,29 +2450,29 @@ function CNV() {
         } else if (stateSensor === "2") {
             return "error";
         } else if (stateSensor === "0") {
-                    if(typeof AL !== "undefined"){
-            debugger;            
-            let isErrorLV2 = false;
-            let isErrorLV1 = false;
-            let valueSensor = parseFloat(value.split("*")[0]);
-            // LV2 HIGH
-            if (AL.IsAlarmHigh && valueSensor > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
-                isErrorLV2 = true;
+            if (typeof AL !== "undefined") {
 
-            // LV2 LOW
-            if (AL.IsAlarmLow && valueSensor < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
-                isErrorLV2 = true;
+                let isErrorLV2 = false;
+                let isErrorLV1 = false;
+                let valueSensor = parseFloat(value.split("*")[0]);
+                // LV2 HIGH
+                if (AL.IsAlarmHigh && valueSensor > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined"))
+                    isErrorLV2 = true;
 
-            // LV1 HIGH
-            if (AL.IsAlarmHigh1 && valueSensor > AL.HighAlarmSetting1) isErrorLV1 = true;
+                // LV2 LOW
+                if (AL.IsAlarmLow && valueSensor < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined"))
+                    isErrorLV2 = true;
 
-            // LV1 LOW
-            if (AL.IsAlarmLow1 && valueSensor < AL.LowAlarmSetting1) isErrorLV1 = true;
-            if( isErrorLV2){
-                return "error";
+                // LV1 HIGH
+                if (AL.IsAlarmHigh1 && valueSensor > AL.HighAlarmSetting1) isErrorLV1 = true;
+
+                // LV1 LOW
+                if (AL.IsAlarmLow1 && valueSensor < AL.LowAlarmSetting1) isErrorLV1 = true;
+                if (isErrorLV2) {
+                    return "error";
+                }
+
             }
-
-        }
             return "normal";
 
         } else if (stateSensor === "5") {
@@ -2655,267 +2656,68 @@ function CNV() {
                             <Item>xs=4</Item>
                         </Grid> */}
                                     <Grid
-                                    item
-                                    sx={{ my: 1 }}
-                                    xs={
-                                        typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
-                                        ? dataCoil[0].length > 0
-                                            ? dataSensor[0].length === 1
-                                            ? 3
-                                            : dataSensor[0].length === 2
-                                            ? 3
-                                            : dataSensor[0].length === 3
-                                            ? 4
-                                            : 8
-                                            : 12
-                                        : 0
-                                    }
+                                        item
+                                        sx={{ my: 1 }}
+                                        xs={
+                                            typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
+                                                ? dataCoil[0].length > 0
+                                                    ? dataSensor[0].length === 1
+                                                        ? 3
+                                                        : dataSensor[0].length === 2
+                                                            ? 3
+                                                            : dataSensor[0].length === 3
+                                                                ? 4
+                                                                : 8
+                                                    : 12
+                                                : 0
+                                        }
                                     >
-                                       <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"borderd-content":""}>
+                                        <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ? "borderd-content" : ""}>
 
-                                           <div  className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ?"content":""}>
+                                            <div className={typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0 ? "content" : ""}>
                                                 {
                                                     valueSelect && valueSelect.id.includes("A-CNV-3") ?
-                                                        <Grid container justify="center">
-                                                            <Grid item xs={3}>
-                                                                <div style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', }}>
-                                                                    <img
-                                                                        src={'/image/cnv-logo.png'}
-                                                                        alt="Clickable Image"
-                                                                        width={"50%"}
-
-                                                                        style={{ cursor: 'pointer' }}
-                                                                    />
-                                                                </div>
-
-                                                            </Grid>
-
-                                                            <Grid item xs={6} justify="center" >
-                                                                <Grid container spacing={2} alignItems="center">
-                                                                    <Grid item xs={12}>
-                                                                        <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw' }}>
-                                                                            {/* Text content here */}
-                                                                            <div style={{ color: "blue", fontWeight: 'bold' }}>{isEnglishLanguage ? "LIQUID LEVEL & PRESSURE" : "MỨC LỎNG VÀ ÁP SUẤT BỒN"}</div>
-
-                                                                        </div>
-                                                                    </Grid>
-                                                                </Grid>
-
-                                                            </Grid>
-
-                                                            <Grid item xs={3}>
-                                                                <Grid container spacing={2} alignItems="center">
-                                                                    <Grid item xs={12}>
-                                                                        <div style={{ height: "10vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
-                                                                            <Button
-                                                                                style={{ marginRight: "1vh" }}
-                                                                                variant="contained"
-                                                                                color="primary"
-                                                                                sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
-                                                                                onClick={() => {
-
-                                                                                    localStorage.setItem("EnglishLanguage", false)
-                                                                                    setIsEnglishLanguage(false);
-                                                                                }}
-                                                                            >
-                                                                                VN
-                                                                            </Button>
-                                                                            <Button
-                                                                                sx={{ fontSize: '1.5vh' }} // Adjust the font size as needed
-                                                                                variant="contained"
-                                                                                color="primary"
-                                                                                onClick={() => {
-
-                                                                                    localStorage.setItem("EnglishLanguage", true)
-                                                                                    setIsEnglishLanguage(true);
-                                                                                }}
-                                                                            >
-                                                                                EN
-                                                                            </Button>
-                                                                        </div>
-                                                                    </Grid>
-                                                                    <Grid item xs={12}>
-                                                                        <DateTimeTextField />
-                                                                    </Grid>
-
-                                                                </Grid>
-                                                            </Grid>
-
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                                <Grid item xs={5}>
-                                                                </Grid>
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Tank Serial No.:" : "Sê-ri bồn:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-                                                                    <div><TextField
-                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[0].Value : ''}
-                                                                        InputProps={{
-                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                        }} id="outlined-basic" variant="outlined" /></div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                </Grid>
-                                                            </Grid>
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Fluid:" : "Môi chất:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-                                                                    <div><TextField id="outlined-basic"
-                                                                        value={typeof fullRS485Data !== "undefined" ? getLiquidName(fullRS485Data.RS485Data[10].Value) : ''}
-                                                                        InputProps={{
-                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                        }} variant="outlined" /></div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                    <div></div>
-                                                                </Grid>
-                                                            </Grid>
-
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                                <Grid item xs={5}>
-                                                                </Grid>
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Liquid level:" : "Mức lỏng:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-
-                                                                    <div>
-                                                                        <TextField id="outlined-basic"
-                                                                            value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[1].Value : ''}
-                                                                            InputProps={{
-                                                                                readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                            }} variant="outlined" />
-
-                                                                    </div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                    <div>(%)</div>
-                                                                </Grid>
-                                                            </Grid>
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Weight:" : "Khối lượng:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-                                                                    <div><TextField id="outlined-basic"
-                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[2].Value : ''}
-                                                                        InputProps={{
-                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                        }} variant="outlined" /></div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                    <div>(kg)</div>
-                                                                </Grid>
-                                                            </Grid>
-
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-                                                                <Grid item xs={5}>
-                                                                </Grid>
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Pressure:" : "Áp suất:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-                                                                    <div><TextField id="outlined-basic"
-                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[5].Value : ''}
-                                                                        InputProps={{
-                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                        }} variant="outlined" /></div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                    <div>({typeof fullRS485Data !== "undefined" ? getUnitName(fullRS485Data.RS485Data[6].Value) : ''})</div>
-                                                                </Grid>
-                                                            </Grid>
-                                                            <Grid style={{ height: "15vh", width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2vw' }} item xs={6}>
-
-                                                                <Grid item xs={2}>
-                                                                    <div>{isEnglishLanguage ? "Volume:" : "Thể tích:"}</div>
-                                                                </Grid>
-                                                                <Grid item xs={3}>
-                                                                    <div><TextField width={'1.4vw'} id="outlined-basic"
-                                                                        value={typeof fullRS485Data !== "undefined" ? fullRS485Data.RS485Data[4].Value : ''}
-                                                                        InputProps={{
-                                                                            readOnly: true, style: { fontSize: '1.4vw', fontWeight: 'bold' }
-                                                                        }} variant="outlined" /></div>
-                                                                </Grid>
-                                                                <Grid item xs={1}>
-                                                                    <div>(m3)</div>
-                                                                </Grid>
-                                                            </Grid>
-
-
-
-                                                            <Grid container spacing={2} alignItems="center">
-                                                                <Grid item xs={12}>
-                                                                    <div style={{ height: "15vh", display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2vw', marginRight: "1vh" }}>
-                                                                        <Button
-                                                                            style={{ marginRight: "1vh" }}
-                                                                            variant="contained"
-                                                                            color="primary"
-                                                                            onClick={
-                                                                                handleSettingCNV
-                                                                            }
-                                                                        >
-
-                                                                            {isEnglishLanguage ? "Set up" : "Cài đặt"}
-                                                                        </Button>
-                                                                        <Button
-                                                                            variant="contained"
-                                                                            color="primary"
-                                                                            onClick={
-                                                                                openAlarmLink
-                                                                            }
-                                                                        >
-
-                                                                            {isEnglishLanguage ? "Alarm" : "Cảnh báo"}
-                                                                        </Button>
-                                                                    </div>
-                                                                </Grid>
-
-
-                                                            </Grid>
-
-
-                                                        </Grid> :
+                                                        <CNVDisplayComponent
+                                                            fullRS485Data={fullRS485Data}
+                                                            onSettingClick={handleSettingCNV}
+                                                            onAlarmClick={openAlarmLink}
+                                                        /> :
                                                         <SensorGridOptimized
-                                                        dataSensor={dataSensor}
-                                                        dataChange={dataChange}
-                                                        valueSelect={valueSelect}
-                                                        isRerenderCard={isRerenderCard}
-                                                        onClickSensorDevice={onClickSensorDevice}
-                                                        styleForCard={styleForCard}
+                                                            dataSensor={dataSensor}
+                                                            dataChange={dataChange}
+                                                            valueSelect={valueSelect}
+                                                            isRerenderCard={isRerenderCard}
+                                                            onClickSensorDevice={onClickSensorDevice}
+                                                            styleForCard={styleForCard}
                                                         />
                                                 }
                                             </div>
-                                        </div> 
+                                        </div>
                                     </Grid>
 
 
-                                <Grid 
-                                    item
-                                    sx={{ my: 1 }}
-                                    xs={
-                                        typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
-                                        ? dataCoil[0]?.length > 0
-                                            ? dataSensor[0].length === 1
-                                            ? 9
-                                            : dataSensor[0].length === 2
-                                            ? 9
-                                            : dataSensor[0].length === 3
-                                            ? 8
-                                            : 4 // fallback nếu length > 3
-                                            : 0
-                                        : 12
-                                    }
+                                    <Grid
+                                        item
+                                        sx={{ my: 1 }}
+                                        xs={
+                                            typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0
+                                                ? dataCoil[0]?.length > 0
+                                                    ? dataSensor[0].length === 1
+                                                        ? 9
+                                                        : dataSensor[0].length === 2
+                                                            ? 9
+                                                            : dataSensor[0].length === 3
+                                                                ? 8
+                                                                : 4 // fallback nếu length > 3
+                                                    : 0
+                                                : 12
+                                        }
                                     >
                                         {dataCoil &&
                                             dataCoil.length > 0 &&
                                             dataCoil[0].length > 0 && dataCoil[0].filter(obj => obj.IsHighAlarm === true && obj.Value === 0).length !== dataCoil[0].length && (
                                                 <div className="borderd-content">
-        
+
                                                     <div className="content">
                                                         {typeof fullRS485Data !== "undefined" && fullRS485Data.IsPIDAnimation ? (
                                                             <>
@@ -3441,57 +3243,57 @@ function CNV() {
                                                     : 10
                                         }
                                     >
-                                        {licenseLockLV1 !== true && (  typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0) ?
-                                        <Grid container spacing={0.5}>
-                                            {valueSelect ? (
-                                                <>
-                                                    <Grid
-                                                        item
-                                                        xl={
-                                                            isShowColChart
-                                                                ? 6
-                                                                : 12
-                                                        }
-                                                        lg={
-                                                            isShowColChart
-                                                                ? 6
-                                                                : 12
-                                                        }
-                                                        md={
-                                                            isShowColChart
-                                                                ? 6
-                                                                : 12
-                                                        }
-                                                        sm={
-                                                            isShowColChart
-                                                                ? 6
-                                                                : 12
-                                                        }
-                                                        xs={
-                                                            isShowColChart
-                                                                ? 6
-                                                                : 12
-                                                        }
-                                                        style={{}}
-                                                    >
-                                                        {/* <div> */}
-                                                        {valueSelect.id.includes("_") || valueSelect.id.includes("CONG-NGHIEP-VIET-2") || valueSelect.id.includes("A-TEDCO-1") || valueSelect.id.includes("A-BIENTAN-1") || valueSelect.id.includes("A-TEMP-NP-1") || valueSelect.id.includes("HCM")? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor} />
+                                        {licenseLockLV1 !== true && (typeof dataSensor[0] !== "undefined" && typeof dataSensor[0].length !== "undefined" && dataSensor[0].length > 0) ?
+                                            <Grid container spacing={0.5}>
+                                                {valueSelect ? (
+                                                    <>
+                                                        <Grid
+                                                            item
+                                                            xl={
+                                                                isShowColChart
+                                                                    ? 6
+                                                                    : 12
+                                                            }
+                                                            lg={
+                                                                isShowColChart
+                                                                    ? 6
+                                                                    : 12
+                                                            }
+                                                            md={
+                                                                isShowColChart
+                                                                    ? 6
+                                                                    : 12
+                                                            }
+                                                            sm={
+                                                                isShowColChart
+                                                                    ? 6
+                                                                    : 12
+                                                            }
+                                                            xs={
+                                                                isShowColChart
+                                                                    ? 6
+                                                                    : 12
+                                                            }
+                                                            style={{}}
+                                                        >
+                                                            {/* <div> */}
+                                                            {valueSelect.id.includes("_") || valueSelect.id.includes("CONG-NGHIEP-VIET-2") || valueSelect.id.includes("A-TEDCO-1") || valueSelect.id.includes("A-BIENTAN-1") || valueSelect.id.includes("A-TEMP-NP-1") || valueSelect.id.includes("HCM") ? <ChartTab endDate={endDate} startDate={startDate} deviceId={valueSelect.id} inputLstSensor={listSensor} />
 
-                                                            : <div className="home_chart">
-                                                                <MainChart
-                                                                    endDate={
-                                                                        endDate
-                                                                    }
-                                                                    startDate={
-                                                                        startDate
-                                                                    }
-                                                                    deviceUser={
-                                                                        valueSelect.id
-                                                                    }
-                                                                />
-                                                            </div>
-                                                        }
-                                                        {/* <MainChart
+                                                                : <div className="home_chart">
+                                                                    <MainChart
+                                                                        endDate={
+                                                                            endDate
+                                                                        }
+                                                                        startDate={
+                                                                            startDate
+                                                                        }
+                                                                        deviceUser={
+                                                                            valueSelect.id
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            }
+                                                            {/* <MainChart
                                                                 endDate={
                                                                     endDate
                                                                 }
@@ -3502,35 +3304,199 @@ function CNV() {
                                                                     valueSelect.id
                                                                 }
                                                             /> */}
-                                                        {/* </div> */}
-                                                    </Grid>
-                                                    {isShowColChart ? (
+                                                            {/* </div> */}
+                                                        </Grid>
+                                                        {isShowColChart ? (
+                                                            <Grid
+                                                                item
+                                                                xl={6}
+                                                                lg={6}
+                                                                md={6}
+                                                                sm={6}
+                                                                xs={6}
+                                                                style={{}}
+                                                            >
+                                                                <div className="home_chart">
+                                                                    <ColumnChartSensor
+                                                                        endDate={
+                                                                            endDate
+                                                                        }
+                                                                        startDate={
+                                                                            startDate
+                                                                        }
+                                                                        deviceUser={
+                                                                            valueSelect.id
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                            </Grid>
+                                                        ) : (
+                                                            ""
+                                                        )}
                                                         <Grid
                                                             item
-                                                            xl={6}
-                                                            lg={6}
-                                                            md={6}
-                                                            sm={6}
-                                                            xs={6}
-                                                            style={{}}
+                                                            xl={12}
+                                                            lg={12}
+                                                            md={12}
+                                                            sm={12}
+                                                            xs={12}
                                                         >
-                                                            <div className="home_chart">
-                                                                <ColumnChartSensor
-                                                                    endDate={
-                                                                        endDate
-                                                                    }
-                                                                    startDate={
-                                                                        startDate
-                                                                    }
-                                                                    deviceUser={
-                                                                        valueSelect.id
-                                                                    }
-                                                                />
-                                                            </div>
+                                                            <Grid
+                                                                container
+                                                                spacing={1}
+                                                            >
+                                                                <Grid item xs={3}>
+                                                                    <MyDateRange
+                                                                        label={
+                                                                            "Bắt đầu"
+                                                                        }
+                                                                        onChange={
+                                                                            handleChangeStartDate
+                                                                        }
+                                                                        value={
+                                                                            startDateTemp
+                                                                        }
+                                                                    />
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <MyDateRange
+                                                                        label={
+                                                                            "Kết thúc"
+                                                                        }
+                                                                        onChange={
+                                                                            handleChangeEndDate
+                                                                        }
+                                                                        value={
+                                                                            endDateTemp
+                                                                        }
+                                                                    />
+                                                                </Grid>
+                                                                <Grid item xs={3}>
+                                                                    <MyButton
+                                                                        icon={null}
+                                                                        name={
+                                                                            "Áp dụng"
+                                                                        }
+                                                                        onClick={
+                                                                            handleApplyDate
+                                                                        }
+                                                                    />
+                                                                </Grid>
+                                                                {valueSelect.id ===
+                                                                    "A-OMWATER-1"
+                                                                    ? (
+                                                                        <Grid
+                                                                            item
+                                                                            xs={3}
+                                                                        >
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Xuất Excel"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportExcel
+                                                                                }
+                                                                            />
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Xuất ISO"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportExcelISO
+                                                                                }
+                                                                            />
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Xuất OPRP ISO"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportExcelISO2
+                                                                                }
+                                                                            />
+                                                                        </Grid>
+                                                                    ) :
+
+                                                                    valueSelect.id.includes(
+                                                                        "CONG-NGHIEP-VIET-2"
+                                                                    ) ? (
+                                                                        <Grid
+                                                                            item
+                                                                            xs={3}
+                                                                        >
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Export Historic Analysis"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportHistoryCNV
+                                                                                }
+                                                                            />
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Export CERTIFICATE OF ANALYSIS"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleCertificate
+                                                                                }
+                                                                            />
+
+                                                                        </Grid>
+                                                                    ) : valueSelect.id.includes(
+                                                                        "A-KHINAMPHUONG-1"
+                                                                    ) ? (
+                                                                        <Grid
+                                                                            item
+                                                                            xs={3}
+                                                                        >
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Xuất Excel"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportHistoryNamPhuong
+                                                                                }
+                                                                            />
+                                                                        </Grid>
+                                                                    ) : (
+                                                                        <Grid
+                                                                            item
+                                                                            xs={3}
+                                                                        >
+                                                                            <MyButton
+                                                                                icon={
+                                                                                    null
+                                                                                }
+                                                                                name={
+                                                                                    "Xuất Excel"
+                                                                                }
+                                                                                onClick={
+                                                                                    handleExportExcel
+                                                                                }
+                                                                            />
+                                                                        </Grid>
+                                                                    )}
+                                                            </Grid>
                                                         </Grid>
-                                                    ) : (
-                                                        ""
-                                                    )}
+                                                    </>
+                                                ) : (
                                                     <Grid
                                                         item
                                                         xl={12}
@@ -3539,178 +3505,14 @@ function CNV() {
                                                         sm={12}
                                                         xs={12}
                                                     >
-                                                        <Grid
-                                                            container
-                                                            spacing={1}
-                                                        >
-                                                            <Grid item xs={3}>
-                                                                <MyDateRange
-                                                                    label={
-                                                                        "Bắt đầu"
-                                                                    }
-                                                                    onChange={
-                                                                        handleChangeStartDate
-                                                                    }
-                                                                    value={
-                                                                        startDateTemp
-                                                                    }
-                                                                />
-                                                            </Grid>
-                                                            <Grid item xs={3}>
-                                                                <MyDateRange
-                                                                    label={
-                                                                        "Kết thúc"
-                                                                    }
-                                                                    onChange={
-                                                                        handleChangeEndDate
-                                                                    }
-                                                                    value={
-                                                                        endDateTemp
-                                                                    }
-                                                                />
-                                                            </Grid>
-                                                            <Grid item xs={3}>
-                                                                <MyButton
-                                                                    icon={null}
-                                                                    name={
-                                                                        "Áp dụng"
-                                                                    }
-                                                                    onClick={
-                                                                        handleApplyDate
-                                                                    }
-                                                                />
-                                                            </Grid>
-                                                            {valueSelect.id ===
-                                                                "A-OMWATER-1"
-                                                                ? (
-                                                                    <Grid
-                                                                        item
-                                                                        xs={3}
-                                                                    >
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Xuất Excel"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportExcel
-                                                                            }
-                                                                        />
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Xuất ISO"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportExcelISO
-                                                                            }
-                                                                        />
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Xuất OPRP ISO"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportExcelISO2
-                                                                            }
-                                                                        />
-                                                                    </Grid>
-                                                                ) :
-
-                                                                valueSelect.id.includes(
-                                                                    "CONG-NGHIEP-VIET-2"
-                                                                ) ? (
-                                                                    <Grid
-                                                                        item
-                                                                        xs={3}
-                                                                    >
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Export Historic Analysis"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportHistoryCNV
-                                                                            }
-                                                                        />
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Export CERTIFICATE OF ANALYSIS"
-                                                                            }
-                                                                            onClick={
-                                                                                handleCertificate
-                                                                            }
-                                                                        />
-
-                                                                    </Grid>
-                                                                ) : valueSelect.id.includes(
-                                                                    "A-KHINAMPHUONG-1"
-                                                                ) ? (
-                                                                    <Grid
-                                                                        item
-                                                                        xs={3}
-                                                                    >
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Xuất Excel"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportHistoryNamPhuong
-                                                                            }
-                                                                        />
-                                                                    </Grid>
-                                                                ) : (
-                                                                    <Grid
-                                                                        item
-                                                                        xs={3}
-                                                                    >
-                                                                        <MyButton
-                                                                            icon={
-                                                                                null
-                                                                            }
-                                                                            name={
-                                                                                "Xuất Excel"
-                                                                            }
-                                                                            onClick={
-                                                                                handleExportExcel
-                                                                            }
-                                                                        />
-                                                                    </Grid>
-                                                                )}
-                                                        </Grid>
+                                                        <Skeleton
+                                                            animation="wave"
+                                                            variant="rounded"
+                                                            height={500}
+                                                        ></Skeleton>
                                                     </Grid>
-                                                </>
-                                            ) : (
-                                                <Grid
-                                                    item
-                                                    xl={12}
-                                                    lg={12}
-                                                    md={12}
-                                                    sm={12}
-                                                    xs={12}
-                                                >
-                                                    <Skeleton
-                                                        animation="wave"
-                                                        variant="rounded"
-                                                        height={500}
-                                                    ></Skeleton>
-                                                </Grid>
-                                            )}
-                                        </Grid>:<div></div> }
+                                                )}
+                                            </Grid> : <div></div>}
                                     </Grid>
                                     {cameraList.length > 0 && licenseLockLV1 === false ? (
                                         <Grid
@@ -3861,7 +3663,7 @@ function CNV() {
                                                                     fillColor={
                                                                         "#C3F8FF"
                                                                     }
-                                                             
+
                                                                 />
                                                             </Grid>
                                                         );
