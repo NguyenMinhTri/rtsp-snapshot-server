@@ -117,15 +117,18 @@
     
     // Ensure minimum card width of 350px
     .MuiGrid-item {
-      display: flex;
+        display: flex;
+    
       min-width: 261px;
       
       .sensor-card-wrapper {
         width: 100%;
         display: flex;
+        
         flex-direction: column;
         
         .loading-wrapper {
+     
           display: flex;
           justify-content: center;
           align-items: center;

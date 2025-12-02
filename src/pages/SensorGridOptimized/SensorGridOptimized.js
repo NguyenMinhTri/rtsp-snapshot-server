@@ -1,12 +1,11 @@
-// Optimized Sensor Grid Component with Cards Per Row Selector
+// Optimized Sensor Grid Component with Grouping by GroupName
 import React, { useState, useEffect, useMemo } from "react";
-import { Grid, Skeleton, ButtonGroup, Button } from "@mui/material";
-import ViewModuleIcon from "@mui/icons-material/ViewModule";
-import CardValueSensor from "../../components/CardValueSensor/CardValueSensor";
+import { Grid, Skeleton } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
+import CardValueSensor from "../../components/CardValueSensor/CardValueSensor";
 import "./SensorGrid.scss";
 
-// Calculate max label length for uniform scaling
+// Calculate uniform scaling
 const useUniformScaling = (dataSensor) => {
   return useMemo(() => {
     if (!dataSensor || !dataSensor[0]) return { maxLabelLength: 0, scaleFactor: 1 };
@@ -34,8 +33,8 @@ export default function SensorGridOptimized({
   styleForCard,
 }) {
   const { scaleFactor } = useUniformScaling(dataSensor);
-  
-  // Cards per row state (stored in localStorage)
+
+  // Cards per row state
   const [cardsPerRow, setCardsPerRow] = useState(() => {
     return parseInt(localStorage.getItem("cards-per-row") || "4");
   });
@@ -44,99 +43,123 @@ export default function SensorGridOptimized({
     localStorage.setItem("cards-per-row", cardsPerRow.toString());
   }, [cardsPerRow]);
 
-  // Calculate responsive grid sizes based on cards per row
-  const getGridSize = (perRow) => {
-    return {
-      xl: 12 / perRow,
-      lg: 12 / perRow,
-      md: perRow <= 2 ? 12 / perRow : perRow === 3 ? 4 : 6,
-      sm: 12,
-      xs: 12,
-    };
-  };
-  
+  // Grid responsive size
+  const getGridSize = (perRow) => ({
+    xl: 12 / perRow,
+    lg: 12 / perRow,
+    md: perRow <= 2 ? 12 / perRow : perRow === 3 ? 4 : 6,
+    sm: 12,
+    xs: 12,
+  });
+
   const gridSizes = getGridSize(cardsPerRow);
+
+  // ---------------------------
+  // 🟦 GROUPING LOGIC (NEW)
+  // ---------------------------
+  const rawSensors = dataSensor?.[0] || [];
+
+  const grouped = rawSensors.reduce((acc, sensor) => {
+    const group = sensor.GroupName || sensor.item?.GroupName || "Khác";
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(sensor);
+    return acc;
+  }, {});
 
   return (
     <div className="sensor-grid-container">
-      {/* Control Panel */}
- 
-      <Grid
-        className="grid-margin sensor-grid"
-        container
-        spacing={1.5}
-        style={{
-          "--scale-factor": scaleFactor,
-          "--cards-per-row": cardsPerRow,
-        }}
-      >
-        {dataSensor && dataSensor.length > 0 ? (
-          dataSensor[0].map((v, index) => {
-            return (
-              <Grid
-                key={index}
-                item
-                xl={gridSizes.xl}
-                lg={gridSizes.lg}
-                md={gridSizes.md}
-                sm={gridSizes.sm}
-                xs={gridSizes.xs}
-              >
-                <div
-                  className="sensor-card-wrapper"
-                  style={{
-                    height: "100%",
-                    cursor: v.IsModify === true ? "pointer" : "default",
-                  }}
-                  onClick={() => {
-                    v.IsModify === true ? onClickSensorDevice(v) : null;
-                  }}
+      {Object.entries(grouped).map(([groupName, sensors], groupIndex) => (
+        <div key={groupIndex} style={{ marginBottom: 20 }}>
+          
+          {/* TIÊU ĐỀ NHÓM - giống Coil */}
+          <div
+            style={{
+              fontSize: 16,
+              fontWeight: 700,
+              marginBottom: 8,
+              color: "#4FC3F7",
+              paddingLeft: 4,
+            }}
+          >
+            {groupName.toUpperCase()}
+          </div>
+
+          <Grid
+            className="grid-margin sensor-grid"
+            container
+            spacing={1.5}
+            style={{
+              "--scale-factor": scaleFactor,
+              "--cards-per-row": cardsPerRow,
+            }}
+          >
+            {sensors.length > 0 ? (
+              sensors.map((v, index) => (
+                <Grid
+                  key={index}
+                  item
+                  xl={gridSizes.xl}
+                  lg={gridSizes.lg}
+                  md={gridSizes.md}
+                  sm={gridSizes.sm}
+                  xs={gridSizes.xs}
                 >
-                  {!isRerenderCard ? (
-                    <CardValueSensor
-                      alarmSetting={v.AlarmSetting}
-                      label={v.sensor}
-                      lastTime={dataChange.last_time}
-                      deviceId={valueSelect.id + v.sensor}
-                      value={v.value.split("*")[0]}
-                      unit={` ${typeof v.unit === "undefined" ? "" : v.unit}`}
-                      state={styleForCard(v.value, v.AlarmSetting)}
-                      fillColor={"red"}
-                      scaleFactor={scaleFactor}
-                      cardsPerRow={cardsPerRow}
+                  <div
+                    className="sensor-card-wrapper"
+                    style={{
+                      height: "100%",
+                      cursor: v.IsModify === true ? "pointer" : "default",
+                    }}
+                    onClick={() => {
+                      v.IsModify === true ? onClickSensorDevice(v) : null;
+                    }}
+                  >
+                    {!isRerenderCard ? (
+                      <CardValueSensor
+                        alarmSetting={v.AlarmSetting}
+                        label={v.sensor}
+                        lastTime={dataChange.last_time}
+                        deviceId={valueSelect.id + v.sensor}
+                        value={v.value.split("*")[0]}
+                        unit={` ${v.unit || ""}`}
+                        state={styleForCard(v.value, v.AlarmSetting)}
+                        fillColor={"red"}
+                        scaleFactor={scaleFactor}
+                        cardsPerRow={cardsPerRow}
+                      />
+                    ) : (
+                      <div className="loading-wrapper">
+                        <CircularProgress color="success" />
+                      </div>
+                    )}
+                  </div>
+                </Grid>
+              ))
+            ) : (
+              <>
+                {[...Array(6)].map((_, index) => (
+                  <Grid
+                    key={index}
+                    item
+                    xl={gridSizes.xl}
+                    lg={gridSizes.lg}
+                    md={gridSizes.md}
+                    sm={gridSizes.sm}
+                    xs={gridSizes.xs}
+                  >
+                    <Skeleton
+                      animation="wave"
+                      variant="rounded"
+                      height={200}
+                      sx={{ borderRadius: "16px" }}
                     />
-                  ) : (
-                    <div className="loading-wrapper">
-                      <CircularProgress color="success" />
-                    </div>
-                  )}
-                </div>
-              </Grid>
-            );
-          })
-        ) : (
-          <>
-            {[...Array(6)].map((_, index) => (
-              <Grid
-                key={index}
-                item
-                xl={gridSizes.xl}
-                lg={gridSizes.lg}
-                md={gridSizes.md}
-                sm={gridSizes.sm}
-                xs={gridSizes.xs}
-              >
-                <Skeleton
-                  animation="wave"
-                  variant="rounded"
-                  height={200}
-                  sx={{ borderRadius: "16px" }}
-                />
-              </Grid>
-            ))}
-          </>
-        )}
-      </Grid>
+                  </Grid>
+                ))}
+              </>
+            )}
+          </Grid>
+        </div>
+      ))}
     </div>
   );
 }

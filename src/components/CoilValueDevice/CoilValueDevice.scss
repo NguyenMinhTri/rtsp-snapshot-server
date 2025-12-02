@@ -1,87 +1,297 @@
+// ============================================
+// ENHANCED COIL CARD STYLES - CONSISTENT & ALIGNED
+// ============================================
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+
+// State variants with improved color schemes for better visibility
 .coil_state-normal {
-    border: 1px solid blue;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 1px 1px 12px blue;
-    background-color: cyan;
-    color: blue;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.2);
+  background: linear-gradient(145deg, #2196f3, #00fbff);
+  color: white;
+  transition: all 0.3s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+  }
 }
 
 .coil_state-error {
-    border: 1px solid red;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 1px 1px 12px red;
-    background-color: red;
-    color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(198, 40, 40, 0.2);
+  background: linear-gradient(145deg, #f44336, #b71c1c);
+  color: white;
+  transition: all 0.3s ease;
+  animation: pulse-error 2s infinite;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(198, 40, 40, 0.3);
+  }
 }
 
 .coil_state-calib {
-    border: 1px solid yellow;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 1px 1px 12px yellow;
-    background-color: transparent;
-    color: yellow;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(249, 168, 37, 0.2);
+  background: linear-gradient(145deg, #ffeb3b, #f57f17);
+  color: #212121;
+  transition: all 0.3s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 168, 37, 0.3);
+  }
 }
 
 .coil_state-off {
-    border: 1px solid gray;
-    padding: 10px;
-    border-radius: 10px;
-    box-shadow: 1px 1px 12px gray;
-    background-color: transparent;
-    color: gray;
-}
-.coil_state_alarm-hide {
-    color: transparent;
-}
-.coil_state_alarm-off {
-    color: white;
-}
-.coil_state_alarm-on {
-    color: red;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(145deg, #bdbdbd, #757575);
+  color: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+  opacity: 0.9;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
 }
 
+// Main coil item structure
 .coil_item {
-    overflow: hidden; /* Ngăn chặn nội dung tràn ra ngoài */
-    white-space: nowrap; /* Buộc nội dung hiển thị trên cùng một dòng */
-    // justify-content: space-between;
-    // align-items: center;
-    // flex-direction: column;
-    &-wrap {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  position: relative;
+  height: 100%;
+
+  // Header with name and lock icon
+  &-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    min-height: 44px; // Consistent height for alignment
+  }
+
+  &-name {
+    font-size: clamp(13px, 1.1vw, 15px);
+    font-weight: 600;
+    line-height: 1.4;
+    color: inherit;
+    word-wrap: break-word;
+    hyphens: auto;
+    flex: 1;
+    padding-right: 8px;
+    
+    // Limit to 3 lines
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 80px;
+  }
+
+  &-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 8px 0;
+  }
+
+  .coil-icon {
+    font-size: 48px !important;
+    transition: all 0.3s ease;
+    
+    &.pump-icon {
+      height: 48px;
+      width: auto;
+      filter: brightness(0) invert(1);
     }
+    
+    &.check-icon {
+      font-size: 54px !important;
+    }
+    
+    &.warning-icon {
+      font-size: 54px !important;
+      animation: pulse-warning 1.5s infinite;
+    }
+  }
+
+  &-unit {
+    font-size: clamp(11px, 0.9vw, 13px);
+    font-weight: 500;
+    margin-top: 4px;
+    opacity: 0.9;
+  }
+
+  &-status {
+    display: flex;
+    justify-content: center;
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
+  .status-badge {
+    padding: 4px 16px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    
+    &.active {
+      background: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    &.inactive {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .coil-lock-icon {
+    font-size: 16px !important;
+    opacity: 0.7;
+    margin-left: 4px;
+    flex-shrink: 0;
+  }
+}
+
+// Animations
+@keyframes pulse-error {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(198, 40, 40, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(198, 40, 40, 0.4);
+  }
+}
+
+@keyframes pulse-warning {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 1200px) {
+  .coil_item {
+    &-header {
+      min-height: 40px;
+    }
+
     &-name {
-        font-size: 15px;
-        word-wrap: break-word; /* Tự động wrap các từ khi vượt kích thước */
-        white-space: normal; /* Cho phép xuống dòng */
+      font-size: clamp(12px, 1vw, 14px);
     }
 
-    &-value {
-        font-size: 30px;
-        font-weight: 700;
+    .coil-icon {
+      font-size: 42px !important;
+      
+      &.pump-icon {
+        height: 42px;
+      }
+      
+      &.check-icon,
+      &.warning-icon {
+        font-size: 48px !important;
+      }
     }
-    &-chart {
-        // background-color: #fff;
-        height: 50px;
-    }
+  }
+
+  .coil_state-normal,
+  .coil_state-error,
+  .coil_state-calib,
+  .coil_state-off {
+    min-height: 140px;
+    padding: 14px;
+  }
 }
 
-.expand {
-    animation: expandText 3s infinite; /* Áp dụng hiệu ứng scale */
+@media (max-width: 768px) {
+  .coil_item {
+    &-header {
+      min-height: 36px;
+    }
+
+    &-name {
+      font-size: clamp(11px, 1vw, 13px);
+    }
+
+    .coil-icon {
+      font-size: 36px !important;
+      
+      &.pump-icon {
+        height: 36px;
+      }
+      
+      &.check-icon,
+      &.warning-icon {
+        font-size: 42px !important;
+      }
+    }
+
+    .status-badge {
+      font-size: 10px;
+      padding: 3px 12px;
+    }
+  }
+
+  .coil_state-normal,
+  .coil_state-error,
+  .coil_state-calib,
+  .coil_state-off {
+    min-height: 130px;
+    padding: 12px;
+  }
 }
 
-@keyframes expandText {
-    0% {
-        transform: scale(1); /* Kích thước ban đầu */
-    }
-    50% {
-        transform: scale(1.2); /* Kích thước phóng to */
-    }
-    100% {
-        transform: scale(1); /* Trở về kích thước ban đầu */
-    }
+// Dark background enhancement
+.coil_state-normal,
+.coil_state-error {
+  .status-badge {
+    backdrop-filter: blur(4px);
+  }
+}
+
+// Hover effect for interactive cards
+.coil_item {
+  cursor: pointer;
+  user-select: none;
+  
+  &:active {
+    transform: scale(0.98);
+  }
 }

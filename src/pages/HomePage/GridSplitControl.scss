@@ -1,0 +1,86 @@
+// ============================================
+// GRID SPLIT CONTROL STYLES
+// ============================================
+
+.grid-split-control {
+  .split-button {
+    color: rgba(0, 0, 0, 0.6);
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(25, 118, 210, 0.08);
+      color: #1976d2;
+    }
+
+    &.active {
+      color: #1976d2;
+      background: rgba(25, 118, 210, 0.1);
+    }
+  }
+}
+
+.split-menu {
+  min-width: 280px;
+
+  .MuiMenuItem-root {
+    padding: 12px 16px;
+    transition: background 0.2s ease;
+
+    &.selected {
+      background: rgba(25, 118, 210, 0.08);
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    &.reset-option {
+      &:hover {
+        background: rgba(244, 67, 54, 0.08);
+      }
+    }
+  }
+
+  .ratio-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    min-width: 60px;
+  }
+
+  .ratio-preview {
+    display: flex;
+    width: 120px;
+    height: 24px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+
+    .preview-sensor {
+      background: linear-gradient(135deg, #1ed760, #16b34a);
+      transition: width 0.3s ease;
+    }
+
+    .preview-coil {
+      background: linear-gradient(135deg, #2196f3, #1976d2);
+      transition: width 0.3s ease;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .split-menu {
+    min-width: 240px;
+
+    .ratio-preview {
+      width: 100px;
+      height: 20px;
+    }
+
+    .ratio-label {
+      font-size: 13px;
+      min-width: 50px;
+    }
+  }
+}

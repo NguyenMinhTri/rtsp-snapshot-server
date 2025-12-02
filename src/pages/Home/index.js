@@ -2,8 +2,8 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Toast from "../../utils/toasts";
 import { readDataByStation } from "../Setting/actions";
-import HomeV1 from "./HomeV1";
-import CNV from "../HomePage/HomePage";
+
+import HomePage from "../HomePage/HomePage";
 function Home() {
     const navigate = useNavigate();
     const deviceUser = localStorage.getItem("device_user");
@@ -70,6 +70,6 @@ function Home() {
 
     
 
-    return <CNV />;
+    return <HomePage />;
 }
 export default Home;

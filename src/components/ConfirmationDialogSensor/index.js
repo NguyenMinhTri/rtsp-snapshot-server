@@ -189,7 +189,7 @@ function ConfirmationDialogSensor(props) {
 
         {/* BUTTON */}
         <Stack direction="row" spacing={1}>
-          {isNoButton && (
+          { (
             <Button onClick={handleClose} variant="contained" fullWidth>
               Hủy
             </Button>

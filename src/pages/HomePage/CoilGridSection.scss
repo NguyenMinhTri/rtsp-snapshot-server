@@ -1,0 +1,40 @@
+.coil-group-box {
+  padding: 14px 14px 10px 14px;
+  border-radius: 14px;
+  background: #ffffff;               /* nền tối gradient */
+  border: 1px solid rgba(79, 195, 247, 0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  transition: all 0.25s ease;
+}
+
+.coil-group-box:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  border-color: rgba(79, 195, 247, 0.6);
+}
+
+.coil-group-title {
+  font-size: 16px;
+  font-weight: 700;
+  padding-bottom: 10px;
+  color: #4FC3F7;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+}
+
+.coil-card-wrapper {
+  height: 100%;
+  transition: transform 0.2s ease;
+}
+
+.coil-card-wrapper:hover {
+  transform: translateY(-3px);
+}
+
+.pid-animation-wrapper {
+  margin-bottom: 16px;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(79, 195, 247, 0.25);
+}
