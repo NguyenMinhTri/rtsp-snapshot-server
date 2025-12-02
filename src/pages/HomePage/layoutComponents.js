@@ -118,6 +118,7 @@ export const CoilGridSection = ({
     acc[group].push(coil);
     return acc;
   }, {});
+  let sensorCount = (fullRS485Data.RS485Data.filter(item => item.MemoryType === 1))?.length || 0;
 
   const isSingleGroup = Object.keys(grouped).length === 1; // chỉ 1 group
   const coilGridXL = isSingleGroup ? 3 : 6; // 12 / 3 = 4 coil / dòng, 12 / 6 = 2 coil / dòng
@@ -140,8 +141,8 @@ export const CoilGridSection = ({
             <Grid
               key={groupIndex}
               item
-              xl={isSingleGroup ? 12 : 6}
-              lg={isSingleGroup ? 12 : 6}
+              xl={isSingleGroup ? 12 : (sensorCount <= 1 ? 3: 6)}
+              lg={isSingleGroup ? 12 : (sensorCount <= 1 ? 3: 6)}
               md={12}
               sm={12}
               xs={12}
@@ -174,7 +175,7 @@ export const CoilGridSection = ({
                           unit={` ${v.unit || ""}`}
                           state={styleForCard(v.value)}
                           fillColor="red"
-                          IsRevHighAlarm = {fullRS485Data?.IsHighAlarm || false}
+                          IsRevHighAlarm = {fullRS485Data?.IsRevHighAlarm || false}
                         />
                       </div>
                     </Grid>

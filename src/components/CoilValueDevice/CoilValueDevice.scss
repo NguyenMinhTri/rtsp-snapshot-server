@@ -5,21 +5,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
 // State variants with improved color schemes for better visibility
+
+// State variants with improved color schemes for better visibility
 .coil_state-normal {
-  border: none;
-  padding: 16px;
+  border: 1px solid blue;
+  padding: 12px 14px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(21, 101, 192, 0.2);
-  background: linear-gradient(145deg, #2196f3, #00fbff);
-  color: white;
+  box-shadow: 0 2px 8px rgba(0, 200, 240, 0.25);
+  background-color: cyan;
+  color: blue;
   transition: all 0.3s ease;
-  min-height: 160px;
+  min-height: 140px;
   display: flex;
   flex-direction: column;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 200, 240, 0.4);
   }
 }
 
