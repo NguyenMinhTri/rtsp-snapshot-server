@@ -38,7 +38,7 @@ export default function CardValueSensor({
 }) {
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
-  
+
   // Individual sound control for this sensor
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
     const saved = localStorage.getItem(`sensor-sound-${deviceId}`);
@@ -54,17 +54,17 @@ export default function CardValueSensor({
   useEffect(() => {
     const AL = alarmSetting || {};
     let isErrorLV2 = false;
-    
+
     // LV2 HIGH
-    if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined") && 
-        value > AL.HighAlarmSetting && 
-        (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+    if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined") &&
+      value > AL.HighAlarmSetting &&
+      (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
       isErrorLV2 = true;
     }
     // LV2 LOW
-    else if (AL.IsAlarmLow && 
-             value < AL.LowAlarmSetting && 
-             (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+    else if (AL.IsAlarmLow &&
+      value < AL.LowAlarmSetting &&
+      (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
       isErrorLV2 = true;
     }
 
@@ -190,13 +190,13 @@ export default function CardValueSensor({
 
   let isErrorLV2 = false;
   let isErrorLV1 = false;
-  
+
   // LV2 HIGH
-  if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined" ) && value > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+  if ((AL.IsAlarmHigh || typeof AL.IsAlarmHigh === "undefined") && value > AL.HighAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined"))
     isErrorLV2 = true;
 
   // LV2 LOW
-  else if (AL.IsAlarmLow && value < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) 
+  else if (AL.IsAlarmLow && value < AL.LowAlarmSetting && (AL.IsSendHighAlarm || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined"))
     isErrorLV2 = true;
 
   // LV1 HIGH
@@ -206,16 +206,16 @@ export default function CardValueSensor({
   else if (AL.IsAlarmLow1 && value < AL.LowAlarmSetting1) isErrorLV1 = true;
 
   let finalState = state !== "off" && isErrorLV2 ? "error" : state;
-  if (isErrorLV2 !== true && isErrorLV1 === true &&  state !== "off" ) {
+  if (isErrorLV2 !== true && isErrorLV1 === true && state !== "off") {
     finalState = 'calib';
   }
-  
+
   // Calculate value scale based on digit count
   const valueLength = value.toString().replace('.', '').length;
   const valueScale = valueLength > 6 ? 0.7 : valueLength > 5 ? 0.8 : valueLength > 4 ? 0.9 : 1;
-  
+
   if (typeof alarmSetting === "undefined") return <div></div>;
-  
+
   function formatValue(val) {
     const num = parseFloat(val);
     if (isNaN(num)) return val;
@@ -235,7 +235,7 @@ export default function CardValueSensor({
   };
 
   return (
-    <div 
+    <div
       className={`sensor_item sensor_state-${finalState}`}
       style={{
         "--label-scale": scaleFactor,
@@ -247,25 +247,25 @@ export default function CardValueSensor({
         <div>
           <div className="sensor_item-header">
             <div className="sensor_item-name">{label}</div>
-{(AL.HighAlarmSetting !== "" && AL.HighAlarmSetting !== undefined) ||
-(AL.LowAlarmSetting !== "" && AL.LowAlarmSetting !== undefined) ? (
-  <Tooltip title={isSoundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}>
-    <IconButton
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleSound();
-      }}
-      size="small"
-      className={`sensor-sound-toggle ${isSoundEnabled ? "enabled" : "disabled"}`}
-    >
-      {isSoundEnabled ? (
-        <VolumeUpIcon fontSize="small" />
-      ) : (
-        <VolumeOffIcon fontSize="small" />
-      )}
-    </IconButton>
-  </Tooltip>
-) : null}
+            {(AL.HighAlarmSetting !== "" && AL.HighAlarmSetting !== undefined) ||
+              (AL.LowAlarmSetting !== "" && AL.LowAlarmSetting !== undefined) ? (
+              <Tooltip title={isSoundEnabled ? "Tắt âm thanh" : "Bật âm thanh"}>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleSound();
+                  }}
+                  size="small"
+                  className={`sensor-sound-toggle ${isSoundEnabled ? "enabled" : "disabled"}`}
+                >
+                  {isSoundEnabled ? (
+                    <VolumeUpIcon fontSize="small" />
+                  ) : (
+                    <VolumeOffIcon fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+            ) : null}
 
 
           </div>
@@ -273,8 +273,8 @@ export default function CardValueSensor({
           <div className="sensor_item-value">
             <p>
               <span className="value-number">{(deviceId.includes("_") || deviceId.includes("HCM"))
-                  ? formatValue(value)
-                  : value
+                ? formatValue(value)
+                : value
               }</span>
               <span className="value-unit">{unit}</span>
             </p>
@@ -307,7 +307,7 @@ export default function CardValueSensor({
 
       {/* CHART DISPLAY CONDITION */}
       {typeof deviceId !== "undefined" &&
-      (deviceId.includes("_") || deviceId.includes("HCM")) ? (
+        (deviceId.includes("_") || deviceId.includes("HCM")) ? (
         <div></div>
       ) : (
         <div className="sensor_item-chart">
