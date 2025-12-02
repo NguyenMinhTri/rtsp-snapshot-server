@@ -202,7 +202,7 @@ export const MapSection = ({
   dataCoordinates,
   listDevice,
   MapComponent,
-  height = "548px",
+  height = "460px",
   zoomDefault = 15,
 }) => {
   if (!valueSelect) {

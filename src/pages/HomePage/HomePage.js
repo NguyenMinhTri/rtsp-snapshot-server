@@ -67,7 +67,7 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
         flexDirection: "column",
         gap: 2,
-        height: "500px",
+        height: "400px",
         overflowY: "auto",
     },
     message: {
@@ -1138,56 +1138,56 @@ function HomePage() {
                         />
                     </Stack>
                 )}
-     
+
 
                 {/* ----------- CONTENT WHEN LOADED ----------- */}
                 {(
                     <>
-<Box
-  sx={{
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    width: "100%",
-    mb: 1,
-    gap: 2, // cho đẹp, tránh dính
-  }}
->
-  {/* StationSelector chiếm 33% */}
-  <Box sx={{ flex: "0 0 50%" }}>
-    <StationSelector
-      menuValue={menuValue}
-      valueSelect={valueSelect}
-      inputValue={inputValue}
-      setInputValue={setInputValue}
-      handleOnChangeSelectStation={handleOnChangeSelectStation}
-    />
-  </Box>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                width: "100%",
+                                mb: 1,
+                                gap: 2, // cho đẹp, tránh dính
+                            }}
+                        >
+                            {/* StationSelector chiếm 33% */}
+                            <Box sx={{ flex: "0 0 50%" }}>
+                                <StationSelector
+                                    menuValue={menuValue}
+                                    valueSelect={valueSelect}
+                                    inputValue={inputValue}
+                                    setInputValue={setInputValue}
+                                    handleOnChangeSelectStation={handleOnChangeSelectStation}
+                                />
+                            </Box>
 
-  {/* SubHeader chiếm phần còn lại  (và tự co giãn) */}
-  <Box sx={{ flex: 1, minWidth: 0 }}>
-    <SubHeader
-      text={
-        valueSelect
-          ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
-              lastimeActive.slice(0, -1)
-            ).format("HH:mm DD/MM/YYYY")}`
-          : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
-      }
-    />
-  </Box>
+                            {/* SubHeader chiếm phần còn lại  (và tự co giãn) */}
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <SubHeader
+                                    text={
+                                        valueSelect
+                                            ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
+                                                lastimeActive.slice(0, -1)
+                                            ).format("HH:mm DD/MM/YYYY")}`
+                                            : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                    }
+                                />
+                            </Box>
 
-  {/* GridSplitControl nằm bên phải */}
-  {layoutConditions.shouldShowSensors(dataSensor) &&
-    layoutConditions.shouldShowCoils(dataCoil) && (
-      <Box sx={{ flexShrink: 0 }}>
-        <GridSplitControl
-          deviceId={valueSelect?.id}
-          onSplitChange={handleGridSplitChange}
-        />
-      </Box>
-    )}
-</Box>
+                            {/* GridSplitControl nằm bên phải */}
+                            {layoutConditions.shouldShowSensors(dataSensor) &&
+                                layoutConditions.shouldShowCoils(dataCoil) && (
+                                    <Box sx={{ flexShrink: 0 }}>
+                                        <GridSplitControl
+                                            deviceId={valueSelect?.id}
+                                            onSplitChange={handleGridSplitChange}
+                                        />
+                                    </Box>
+                                )}
+                        </Box>
 
 
 
@@ -1201,11 +1201,11 @@ function HomePage() {
                         />
 
                         {!licenseLockLV2 && (
-                            <Box sx={{ flexGrow: 1 }}>
+                            <Box sx={{ flexGrow: 1 }} style={{ margin: "-35px 0" }}>
 
 
                                 {/* ------------ SENSOR + COIL GRID ------------ */}
-                                <div style={{ margin: "10px 0" }}>
+                                <div >
                                     <Grid container spacing={2}>
                                         <SensorGridSection
                                             gridConfig={gridLayout.sensor}

@@ -260,7 +260,7 @@ function MainChart({ endDate, startDate, deviceUser }) {
                     <LineChart
                         width={1000}
                         height={1000}
-                        style={{ minHeight: "500px" }}
+                        style={{ minHeight: "400px" }}
                         data={endDataForChart}
                         margin={{
                             top: 20,
@@ -301,7 +301,7 @@ function MainChart({ endDate, startDate, deviceUser }) {
                     <Skeleton
                         animation="wave"
                         variant="rounded"
-                        height={500}
+                        height={400}
                         width={"100%"}
                     />
                     <p

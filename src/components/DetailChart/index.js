@@ -64,7 +64,7 @@ function DetailChart() {
     };
 
     return (
-        <div style={{ height: '500px', width: '90vw', margin: 'auto' }}>
+        <div style={{ height: '400px', width: '90vw', margin: 'auto' }}>
             {dataChart.length ? (
                 <div
                     style={{

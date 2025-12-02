@@ -64,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
         display: "flex",
         flexDirection: "column",
         gap: 2,
-        height: "500px",
+        height: "400px",
         overflowY: "auto",
     },
     message: {

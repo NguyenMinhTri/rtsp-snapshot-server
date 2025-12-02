@@ -69,7 +69,7 @@ export default function SensorGridOptimized({
   return (
     <div className="sensor-grid-container">
       {Object.entries(grouped).map(([groupName, sensors], groupIndex) => (
-        <div key={groupIndex} style={{ marginBottom: 20 }}>
+        <div key={groupIndex} >
           
           {/* TIÊU ĐỀ NHÓM - giống Coil */}
           <div
@@ -86,7 +86,7 @@ export default function SensorGridOptimized({
 
           <Grid
             className="grid-margin sensor-grid"
-            container
+            
             spacing={1.5}
             style={{
               "--scale-factor": scaleFactor,
