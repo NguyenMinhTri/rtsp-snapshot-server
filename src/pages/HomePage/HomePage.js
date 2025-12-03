@@ -48,12 +48,24 @@ import AsyncLocalStorage from "../../utils/async_localstorage";
 import Toast from "../../utils/toasts";
 import { getUniqueListBy } from "../../utils/function";
 import { handleGetSettingThreshold } from "../../utils/handleGetSettingThreshold";
-import compareDate from "../../utils/compare_date";
+
 import { chooseSensorAction } from "../../redux/reducer/chooseSensorChart";
 
 // Styles
 import "./HomePage.scss";
-
+ export const bulkTopicAction = async (token, topics, isSub) => {
+    return await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        topics,
+        isSub,
+      }),
+    }).then((res) => res.json());
+  };
 // Define styles
 const useStyles = makeStyles((theme) => ({
     container: {
@@ -143,35 +155,10 @@ const globalStyle = `
   100% { opacity: 1; transform: translateY(0); }
 }
 `;
-// Function to subscribe/unsubscribe token to/from a topic
-const subscribeTokenToTopic = async (token, topic, isSub,) => {
-    if (!token) {
-        console.error("No token available for subscription.");
-        return;
-    }
 
-    try {
-        const response = await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/subscribe-to-topic", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                token: token,
-                topic: topic,
-                isSub: isSub,
-            }),
-        });
-        
-        if (response.ok) {
-            console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
-
-        } else {
-            console.error("Failed to subscribe/unsubscribe.");
-        }
-    } catch (err) {
-        console.error("Error while subscribing/unsubscribing:", err);
-    }
+const saveSubscribedTopics = (token, topics) => {
+  const key = `fcm_topics_${token.substring(0, 20)}`;
+  localStorage.setItem(key, JSON.stringify(topics));
 };
 export const LoadingState = (props) => (
     <>
@@ -328,7 +315,6 @@ function HomePage() {
         }));
         setMenuSelect(devices);
     }, [listDevice, navigate]);
-    // Setup FCM notifications
   // Setup FCM notifications
   useEffect(() => {
     if (!listDevice || !user?.email) return;
@@ -380,24 +366,31 @@ function HomePage() {
 
         console.log("Subscribing to topics...");
 
-        // Subscribe to user email topic
-        if (user.email) {
-          await subscribeTokenToTopic(
-            currentToken,
-            user.email.replace("@", ""),
-            true
-          );
-        }
+  
 
         // Subscribe to all device topics
         const deviceIds = Object.keys(listDevice);
-        await Promise.all(
-          deviceIds.map(deviceId =>
-            subscribeTokenToTopic(currentToken, deviceId, true)
-          )
-        );
 
-        // Save subscription timestamp
+        // Build topic list
+        const topicList = [
+        user.email.replace("@", ""),
+        ...deviceIds
+        ];
+
+        // Subscribe
+        // Subscribe to all device topics (FAST version)
+        if (topicList.length > 0) {
+            debugger;
+            const result = await bulkTopicAction(currentToken, topicList, true);
+            console.log("Bulk subscribe result:", result);
+        }
+
+
+
+        // Save subscribed topics locally (for logout unsub)
+        saveSubscribedTopics(currentToken, topicList);
+
+        // Save timestamp
         localStorage.setItem(subscriptionKey, now.toString());
         console.log("Subscription completed and cached");
 

@@ -6,7 +6,24 @@ import { useNavigate } from "react-router-dom";
 import MyButton from "../../components/MyButton";
 import { useState } from "react";
 import { useEffect } from "react";
+import subscribeTokenToTopic from "../../utils/compare_date";
+import { getToken } from "firebase/messaging";
+import {  messaging } from "../../config/firebase";
+    const unsubscribeAllTopics = async (token) => {
+        const key = `fcm_topics_${token.substring(0, 20)}`;
+        const topicJson = localStorage.getItem(key);
 
+        if (!topicJson) return;
+
+        const topics = JSON.parse(topicJson);
+
+        for (const topic of topics) {
+            await subscribeTokenToTopic(token, topic, false); // false = unsubscribe
+        }
+
+        // Xóa cache sau khi unsubscribe
+        localStorage.removeItem(key);
+    };
 export default function WebError({errorMessage}) {
     const [currentDomain, setCurrentDomain] = useState("");
 
@@ -15,20 +32,19 @@ export default function WebError({errorMessage}) {
     }, []);
     const auth = getAuth();
     const navigate = useNavigate();
-    const handleLogOut = () => {
-        signOut(auth)
-            .then(() => {
-                sessionStorage.clear();
-                localStorage.clear();
-                Cookies.remove("auth_token");
-                Toast("success", "Khởi động lại thành công");
-                navigate(0);
-                navigate("/");
-            })
-            .catch((error) => {
-                // An error happened.
-                // navigate('/');
-            });
+    const handleLogOut = async () => {
+        await signOut(auth);
+
+        const token = await getToken(messaging);
+        if (token) {
+            await unsubscribeAllTopics(token);
+        }
+        sessionStorage.clear();
+        localStorage.clear();
+        Cookies.remove("auth_token");
+        Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
+        navigate("/");
+
     };
     return (
         <div

@@ -184,3 +184,15 @@
     }
 
 }
+.enhanced_logo {
+  border-radius: 14px;          /* Bo góc */
+  padding: 8px;                 /* Khoảng cách trong logo */
+  background: white;            /* Nền trắng làm logo nổi bật */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Hiệu ứng nổi */
+  transition: all 0.25s ease;   /* Hiệu ứng mượt */
+}
+
+.enhanced_logo:hover {
+  transform: translateY(-2px); /* Nổi lên nhẹ khi hover */
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+}

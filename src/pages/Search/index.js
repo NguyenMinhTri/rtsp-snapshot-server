@@ -65,6 +65,8 @@ import TabPanel from "./components/TabPanel";
 import TabTable from "./components/TabTable";
 import { SENS, saveSensorOfDevice } from "./actions";
 
+import { getToken } from "firebase/messaging";
+import {  messaging } from "../../config/firebase";
 async function handleAuthStateChanged() {
     return new Promise((resolve, reject) => {
         const auth = getAuth();
@@ -113,7 +115,7 @@ function Search() {
 
     const handleChangeStartDate = (e) => {
         setDataSensorRange([]);
-        
+
         const startTime = moment(e.$d).format("00:00 MM-DD-YYYY");
         setStartDate(startTime);
     };
@@ -135,7 +137,7 @@ function Search() {
 
     // subtract hour
     const subTract7Hour = (startDateChoose, endDateChoose) => {
-        
+
         const dateS = new Date(startDateChoose);
         const dateE = new Date(endDateChoose);
 
@@ -666,8 +668,8 @@ function Search() {
         // );
         const data = {
             deviceId: idStation,
-            startDate:  moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
-            endDate:  moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
+            startDate: moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
+            endDate: moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
             listSensorId: listSensorId,
         };
         try {
@@ -696,7 +698,7 @@ function Search() {
             startDate,
             endDate
         );
-        
+
         const fcGetDataAVGMinMaxByHours = httpsCallable(
             functions,
             "GetDataAVGMinMaxByHours"
@@ -738,8 +740,8 @@ function Search() {
         // );
         const data = {
             deviceId: idStation,
-            startDate:  moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
-            endDate:  moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
+            startDate: moment(startDate).format("YYYY-MM-DD HH:mm:ss"),
+            endDate: moment(endDate).format("YYYY-MM-DD HH:mm:ss"),
             listSensorId: listSensorId,
         };
         try {
@@ -1047,22 +1049,48 @@ function Search() {
         setDataSearchHour(null);
         setDataSearchMonth(null);
     };
-    const auth = getAuth();
-    const handleLogOut = () => {
-        signOut(auth)
-            .then(() => {
-                sessionStorage.clear();
-                localStorage.clear();
-                Cookies.remove("auth_token");
-                Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
-                navigate("/");
-            })
-            .catch((error) => {
-                // An error happened.
-                // navigate('/');
-            });
-    };
+  const bulkTopicAction = async (token, topics, isSub) => {
+    return await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        token,
+        topics,
+        isSub,
+      }),
+    }).then((res) => res.json());
+  };
 
+  const unsubscribeAllTopics = async (token) => {
+        const key = `fcm_topics_${token.substring(0, 20)}`;
+        const topicJson = localStorage.getItem(key);
+
+        if (!topicJson) return;
+
+        const topics = JSON.parse(topicJson);
+        const result = await bulkTopicAction(token, topics, false);
+        console.log("Unsubscribe result:", result);
+
+        // Xóa cache sau khi unsubscribe
+        localStorage.removeItem(key);
+    };
+    const auth = getAuth();
+    const handleLogOut = async () => {
+        await signOut(auth);
+
+        const token = await getToken(messaging);
+        if (token) {
+            await unsubscribeAllTopics(token);
+        }
+        sessionStorage.clear();
+        localStorage.clear();
+        Cookies.remove("auth_token");
+        Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
+        navigate("/");
+
+    };
     const listSensorOfDevice = JSON.parse(
         localStorage.getItem(SENSOR_OF_DEVICE_KEY)
     );
@@ -1142,7 +1170,7 @@ function Search() {
 
             const { dataMin, dataMax, dataAVG, columnDefine } =
                 handleDataSearchDateMonthHour(res, listSensor);
-                
+
             setListSensor(columnDefine);
             setDataSearchHour({ dataMin, dataMax, dataAVG });
         }
@@ -1151,7 +1179,7 @@ function Search() {
     const [tabTable, setTabTable] = useState("avg");
 
     const handleChangeTabTable = (event, newValue) => {
-       
+
         setTabTable(newValue);
     };
 

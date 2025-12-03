@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 // Styles
 import "./CoilGridSection.scss";
-
+import moment from "moment";
 /**
  * Responsive Grid Item Wrapper
  */
@@ -291,7 +291,7 @@ export const NotesSection = ({
               <div className={classes.message} key={index}>
                 <Stack sx={{ p: 1 }} spacing={0.5}>
                   <Typography variant="subtitle1" color="primary">
-                    {message.name} - {message.timestamp}
+                    {message.name} - {moment( message.timestamp).format("HH:mm:ss DD/MM/YYYY")}
                   </Typography>
                   <Typography variant="body1">{message.content}</Typography>
                 </Stack>

@@ -19,7 +19,9 @@ import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined';
 import ReportOutlinedIcon from '@mui/icons-material/ReportOutlined';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
-
+import subscribeTokenToTopic from "../../../utils/compare_date";
+import { getToken } from "firebase/messaging";
+import {  messaging } from "../../../config/firebase";
 import { Link, useNavigate } from 'react-router-dom';
 import './Sidebar.scss';
 
@@ -104,21 +106,24 @@ function HeaderOnly() {
 
     // logout
 
-    const auth = getAuth();
-    const handleLogOut = () => {
-        signOut(auth)
-            .then(() => {
-                sessionStorage.clear();
-                localStorage.clear();
-                Cookies.remove('auth_token');
-                Toast('success', 'Bạn đã đăng xuất ra khỏi hệ thống');
-                navigate('/');
-            })
-            .catch((error) => {
-                // An error happened.
-                // navigate('/');
-            });
+    const unsubscribeAllTopics = async (token) => {
+        const key = `fcm_topics_${token.substring(0, 20)}`;
+        const topicJson = localStorage.getItem(key);
+
+        if (!topicJson) return;
+
+        const topics = JSON.parse(topicJson);
+
+        for (const topic of topics) {
+            await subscribeTokenToTopic(token, topic, false); // false = unsubscribe
+        }
+
+        // Xóa cache sau khi unsubscribe
+        localStorage.removeItem(key);
     };
+    // Logout
+    const auth = getAuth();
+
 
     return (
         <Box sx={{ display: 'flex' }} style={{ backgroundColor: 'red !important' }}>

@@ -1,10 +1,10 @@
 import { styled } from "@mui/material/styles";
-import { memo, useState, useCallback, useEffect, useRef } from "react";
+import React, { memo, useState, useEffect } from "react";
+
 
 import Logout from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-import PersonAdd from "@mui/icons-material/PersonAdd";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { ListItemIcon } from "@mui/material";
 import MuiAppBar from "@mui/material/AppBar";
@@ -14,34 +14,31 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import React from "react";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import Divider from "@mui/material/Divider";
 import ListItemText from "@mui/material/ListItemText";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
-
-import axios from "axios";
-import { getAuth, signOut } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-
-import Toast from "../../../utils/toasts";
-import "./Header.scss";
-import Cookies from "js-cookie";
-import Notification from "../../Notification";
-// import ConfirmationDialog from '../../ConfirmationDialog';
-
+import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
 import Button from "@mui/material/Button";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import CircularProgress from "@mui/material/CircularProgress";
-import AsyncLocalStorage from "../../../utils/async_localstorage";
-// thêm vào nhóm import icons/material
-import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import Slide from "@mui/material/Slide";
+
+import axios from "axios";
+import { getAuth, signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { getToken } from "firebase/messaging";
+import { messaging } from "../../../config/firebase";
+import Toast from "../../../utils/toasts";
+import Cookies from "js-cookie";
+import AsyncLocalStorage from "../../../utils/async_localstorage";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import DeviceConfigPage from "../../../pages/ModbusSetting";
+
+import "./Header.scss";
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
@@ -53,29 +50,33 @@ const AppBar = styled(MuiAppBar, {
   }),
 }));
 
-// Transition nhẹ cho dialog (tùy chọn)
 const TransitionUp = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
 function Header({ handleOpenSidebar }) {
   const [currentDomain, setCurrentDomain] = useState("");
-  useEffect(() => setCurrentDomain(window.location.href), []);
-
   const [openSidebar, setOpenSidebar] = useState(false);
 
-  // ===== Notification dialog state =====
+  // Notification dialog state
   const [openNoti, setOpenNoti] = useState(false);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [deviceId, setDeviceId] = useState("");
 
-  // ===== Modbus Settings dialog state =====
+  // Modbus Settings dialog state
   const [openModbus, setOpenModbus] = useState(false);
 
-  // ===== Device list from localStorage =====
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  // Logout loading state
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const navigate = useNavigate();
+  const auth = getAuth();
+
   const deviceUser = localStorage.getItem("device_user");
   let listDevice;
   if (deviceUser !== "undefined") {
@@ -88,63 +89,21 @@ function Header({ handleOpenSidebar }) {
     navigate("/nothing");
   }
 
-  // ===== Helpers open/close =====
+  useEffect(() => setCurrentDomain(window.location.href), []);
+
+  // Helpers
+  const handleDrawerOpen = () => {
+    setOpenSidebar((prev) => {
+      const next = !prev;
+      handleOpenSidebar(next);
+      return next;
+    });
+  };
+
   const openDialogNoti = () => setOpenNoti(true);
   const closeDialogNoti = () => setOpenNoti(false);
-  const openDialogModbus = () =>{
-        let prev = deviceId;
-    AsyncLocalStorage.getItem("home_station").then((station) => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const qDeviceId = searchParams.get("deviceId");
 
-      if (station && qDeviceId === null) {
-        const stationUser = JSON.parse(station);
-        setDeviceId((cur) => {
-          if (prev !== stationUser.id) {
-            setOffset(0);
-            setData([]);
-          }
-          return stationUser.id;
-        });
-      } else {
-        let deviceIdTemp = Object.keys(listDevice || {})[0];
-        if (qDeviceId !== null && typeof (listDevice || {})[qDeviceId] !== "undefined") {
-          deviceIdTemp = qDeviceId;
-        }
-        setDeviceId((cur) => {
-          if (prev !== deviceIdTemp) {
-            setOffset(0);
-            setData([]);
-          }
-          return deviceIdTemp;
-        });
-      }
-    });
-    setOpenModbus(true);
-};
-  const closeDialogModbus = () => setOpenModbus(false);
-
-  // ===== Resolve deviceId from URL or saved home station =====
-  useEffect(() => {
-    AsyncLocalStorage.getItem("home_station").then((station) => {
-      const searchParams = new URLSearchParams(window.location.search);
-      const qDeviceId = searchParams.get("deviceId");
-
-      if (station && qDeviceId === null) {
-        const stationUser = JSON.parse(station);
-        setDeviceId(stationUser.id);
-      } else {
-        let deviceIdTemp = Object.keys(listDevice || {})[0];
-        if (qDeviceId !== null && typeof (listDevice || {})[qDeviceId] !== "undefined") {
-          deviceIdTemp = qDeviceId;
-        }
-        setDeviceId(deviceIdTemp);
-      }
-    });
-  }, []);
-
-  // Reload notification list when dialog open toggles (nếu đổi trạm)
-  useEffect(() => {
+  const openDialogModbus = () => {
     let prev = deviceId;
     AsyncLocalStorage.getItem("home_station").then((station) => {
       const searchParams = new URLSearchParams(window.location.search);
@@ -173,10 +132,29 @@ function Header({ handleOpenSidebar }) {
         });
       }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openNoti]);
+    setOpenModbus(true);
+  };
 
-  // Fetch notifications
+  const closeDialogModbus = () => setOpenModbus(false);
+
+  useEffect(() => {
+    AsyncLocalStorage.getItem("home_station").then((station) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const qDeviceId = searchParams.get("deviceId");
+
+      if (station && qDeviceId === null) {
+        const stationUser = JSON.parse(station);
+        setDeviceId(stationUser.id);
+      } else {
+        let deviceIdTemp = Object.keys(listDevice || {})[0];
+        if (qDeviceId !== null && typeof (listDevice || {})[qDeviceId] !== "undefined") {
+          deviceIdTemp = qDeviceId;
+        }
+        setDeviceId(deviceIdTemp);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       if (offset < 8) setIsLoading(true);
@@ -200,40 +178,61 @@ function Header({ handleOpenSidebar }) {
     if (bottom) setOffset((x) => x + 10);
   };
 
-  // Sidebar
-  const handleDrawerOpen = () => {
-    setOpenSidebar((prev) => {
-      const next = !prev;
-      handleOpenSidebar(next);
-      return next;
-    });
-  };
-
-  // Menu user
-  const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
   const handleClickAvatar = (event) => setAnchorEl(event.currentTarget);
   const handleCloseMenu = () => setAnchorEl(null);
 
-  // Profile
   const username = localStorage.getItem("loginUserName");
-  const imgUserLogin = !currentDomain.includes("tanphamnguyen")
-    ? localStorage.getItem("imgUser")
-    : "/image/logo-tpn.jpg";
+  const imgUserLogin =
+    !currentDomain.includes("tanphamnguyen")
+      ? localStorage.getItem("imgUser")
+      : "/image/logo-tpn.jpg";
   const email = localStorage.getItem("loginEmail");
 
-  // Logout
-  const auth = getAuth();
-  const handleLogOut = () => {
-    signOut(auth)
-      .then(() => {
-        sessionStorage.clear();
-        localStorage.clear();
-        Cookies.remove("auth_token");
-        Toast("success", "Bạn đã đăng xuất ra khỏi hệ thống");
-        navigate("/");
-      })
-      .catch(() => {});
+  const bulkTopicAction = async (token, topics, isSub) => {
+    return await fetch(
+      "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, topics, isSub }),
+      }
+    ).then((res) => res.json());
+  };
+
+  const unsubscribeAllTopics = async (token) => {
+    const key = `fcm_topics_${token.substring(0, 20)}`;
+    const topicJson = localStorage.getItem(key);
+    if (!topicJson) return;
+    const topics = JSON.parse(topicJson);
+    const result = await bulkTopicAction(token, topics, false);
+    console.log("Unsubscribe result:", result);
+    localStorage.removeItem(key);
+  };
+
+  const handleLogOut = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+
+    try {
+      const token = await getToken(messaging);
+      if (token) {
+        await unsubscribeAllTopics(token);
+        const subKey = `fcm_subscribed_${token.substring(0, 20)}`;
+        localStorage.removeItem(subKey);
+      }
+
+      await signOut(auth);
+      sessionStorage.clear();
+      localStorage.clear();
+      Cookies.remove("auth_token");
+      Toast("success", "Bạn đã đăng xuất ra khỏi hệ thống");
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+      Toast("error", "Có lỗi khi đăng xuất!");
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -259,7 +258,6 @@ function Header({ handleOpenSidebar }) {
           QUẢN LÝ DỮ LIỆU
         </Typography>
 
-        {/* Nút Notification */}
         <IconButton
           size="20"
           color="inherit"
@@ -271,7 +269,6 @@ function Header({ handleOpenSidebar }) {
           <NotificationsIcon />
         </IconButton>
 
-        {/* Nút Settings (Modbus) */}
         <IconButton
           size="20"
           color="inherit"
@@ -283,11 +280,10 @@ function Header({ handleOpenSidebar }) {
           <SettingsOutlinedIcon />
         </IconButton>
 
-        {/* Avatar + menu */}
         <Avatar
           alt="user"
           src={
-            typeof imgUserLogin === "undefined" || imgUserLogin === "" || imgUserLogin === null
+            !imgUserLogin || imgUserLogin === "undefined"
               ? "/image/navis.png"
               : imgUserLogin
           }
@@ -301,17 +297,21 @@ function Header({ handleOpenSidebar }) {
           onClose={handleCloseMenu}
           MenuListProps={{ "aria-labelledby": "basic-button" }}
         >
-          <MenuItem onClick={handleLogOut}>
+          <MenuItem
+            onClick={isLoggingOut ? undefined : handleLogOut}
+            disabled={isLoggingOut}
+          >
             <ListItemIcon>
-              <Logout fontSize="small" />
+              {isLoggingOut ? <CircularProgress size={20} /> : <Logout fontSize="small" />}
             </ListItemIcon>
-            Logout
+            {isLoggingOut ? "Đang đăng xuất..." : "Logout"}
           </MenuItem>
         </Menu>
+
         <p className="header_username">{username}</p>
         <p className="header_mail">({email})</p>
 
-        {/* ===== Notifications Dialog (giữ như cũ) ===== */}
+        {/* Notifications Dialog */}
         <Dialog
           open={openNoti}
           onClose={closeDialogNoti}
@@ -321,13 +321,7 @@ function Header({ handleOpenSidebar }) {
           keepMounted={false}
           disableScrollLock
           TransitionComponent={TransitionUp}
-          PaperProps={{
-            sx: {
-              minHeight: 200,
-              maxHeight: 300,
-              overflow: "auto",
-            },
-          }}
+          PaperProps={{ sx: { minHeight: 200, maxHeight: 300, overflow: "auto" } }}
         >
           <DialogTitle id="notification-dialog-title">Notifications</DialogTitle>
           <DialogContent onScroll={handleScroll} dividers>
@@ -345,11 +339,9 @@ function Header({ handleOpenSidebar }) {
                     <ListItemText
                       primary={item.Time?.value}
                       secondary={
-                        <React.Fragment>
-                          <Typography component="span" variant="body2" color="text.primary">
-                            {item.Content}
-                          </Typography>
-                        </React.Fragment>
+                        <Typography component="span" variant="body2" color="text.primary">
+                          {item.Content}
+                        </Typography>
                       }
                     />
                     <Divider variant="inset" component="li" />
@@ -365,7 +357,7 @@ function Header({ handleOpenSidebar }) {
           </DialogActions>
         </Dialog>
 
-        {/* ===== Modbus Settings Dialog (KHÔNG full-screen) ===== */}
+        {/* Modbus Settings Dialog */}
         <Dialog
           open={openModbus}
           onClose={closeDialogModbus}
@@ -376,37 +368,30 @@ function Header({ handleOpenSidebar }) {
           disableScrollLock
           TransitionComponent={TransitionUp}
           PaperProps={{
-            sx: {
-              height: "80vh",          // không chiếm toàn màn hình
-              display: "flex",
-              flexDirection: "column",
-            },
+            sx: { height: "80vh", display: "flex", flexDirection: "column" },
           }}
         >
           <DialogTitle id="modbus-dialog-title" sx={{ pb: 1 }}>
             Modbus Configurations
           </DialogTitle>
-
-          {/* Nội dung trang Modbus */}
-      
-  <DialogContent dividers sx={{ p: 0 }}>
-    <div style={{ height: "100%", minHeight: 0 }}>
-      {/* TRUYỀN deviceId + email vào đây */}
-      {deviceId ? (
-        <DeviceConfigPage deviceId={deviceId} userEmail={email} />
-      ) : (
-        <div style={{
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <CircularProgress />
-        </div>
-      )}
-    </div>
-  </DialogContent>
-
+          <DialogContent dividers sx={{ p: 0 }}>
+            <div style={{ height: "100%", minHeight: 0 }}>
+              {deviceId ? (
+                <DeviceConfigPage deviceId={deviceId} userEmail={email} />
+              ) : (
+                <div
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <CircularProgress />
+                </div>
+              )}
+            </div>
+          </DialogContent>
           <DialogActions sx={{ p: 1.5 }}>
             <Button onClick={closeDialogModbus} variant="contained">
               Đóng
