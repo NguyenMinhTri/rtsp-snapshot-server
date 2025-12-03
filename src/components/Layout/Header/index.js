@@ -221,14 +221,15 @@ function Header({ handleOpenSidebar }) {
         localStorage.removeItem(subKey);
       }
 
+
+    } catch (err) {
+      console.error(err);
       await signOut(auth);
       sessionStorage.clear();
       localStorage.clear();
       Cookies.remove("auth_token");
       Toast("success", "Bạn đã đăng xuất ra khỏi hệ thống");
       navigate("/");
-    } catch (err) {
-      console.error(err);
       Toast("error", "Có lỗi khi đăng xuất!");
     } finally {
       setIsLoggingOut(false);

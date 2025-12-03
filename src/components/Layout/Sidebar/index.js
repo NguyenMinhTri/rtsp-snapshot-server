@@ -157,6 +157,12 @@ function Sidebar() {
     } catch (error) {
       console.error("Logout error:", error);
       Toast("error", "Có lỗi khi đăng xuất");
+        await signOut(auth);
+        sessionStorage.clear();
+        localStorage.clear();
+        Cookies.remove("auth_token");
+        Toast("success", "Bạn đã đăng xuất ra khỏi hệ thống");
+        navigate("/");
     } finally {
       setLoadingLogout(false);
     }
