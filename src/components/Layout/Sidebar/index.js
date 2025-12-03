@@ -136,6 +136,7 @@ function Sidebar() {
   };
 
   const handleLogOut = async () => {
+    debugger;
     if (loadingLogout) return;
     setLoadingLogout(true);
 

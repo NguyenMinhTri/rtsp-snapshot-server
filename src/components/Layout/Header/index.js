@@ -212,7 +212,7 @@ function Header({ handleOpenSidebar }) {
   const handleLogOut = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
-
+    debugger;
     try {
       const token = await getToken(messaging);
       if (token) {
