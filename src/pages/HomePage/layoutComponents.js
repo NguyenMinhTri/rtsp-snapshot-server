@@ -175,7 +175,7 @@ export const CoilGridSection = ({
                           unit={` ${v.unit || ""}`}
                           state={styleForCard(v.value)}
                           fillColor="red"
-                          IsRevHighAlarm = {fullRS485Data?.IsRevHighAlarm || false}
+                          IsRevHighAlarm = {fullRS485Data?.IsHighAlarm || false}
                         />
                       </div>
                     </Grid>

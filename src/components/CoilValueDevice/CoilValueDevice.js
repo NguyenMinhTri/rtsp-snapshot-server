@@ -1,8 +1,9 @@
-// Enhanced CoilValueDevice with consistent styling
-import React from 'react';
+// Enhanced CoilValueDevice with consistent styling, transitions, and tooltip
+import React, { useRef, useState, useEffect } from 'react';
 import Check from '@mui/icons-material/Check';
 import WarningIcon from '@mui/icons-material/Warning';
 import LockIcon from '@mui/icons-material/Lock';
+import Tooltip from '@mui/material/Tooltip';
 import './CoilValueDevice.scss';
 
 export default function CoilValueDevice({ 
@@ -15,6 +16,25 @@ export default function CoilValueDevice({
   item,
   IsRevHighAlarm = false, 
 }) {
+  const labelRef = useRef(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const [previousValue, setPreviousValue] = useState(value);
+
+  // Check if text is overflowing
+  useEffect(() => {
+    const element = labelRef.current;
+    if (element) {
+      setIsOverflowing(element.scrollHeight > element.clientHeight);
+    }
+  }, [label]);
+
+  // Detect value change for transition effect
+  useEffect(() => {
+    if (previousValue !== value) {
+      setPreviousValue(value);
+    }
+  }, [value, previousValue]);
+
   // Determine icon to display
   const getIcon = () => {
     const isPump = label.toLowerCase().includes("pump") || 
@@ -34,7 +54,6 @@ export default function CoilValueDevice({
       return (
         <Check 
           className="coil-icon check-icon"
-        
         />
       );
     }
@@ -44,7 +63,6 @@ export default function CoilValueDevice({
       return (
         <Check 
           className="coil-icon check-icon"
-        
         />
       );
     }
@@ -66,11 +84,21 @@ export default function CoilValueDevice({
   };
 
   return (
-    <div className={`coil_item coil_state-${getStateClass()}`}>
+    <div className={`coil_item coil_state-${getStateClass()} ${previousValue !== value ? 'state-transitioning' : ''}`}>
       <div className="coil_item-header">
-        <div className="coil_item-name">{label}</div>
+        <Tooltip 
+          title={label} 
+          arrow 
+          placement="top"
+          disableHoverListener={!isOverflowing}
+          enterDelay={300}
+        >
+          <div className="coil_item-name" ref={labelRef}>{label}</div>
+        </Tooltip>
         {item.IsModify === false && (
-          <LockIcon className="coil-lock-icon" />
+          <Tooltip title="Locked - Cannot modify" arrow placement="top">
+            <LockIcon className="coil-lock-icon" />
+          </Tooltip>
         )}
       </div>
 

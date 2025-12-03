@@ -4,7 +4,8 @@ import { useDispatch } from "react-redux";
 import moment from "moment";
 import axios from "axios";
 import Cookies from "js-cookie";
-
+import { getToken, onMessage } from "firebase/messaging";
+import {  messaging } from "../../config/firebase";
 // MUI Components
 import { Box, Grid, TextField, Autocomplete, Backdrop, CircularProgress, Stack, Skeleton, Typography } from "@mui/material";
 import { makeStyles } from "@material-ui/styles";
@@ -142,6 +143,36 @@ const globalStyle = `
   100% { opacity: 1; transform: translateY(0); }
 }
 `;
+// Function to subscribe/unsubscribe token to/from a topic
+const subscribeTokenToTopic = async (token, topic, isSub,) => {
+    if (!token) {
+        console.error("No token available for subscription.");
+        return;
+    }
+
+    try {
+        const response = await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/subscribe-to-topic", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                token: token,
+                topic: topic,
+                isSub: isSub,
+            }),
+        });
+        
+        if (response.ok) {
+            console.log(`Successfully ${isSub ? "subscribed" : "unsubscribed"} to topic ${topic}`);
+
+        } else {
+            console.error("Failed to subscribe/unsubscribe.");
+        }
+    } catch (err) {
+        console.error("Error while subscribing/unsubscribing:", err);
+    }
+};
 export const LoadingState = (props) => (
     <>
         {/* inject animation keyframes */}
@@ -297,7 +328,135 @@ function HomePage() {
         }));
         setMenuSelect(devices);
     }, [listDevice, navigate]);
+    // Setup FCM notifications
+  // Setup FCM notifications
+  useEffect(() => {
+    if (!listDevice || !user?.email) return;
 
+    const setupNotifications = async () => {
+      try {
+        // Check if notifications are supported
+        if (typeof window.Notification === "undefined") {
+          console.log("Notifications not supported");
+          return;
+        }
+
+        // Request permission if not granted
+        if (window.Notification.permission !== "granted") {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            console.log("Notification permission denied");
+            return;
+          }
+        }
+
+        // Get FCM token
+        const currentToken = await getToken(messaging);
+        
+        if (!currentToken) {
+          console.log("No registration token available");
+          return;
+        }
+
+        console.log("FCM token:", currentToken);
+
+        // Check if already subscribed (cache in localStorage)
+        const subscriptionKey = `fcm_subscribed_${currentToken.substring(0, 20)}`;
+        const lastSubscribed = localStorage.getItem(subscriptionKey);
+        const now = Date.now();
+        
+        // Only subscribe if:
+        // 1. Never subscribed before, OR
+        // 2. Last subscription was more than 24 hours ago
+        const shouldSubscribe = !lastSubscribed || (now - parseInt(lastSubscribed)) > 24 * 60 * 60 * 1000;
+
+        if (!shouldSubscribe) {
+          console.log("Already subscribed recently, skipping...");
+          
+          // Setup message handler only
+          onMessage(messaging, handleForegroundMessage);
+          return;
+        }
+
+        console.log("Subscribing to topics...");
+
+        // Subscribe to user email topic
+        if (user.email) {
+          await subscribeTokenToTopic(
+            currentToken,
+            user.email.replace("@", ""),
+            true
+          );
+        }
+
+        // Subscribe to all device topics
+        const deviceIds = Object.keys(listDevice);
+        await Promise.all(
+          deviceIds.map(deviceId =>
+            subscribeTokenToTopic(currentToken, deviceId, true)
+          )
+        );
+
+        // Save subscription timestamp
+        localStorage.setItem(subscriptionKey, now.toString());
+        console.log("Subscription completed and cached");
+
+        // Setup foreground message handler
+        onMessage(messaging, handleForegroundMessage);
+
+      } catch (error) {
+        console.error("Error setting up notifications:", error);
+      }
+    };
+
+    // Handler for foreground messages (extracted for reuse)
+    const handleForegroundMessage = (payload) => {
+      console.log("Receive foreground notification:", payload);
+
+      const title = payload.notification?.title || "";
+      const body = payload.notification?.body || "";
+      const deviceID = payload.data?.status;
+
+      // Determine notification type
+      const isError = 
+        title.toLowerCase().includes("err") ||
+        title.toLowerCase().includes("alarm") ||
+        body.toLowerCase().includes("err") ||
+        body.toLowerCase().includes("alarm");
+
+      // Show toast with callback to navigate to device
+      Toast(
+        isError ? "error" : "info",
+        `${title}: ${body}`,
+        5000,
+        () => {
+          // Navigate to the device if valid
+          if (deviceID && listDevice[deviceID]) {
+            AsyncLocalStorage.setItem(
+              "home_station",
+              JSON.stringify({
+                id: deviceID,
+                label: listDevice[deviceID]["FullName"],
+              })
+            ).then(() => {
+              setValueSelect({
+                id: deviceID,
+                label: listDevice[deviceID]["FullName"],
+              });
+              setCameraList(listDevice[deviceID]["cameraList"] || []);
+            });
+          }
+        }
+      );
+    };
+
+    setupNotifications();
+
+    // Cleanup - no unsubscribe needed for onMessage
+    return () => {
+      // onMessage doesn't return an unsubscribe function
+    };
+  }, [listDevice, user, setValueSelect, setCameraList]);
     // Load saved station
     useEffect(() => {
         const loadStation = async () => {
@@ -1171,7 +1330,7 @@ function HomePage() {
                                         valueSelect
                                             ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
                                                 lastimeActive.slice(0, -1)
-                                            ).format("HH:mm DD/MM/YYYY")}`
+                                            ).format("HH:mm:ss DD/MM/YYYY")}`
                                             : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                                     }
                                 />

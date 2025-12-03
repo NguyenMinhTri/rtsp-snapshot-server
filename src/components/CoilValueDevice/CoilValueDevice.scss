@@ -5,8 +5,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
 
 // State variants with improved color schemes for better visibility
-
-// State variants with improved color schemes for better visibility
 .coil_state-normal {
   border: 1px solid blue;
   padding: 12px 14px;
@@ -14,7 +12,7 @@
   box-shadow: 0 2px 8px rgba(0, 200, 240, 0.25);
   background-color: cyan;
   color: blue;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 140px;
   display: flex;
   flex-direction: column;
@@ -32,7 +30,7 @@
   box-shadow: 0 2px 8px rgba(198, 40, 40, 0.2);
   background: linear-gradient(145deg, #f44336, #b71c1c);
   color: white;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   animation: pulse-error 2s infinite;
   min-height: 160px;
   display: flex;
@@ -51,7 +49,7 @@
   box-shadow: 0 2px 8px rgba(249, 168, 37, 0.2);
   background: linear-gradient(145deg, #ffeb3b, #f57f17);
   color: #212121;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 160px;
   display: flex;
   flex-direction: column;
@@ -69,7 +67,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   background: linear-gradient(145deg, #bdbdbd, #757575);
   color: rgba(255, 255, 255, 0.9);
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0.9;
   min-height: 160px;
   display: flex;
@@ -102,6 +100,7 @@
     hyphens: auto;
     flex: 1;
     padding-right: 8px;
+    cursor: help;
     
     // Limit to 3 lines
     display: -webkit-box;
@@ -129,12 +128,13 @@
 
   .coil-icon {
     font-size: 48px !important;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     
     &.pump-icon {
       height: 48px;
       width: auto;
       filter: brightness(0) invert(1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     &.check-icon {
@@ -168,6 +168,7 @@
     font-weight: 700;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     
     &.active {
       background: rgba(255, 255, 255, 0.3);
@@ -184,6 +185,7 @@
     opacity: 0.7;
     margin-left: 4px;
     flex-shrink: 0;
+    cursor: help;
   }
 }
 
@@ -205,6 +207,54 @@
   50% {
     transform: scale(1.1);
     opacity: 0.8;
+  }
+}
+
+@keyframes state-change {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes icon-pop {
+  0% {
+    transform: scale(0.8) rotate(-10deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+// State transition effect
+.state-transitioning {
+  animation: state-change 1s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  .coil-icon {
+    animation: icon-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .status-badge {
+    animation: glow-pulse 1.5s ease-in-out;
   }
 }
 
