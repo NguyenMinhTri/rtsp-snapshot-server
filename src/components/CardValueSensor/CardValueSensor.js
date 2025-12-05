@@ -68,6 +68,19 @@ export default function CardValueSensor({
       isErrorLV2 = true;
     }
 
+     // LV1 HIGH
+    if ((AL.IsAlarmHigh1 || typeof AL.IsAlarmHigh1 === "undefined") &&
+      value > AL.HighAlarmSetting1 &&
+      (AL.IsSendHighAlarm1 || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+      isErrorLV2 = true;
+    }
+    // LV1 LOW
+    else if (AL.IsAlarmLow1 &&
+      value < AL.LowAlarmSetting1 &&
+      (AL.IsSendHighAlarm1 || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
+      isErrorLV2 = true;
+    }
+
     const shouldAlarm = isErrorLV2 && isSoundEnabled && state !== "off";
 
     if (shouldAlarm) {

@@ -96,7 +96,7 @@ function ConfirmationDialogSensor(props) {
           {/* HIGH LV1 */}
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <TextField
-              label="Ngưỡng cao (Level 1)"
+              label="Ngưỡng cao (High alarm 1)"
               type="number"
               size="small"
               fullWidth
@@ -112,7 +112,7 @@ function ConfirmationDialogSensor(props) {
           {/* LOW LV1 */}
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <TextField
-              label="Ngưỡng thấp (Level 1)"
+              label="Ngưỡng thấp (Low alarm 1)"
               type="number"
               size="small"
               fullWidth
@@ -137,7 +137,7 @@ function ConfirmationDialogSensor(props) {
           {/* HIGH LV2 */}
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <TextField
-              label="Ngưỡng cao (Level 2)"
+              label="Ngưỡng cao (High alarm 2)"
               type="number"
               size="small"
               fullWidth
@@ -153,7 +153,7 @@ function ConfirmationDialogSensor(props) {
           {/* LOW LV2 */}
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <TextField
-              label="Ngưỡng thấp (Level 2)"
+              label="Ngưỡng thấp (Low alarm 2)"
               type="number"
               size="small"
               fullWidth
