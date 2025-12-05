@@ -279,22 +279,22 @@ export default function CardValueSensor({
               <span className="value-unit">{unit}</span>
             </p>
           </div>
-
-          {/* SHOW LEVEL2 */}
-          {AL.HighAlarmSetting !== "" && AL.HighAlarmSetting !== undefined && (
-            <div className="sensor_item-name">HL2: {AL.HighAlarmSetting}</div>
-          )}
-          {AL.LowAlarmSetting !== "" && AL.LowAlarmSetting !== undefined && (
-            <div className="sensor_item-name">LL2: {AL.LowAlarmSetting}</div>
-          )}
-
           {/* SHOW LEVEL1 */}
           {AL.HighAlarmSetting1 !== "" && AL.HighAlarmSetting1 !== undefined && (
-            <div className="sensor_item-name">HL1: {AL.HighAlarmSetting1}</div>
+            <div className="sensor_item-name">High Alarm 1: {AL.HighAlarmSetting1}</div>
           )}
           {AL.LowAlarmSetting1 !== "" && AL.LowAlarmSetting1 !== undefined && (
-            <div className="sensor_item-name">LL1: {AL.LowAlarmSetting1}</div>
+            <div className="sensor_item-name">Low Alarm 1: {AL.LowAlarmSetting1}</div>
           )}
+          {/* SHOW LEVEL2 */}
+          {AL.HighAlarmSetting !== "" && AL.HighAlarmSetting !== undefined && (
+            <div className="sensor_item-name">High Alarm 2: {AL.HighAlarmSetting}</div>
+          )}
+          {AL.LowAlarmSetting !== "" && AL.LowAlarmSetting !== undefined && (
+            <div className="sensor_item-name">Low Alarm 2: {AL.LowAlarmSetting}</div>
+          )}
+
+
 
           {/* Delay */}
           {AL.DelayTime !== "" && AL.DelayTime !== undefined && AL.DelayTime > 0 && (
