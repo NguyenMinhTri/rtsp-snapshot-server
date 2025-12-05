@@ -78,7 +78,7 @@ export default function CoilValueDevice({
   // Determine state class
   const getStateClass = () => {
     if (value == "1") {
-      return isHighAlarm  && IsRevHighAlarm !== true ? "error" : "normal";
+      return isHighAlarm ? "error" : "normal";
     }
     return isHighAlarm && IsRevHighAlarm !== true ? "normal" : "off";
   };

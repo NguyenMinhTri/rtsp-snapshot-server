@@ -175,7 +175,7 @@ function ConfirmationDialogSensor(props) {
           type="number"
           size="small"
           fullWidth
-          value={updatedItem?.AlarmSetting?.DelayTime ?? ""}
+          value={updatedItem?.AlarmSetting?.DelayTime ?? 0}
           onChange={(e) =>
             setUpdatedItem((prev) => ({
               ...prev,
