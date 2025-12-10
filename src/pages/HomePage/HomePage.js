@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { IconButton, Tooltip } from "@mui/material";
 import moment from "moment";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -1318,15 +1319,27 @@ function HomePage() {
 
                             {/* SubHeader chiếm phần còn lại  (và tự co giãn) */}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <SubHeader
-                                    text={
+                                <Tooltip
+                                    title={
                                         valueSelect
-                                            ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
-                                                lastimeActive.slice(0, -1)
-                                            ).format("HH:mm:ss DD/MM/YYYY")}`
-                                            : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                            ? `${valueSelect?.id}`
+                                            : "Bạn hãy chọn trạm để giám sát"
                                     }
-                                />
+                                    arrow
+                                    placement="top"
+                                >
+                                    <div>
+                                        <SubHeader
+                                            text={
+                                                valueSelect
+                                                    ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
+                                                        lastimeActive.slice(0, -1)
+                                                    ).format("HH:mm:ss DD/MM/YYYY")}`
+                                                    : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
+                                            }
+                                        />
+                                    </div>
+                                </Tooltip>
                             </Box>
 
                             {/* GridSplitControl nằm bên phải */}
