@@ -94,6 +94,16 @@ export const useResponsiveGrid = (config) => {
 
     // Map/Notes Grid Configuration
     const getMapGridSize = () => {
+      if(      hasSensors == false){
+            return {
+        xl: 6,
+        lg: 6,
+        md: 12,
+        sm: 12,
+        xs: 12,
+      };
+      }
+        else
       return {
         xl: 2,
         lg: 2,
