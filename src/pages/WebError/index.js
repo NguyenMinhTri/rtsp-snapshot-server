@@ -1,4 +1,4 @@
-import { getAuth, signOut } from "firebase/auth";
+import { getAuth, reload, signOut } from "firebase/auth";
 import Cookies from "js-cookie";
 import React from "react";
 import Toast from "../../utils/toasts";
@@ -8,23 +8,23 @@ import { useState } from "react";
 import { useEffect } from "react";
 import subscribeTokenToTopic from "../../utils/compare_date";
 import { getToken } from "firebase/messaging";
-import {  messaging } from "../../config/firebase";
-    const unsubscribeAllTopics = async (token) => {
-        const key = `fcm_topics_${token.substring(0, 20)}`;
-        const topicJson = localStorage.getItem(key);
+import { messaging } from "../../config/firebase";
+const unsubscribeAllTopics = async (token) => {
+    const key = `fcm_topics_${token.substring(0, 20)}`;
+    const topicJson = localStorage.getItem(key);
 
-        if (!topicJson) return;
+    if (!topicJson) return;
 
-        const topics = JSON.parse(topicJson);
+    const topics = JSON.parse(topicJson);
 
-        for (const topic of topics) {
-            await subscribeTokenToTopic(token, topic, false); // false = unsubscribe
-        }
+    for (const topic of topics) {
+        await subscribeTokenToTopic(token, topic, false); // false = unsubscribe
+    }
 
-        // Xóa cache sau khi unsubscribe
-        localStorage.removeItem(key);
-    };
-export default function WebError({errorMessage}) {
+    // Xóa cache sau khi unsubscribe
+    localStorage.removeItem(key);
+};
+export default function WebError({ errorMessage }) {
     const [currentDomain, setCurrentDomain] = useState("");
 
     useEffect(() => {
@@ -33,17 +33,28 @@ export default function WebError({errorMessage}) {
     const auth = getAuth();
     const navigate = useNavigate();
     const handleLogOut = async () => {
-        await signOut(auth);
+        try {
+            await signOut(auth);
 
-        const token = await getToken(messaging);
-        if (token) {
-            await unsubscribeAllTopics(token);
+            const token = await getToken(messaging);
+            if (token) {
+                await unsubscribeAllTopics(token);
+            }
+            sessionStorage.clear();
+            localStorage.clear();
+            Cookies.remove("auth_token");
+            Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
+            location.reload();
+        } catch (error) {
+             await signOut(auth);
+            console.error("Logout error:", error);
+            Toast("error", "Có lỗi khi đăng xuất");
+            sessionStorage.clear();
+            localStorage.clear();
+            Cookies.remove("auth_token");
+            Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
+            location.reload();
         }
-        sessionStorage.clear();
-        localStorage.clear();
-        Cookies.remove("auth_token");
-        Toast("success", "Bạn đã đăng xuất. Vui lòng đăng nhập lại");
-        navigate("/");
 
     };
     return (
@@ -57,8 +68,8 @@ export default function WebError({errorMessage}) {
                 // marginTop: '10%',
             }}
         >
-       
-       <p style={{ fontSize: "18px", margin: "20px 0", color: "red" }}>
+
+            <p style={{ fontSize: "18px", margin: "20px 0", color: "red" }}>
                 Có lỗi xảy ra vui lòng nhấn nút khởi động lại.
             </p>
             <p style={{ fontSize: "18px", margin: "20px 0", color: "red" }}>
