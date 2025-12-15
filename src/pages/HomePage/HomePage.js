@@ -295,7 +295,52 @@ function HomePage() {
     const { textList, inputText, setInputText, fetchDataNote, addNote } = useNotes(valueSelect, user);
     const { licenseDay, licenseMessage, licenseLockLV1, licenseLockLV2, fetchLicense } = useLicense();
     const { sendCommand } = useDeviceControl(fullRS485Data, user);
-
+    useEffect(() => {
+        const token = Cookies.get("auth_token");
+        fetch(
+            "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/getListDevices",
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Credentials": "true",
+                },
+            }
+        )
+            .then((response) => response.json())
+            .then((myJson) => {
+                setLoaded(true);
+                const res = myJson.ListDevicesOfUser;
+                const filteredObj = {};
+                Object.keys(res)
+                    .filter(
+                        (key) =>
+                            !key.includes("HUMATIC-HCE") &&
+                            !key.includes("IRO-")
+                    )
+                    .forEach((key) => {
+                        filteredObj[key] = res[key];
+                    });
+                AsyncLocalStorage.setItem(
+                    "device_user",
+                    JSON.stringify(filteredObj)
+                )
+                    .then(() => {
+                        Toast("success", "Đăng nhập thành công");
+                        // navigate('/home');
+                    })
+                    .catch(() => {
+                        Toast(
+                            "error",
+                            "Đã xảy ra lỗi trong quá trình đăng nhập"
+                        );
+                    });
+            })
+            .catch((err) => {
+                console.log({ err_loin: err });
+            });
+    }, []);
     // Set loaded state when data is ready
     useEffect(() => {
         if (fullRS485Data) {
