@@ -104,17 +104,56 @@ const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValu
     <div style={{ border: "1.5px solid #ccc", marginBottom: "10px", padding: "10px", backgroundColor: "white", fontWeight: "600", borderRadius: "3px" }}>
         <Grid container spacing={2}>
             <Grid item xs={12}>
-                <Autocomplete
-                    size="small"
-                    onChange={handleOnChangeSelectStation}
-                    options={menuValue}
-                    value={valueSelect || null}
-                    inputValue={inputValue}
-                    onInputChange={(_, newValue) => setInputValue(newValue)}
-                    getOptionLabel={(option) => option.label || ""}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderInput={(params) => <TextField {...params} label="Chọn trạm giám sát" />}
-                />
+      <Autocomplete
+            size="small"
+            options={menuValue}
+            value={valueSelect || null}
+            inputValue={inputValue}
+            onInputChange={(_, newValue) => setInputValue(newValue)}
+            onChange={handleOnChangeSelectStation}
+            getOptionLabel={(option) => option.label || ""}
+            isOptionEqualToValue={(option, value) =>
+              option.id === value.id
+            }
+
+
+            /* ================= FILTER LOGIC ================= */
+            filterOptions={(options, { inputValue }) => {
+              const raw = inputValue.trim();
+
+              // 👉 SEARCH THEO DEVICE ID (MATCH CHÍNH XÁC)
+              if (raw.startsWith('"') && raw.endsWith('"')) {
+                const keyword = raw
+                  .slice(1, -1)          // bỏ dấu "
+                  .toLowerCase();
+
+                return options.filter(
+                  (opt) => opt.id.toLowerCase() === keyword
+                );
+              }
+
+              // 👉 MẶC ĐỊNH: SEARCH THEO TÊN TRẠM
+              const keyword = raw.toLowerCase();
+              return options.filter((opt) =>
+                opt.label.toLowerCase().includes(keyword)
+              );
+            }}
+            /* ================================================= */
+
+            renderOption={(props, option) => (
+              <li {...props}>
+
+                <span>{option.label}</span>
+              </li>
+            )}
+
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label='Chọn trạm'
+              />
+            )}
+          />
             </Grid>
         </Grid>
     </div>
@@ -1377,9 +1416,13 @@ function HomePage() {
                                         <SubHeader
                                             text={
                                                 valueSelect
-                                                    ? `Thời gian dữ liệu cập nhật gần nhất ${moment(
+                                                    ? `Cập nhật lúc ${moment(
                                                         lastimeActive.slice(0, -1)
-                                                    ).format("HH:mm:ss DD/MM/YYYY")}`
+                                                    ).format("HH:mm:ss DD/MM/YYYY")}${
+                                                        fullRS485Data?.WifiInfo
+                                                            ? ` | Net: ${fullRS485Data.WifiInfo}`
+                                                            : ""
+                                                    }`
                                                     : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                                             }
                                         />
