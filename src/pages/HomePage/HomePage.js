@@ -6,7 +6,7 @@ import moment from "moment";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { getToken, onMessage } from "firebase/messaging";
-import {  messaging } from "../../config/firebase";
+import { messaging } from "../../config/firebase";
 // MUI Components
 import { Box, Grid, TextField, Autocomplete, Backdrop, CircularProgress, Stack, Skeleton, Typography } from "@mui/material";
 import { makeStyles } from "@material-ui/styles";
@@ -54,19 +54,19 @@ import { chooseSensorAction } from "../../redux/reducer/chooseSensorChart";
 
 // Styles
 import "./HomePage.scss";
- export const bulkTopicAction = async (token, topics, isSub) => {
+export const bulkTopicAction = async (token, topics, isSub) => {
     return await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        topics,
-        isSub,
-      }),
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            token,
+            topics,
+            isSub,
+        }),
     }).then((res) => res.json());
-  };
+};
 // Define styles
 const useStyles = makeStyles((theme) => ({
     container: {
@@ -99,68 +99,68 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 const normalizeText = (str = "") =>
-  str
-    .toLowerCase()
-    .normalize("NFD")                 // tách dấu
-    .replace(/[\u0300-\u036f]/g, "")  // bỏ dấu
-    .replace(/đ/g, "d")
-    .replace(/[^a-z0-9\- ]/g, "")     // bỏ ký tự lạ
-    .trim();
+    str
+        .toLowerCase()
+        .normalize("NFD")                 // tách dấu
+        .replace(/[\u0300-\u036f]/g, "")  // bỏ dấu
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9\- ]/g, "")     // bỏ ký tự lạ
+        .trim();
 // Memoized sub-components
 const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValue, handleOnChangeSelectStation }) => (
     <div style={{ border: "1.5px solid #ccc", marginBottom: "10px", padding: "10px", backgroundColor: "white", fontWeight: "600", borderRadius: "3px" }}>
         <Grid container spacing={2}>
             <Grid item xs={12}>
-      <Autocomplete
-            size="small"
-            options={menuValue}
-            value={valueSelect || null}
-            inputValue={inputValue}
-            onInputChange={(_, newValue) => setInputValue(newValue)}
-            onChange={handleOnChangeSelectStation}
-            getOptionLabel={(option) => option.label || ""}
-            isOptionEqualToValue={(option, value) =>
-              option.id === value.id
-            }
+                <Autocomplete
+                    size="small"
+                    options={menuValue}
+                    value={valueSelect || null}
+                    inputValue={inputValue}
+                    onInputChange={(_, newValue) => setInputValue(newValue)}
+                    onChange={handleOnChangeSelectStation}
+                    getOptionLabel={(option) => option.label || ""}
+                    isOptionEqualToValue={(option, value) =>
+                        option.id === value.id
+                    }
 
 
-            /* ================= FILTER LOGIC ================= */
-filterOptions={(options, { inputValue }) => {
-  const raw = inputValue.trim();
+                    /* ================= FILTER LOGIC ================= */
+                    filterOptions={(options, { inputValue }) => {
+                        const raw = inputValue.trim();
 
-            // 👉 SEARCH THEO DEVICE ID (KHI CÓ ")
-            if (raw.startsWith('"')) {
-                const keyword = normalizeText(raw.replace(/"/g, ""));
+                        // 👉 SEARCH THEO DEVICE ID (KHI CÓ ")
+                        if (raw.startsWith('"')) {
+                            const keyword = normalizeText(raw.replace(/"/g, ""));
 
-                return options.filter(
-                (opt) => normalizeText(opt.id) === keyword
-                );
-            }
+                            return options.filter(
+                                (opt) => normalizeText(opt.id) === keyword
+                            );
+                        }
 
-            // 👉 SEARCH THEO TÊN TRẠM (HỖ TRỢ KHÔNG DẤU)
-            const keyword = normalizeText(raw);
+                        // 👉 SEARCH THEO TÊN TRẠM (HỖ TRỢ KHÔNG DẤU)
+                        const keyword = normalizeText(raw);
 
-            return options.filter((opt) =>
-                normalizeText(opt.label).includes(keyword)
-            );
-            }}
+                        return options.filter((opt) =>
+                            normalizeText(opt.label).includes(keyword)
+                        );
+                    }}
 
-            /* ================================================= */
+                    /* ================================================= */
 
-            renderOption={(props, option) => (
-              <li {...props}>
+                    renderOption={(props, option) => (
+                        <li {...props}>
 
-                <span>{option.label}</span>
-              </li>
-            )}
+                            <span>{option.label}</span>
+                        </li>
+                    )}
 
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label='Chọn trạm'
-              />
-            )}
-          />
+                    renderInput={(params) => (
+                        <TextField
+                            {...params}
+                            label='Chọn trạm'
+                        />
+                    )}
+                />
             </Grid>
         </Grid>
     </div>
@@ -204,8 +204,8 @@ const globalStyle = `
 `;
 
 const saveSubscribedTopics = (token, topics) => {
-  const key = `fcm_topics_${token.substring(0, 20)}`;
-  localStorage.setItem(key, JSON.stringify(topics));
+    const key = `fcm_topics_${token.substring(0, 20)}`;
+    localStorage.setItem(key, JSON.stringify(topics));
 };
 export const LoadingState = (props) => (
     <>
@@ -407,141 +407,141 @@ function HomePage() {
         }));
         setMenuSelect(devices);
     }, [listDevice, navigate]);
-  // Setup FCM notifications
-  useEffect(() => {
-    if (!listDevice || !user?.email) return;
+    // Setup FCM notifications
+    useEffect(() => {
+        if (!listDevice || !user?.email) return;
 
-    const setupNotifications = async () => {
-      try {
-        // Check if notifications are supported
-        if (typeof window.Notification === "undefined") {
-          console.log("Notifications not supported");
-          return;
-        }
+        const setupNotifications = async () => {
+            try {
+                // Check if notifications are supported
+                if (typeof window.Notification === "undefined") {
+                    console.log("Notifications not supported");
+                    return;
+                }
 
-        // Request permission if not granted
-        if (window.Notification.permission !== "granted") {
-          const permission = await Notification.requestPermission();
-          if (permission !== "granted") {
-            console.log("Notification permission denied");
-            return;
-          }
-        }
+                // Request permission if not granted
+                if (window.Notification.permission !== "granted") {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== "granted") {
+                        console.log("Notification permission denied");
+                        return;
+                    }
+                }
 
-        // Get FCM token
-        const currentToken = await getToken(messaging);
-        
-        if (!currentToken) {
-          console.log("No registration token available");
-          return;
-        }
+                // Get FCM token
+                const currentToken = await getToken(messaging);
 
-        console.log("FCM token:", currentToken);
+                if (!currentToken) {
+                    console.log("No registration token available");
+                    return;
+                }
 
-        // Check if already subscribed (cache in localStorage)
-        const subscriptionKey = `fcm_subscribed_${currentToken.substring(0, 20)}`;
-        const lastSubscribed = localStorage.getItem(subscriptionKey);
-        const now = Date.now();
-        
-        // Only subscribe if:
-        // 1. Never subscribed before, OR
-        // 2. Last subscription was more than 24 hours ago
-        const shouldSubscribe = !lastSubscribed || (now - parseInt(lastSubscribed)) > 24 * 60 * 60 * 1000;
+                console.log("FCM token:", currentToken);
 
-        if (!shouldSubscribe) {
-          console.log("Already subscribed recently, skipping...");
-          
-          // Setup message handler only
-          onMessage(messaging, handleForegroundMessage);
-          return;
-        }
+                // Check if already subscribed (cache in localStorage)
+                const subscriptionKey = `fcm_subscribed_${currentToken.substring(0, 20)}`;
+                const lastSubscribed = localStorage.getItem(subscriptionKey);
+                const now = Date.now();
 
-        console.log("Subscribing to topics...");
+                // Only subscribe if:
+                // 1. Never subscribed before, OR
+                // 2. Last subscription was more than 24 hours ago
+                const shouldSubscribe = !lastSubscribed || (now - parseInt(lastSubscribed)) > 24 * 60 * 60 * 1000;
 
-  
+                if (!shouldSubscribe) {
+                    console.log("Already subscribed recently, skipping...");
 
-        // Subscribe to all device topics
-        const deviceIds = Object.keys(listDevice);
+                    // Setup message handler only
+                    onMessage(messaging, handleForegroundMessage);
+                    return;
+                }
 
-        // Build topic list
-        const topicList = [
-        user.email.replace("@", ""),
-        ...deviceIds
-        ];
-
-        // Subscribe
-        // Subscribe to all device topics (FAST version)
-        if (topicList.length > 0) {
-            debugger;
-            const result = await bulkTopicAction(currentToken, topicList, true);
-            console.log("Bulk subscribe result:", result);
-        }
+                console.log("Subscribing to topics...");
 
 
 
-        // Save subscribed topics locally (for logout unsub)
-        saveSubscribedTopics(currentToken, topicList);
+                // Subscribe to all device topics
+                const deviceIds = Object.keys(listDevice);
 
-        // Save timestamp
-        localStorage.setItem(subscriptionKey, now.toString());
-        console.log("Subscription completed and cached");
+                // Build topic list
+                const topicList = [
+                    user.email.replace("@", ""),
+                    ...deviceIds
+                ];
 
-        // Setup foreground message handler
-        onMessage(messaging, handleForegroundMessage);
+                // Subscribe
+                // Subscribe to all device topics (FAST version)
+                if (topicList.length > 0) {
+                    debugger;
+                    const result = await bulkTopicAction(currentToken, topicList, true);
+                    console.log("Bulk subscribe result:", result);
+                }
 
-      } catch (error) {
-        console.error("Error setting up notifications:", error);
-      }
-    };
 
-    // Handler for foreground messages (extracted for reuse)
-    const handleForegroundMessage = (payload) => {
-      console.log("Receive foreground notification:", payload);
 
-      const title = payload.notification?.title || "";
-      const body = payload.notification?.body || "";
-      const deviceID = payload.data?.status;
+                // Save subscribed topics locally (for logout unsub)
+                saveSubscribedTopics(currentToken, topicList);
 
-      // Determine notification type
-      const isError = 
-        title.toLowerCase().includes("err") ||
-        title.toLowerCase().includes("alarm") ||
-        body.toLowerCase().includes("err") ||
-        body.toLowerCase().includes("alarm");
+                // Save timestamp
+                localStorage.setItem(subscriptionKey, now.toString());
+                console.log("Subscription completed and cached");
 
-      // Show toast with callback to navigate to device
-      Toast(
-        isError ? "error" : "info",
-        `${title}: ${body}`,
-        5000,
-        () => {
-          // Navigate to the device if valid
-          if (deviceID && listDevice[deviceID]) {
-            AsyncLocalStorage.setItem(
-              "home_station",
-              JSON.stringify({
-                id: deviceID,
-                label: listDevice[deviceID]["FullName"],
-              })
-            ).then(() => {
-              setValueSelect({
-                id: deviceID,
-                label: listDevice[deviceID]["FullName"],
-              });
-              setCameraList(listDevice[deviceID]["cameraList"] || []);
-            });
-          }
-        }
-      );
-    };
+                // Setup foreground message handler
+                onMessage(messaging, handleForegroundMessage);
 
-    setupNotifications();
+            } catch (error) {
+                console.error("Error setting up notifications:", error);
+            }
+        };
 
-    // Cleanup - no unsubscribe needed for onMessage
-    return () => {
-      // onMessage doesn't return an unsubscribe function
-    };
-  }, [listDevice, user, setValueSelect, setCameraList]);
+        // Handler for foreground messages (extracted for reuse)
+        const handleForegroundMessage = (payload) => {
+            console.log("Receive foreground notification:", payload);
+
+            const title = payload.notification?.title || "";
+            const body = payload.notification?.body || "";
+            const deviceID = payload.data?.status;
+
+            // Determine notification type
+            const isError =
+                title.toLowerCase().includes("err") ||
+                title.toLowerCase().includes("alarm") ||
+                body.toLowerCase().includes("err") ||
+                body.toLowerCase().includes("alarm");
+
+            // Show toast with callback to navigate to device
+            Toast(
+                isError ? "error" : "info",
+                `${title}: ${body}`,
+                5000,
+                () => {
+                    // Navigate to the device if valid
+                    if (deviceID && listDevice[deviceID]) {
+                        AsyncLocalStorage.setItem(
+                            "home_station",
+                            JSON.stringify({
+                                id: deviceID,
+                                label: listDevice[deviceID]["FullName"],
+                            })
+                        ).then(() => {
+                            setValueSelect({
+                                id: deviceID,
+                                label: listDevice[deviceID]["FullName"],
+                            });
+                            setCameraList(listDevice[deviceID]["cameraList"] || []);
+                        });
+                    }
+                }
+            );
+        };
+
+        setupNotifications();
+
+        // Cleanup - no unsubscribe needed for onMessage
+        return () => {
+            // onMessage doesn't return an unsubscribe function
+        };
+    }, [listDevice, user, setValueSelect, setCameraList]);
     // Load saved station
     useEffect(() => {
         const loadStation = async () => {
@@ -1425,10 +1425,9 @@ function HomePage() {
                                                 valueSelect
                                                     ? `Cập nhật lúc ${moment(
                                                         lastimeActive.slice(0, -1)
-                                                    ).format("HH:mm:ss DD/MM/YYYY")}${
-                                                        fullRS485Data?.WifiInfo
-                                                            ? ` | Net: ${fullRS485Data.WifiInfo}`
-                                                            : ""
+                                                    ).format("HH:mm:ss DD/MM/YYYY")}${fullRS485Data?.WifiInfo
+                                                        ? ` | Net: ${fullRS485Data.WifiInfo}`
+                                                        : ""
                                                     }`
                                                     : "BẠN HÃY CHỌN TRẠM ĐỂ GIÁM SÁT"
                                             }
