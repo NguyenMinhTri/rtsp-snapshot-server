@@ -98,7 +98,14 @@ const useStyles = makeStyles((theme) => ({
         flexGrow: 1,
     },
 }));
-
+const normalizeText = (str = "") =>
+  str
+    .toLowerCase()
+    .normalize("NFD")                 // tách dấu
+    .replace(/[\u0300-\u036f]/g, "")  // bỏ dấu
+    .replace(/đ/g, "d")
+    .replace(/[^a-z0-9\- ]/g, "")     // bỏ ký tự lạ
+    .trim();
 // Memoized sub-components
 const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValue, handleOnChangeSelectStation }) => (
     <div style={{ border: "1.5px solid #ccc", marginBottom: "10px", padding: "10px", backgroundColor: "white", fontWeight: "600", borderRadius: "3px" }}>
@@ -118,26 +125,26 @@ const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValu
 
 
             /* ================= FILTER LOGIC ================= */
-            filterOptions={(options, { inputValue }) => {
-              const raw = inputValue.trim();
+filterOptions={(options, { inputValue }) => {
+  const raw = inputValue.trim();
 
-              // 👉 SEARCH THEO DEVICE ID (MATCH CHÍNH XÁC)
-              if (raw.startsWith('"') && raw.endsWith('"')) {
-                const keyword = raw
-                  .slice(1, -1)          // bỏ dấu "
-                  .toLowerCase();
+            // 👉 SEARCH THEO DEVICE ID (KHI CÓ ")
+            if (raw.startsWith('"')) {
+                const keyword = normalizeText(raw.replace(/"/g, ""));
 
                 return options.filter(
-                  (opt) => opt.id.toLowerCase() === keyword
+                (opt) => normalizeText(opt.id) === keyword
                 );
-              }
+            }
 
-              // 👉 MẶC ĐỊNH: SEARCH THEO TÊN TRẠM
-              const keyword = raw.toLowerCase();
-              return options.filter((opt) =>
-                opt.label.toLowerCase().includes(keyword)
-              );
+            // 👉 SEARCH THEO TÊN TRẠM (HỖ TRỢ KHÔNG DẤU)
+            const keyword = normalizeText(raw);
+
+            return options.filter((opt) =>
+                normalizeText(opt.label).includes(keyword)
+            );
             }}
+
             /* ================================================= */
 
             renderOption={(props, option) => (
