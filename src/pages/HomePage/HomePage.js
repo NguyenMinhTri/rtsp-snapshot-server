@@ -1315,7 +1315,7 @@ function HomePage() {
         );
     }
 
-    if (!loaded && !fullRS485Data) {
+    if (!loaded || !fullRS485Data) {
         return (
             <Backdrop open={true}>
                 <CircularProgress color="inherit" />
