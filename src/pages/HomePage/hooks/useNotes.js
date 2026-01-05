@@ -1,10 +1,16 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback,useEffect } from "react";
 import moment from "moment";
 
 
 export const useNotes = (valueSelect, user) => {
   const [textList, setTextList] = useState([]);
   const [inputText, setInputText] = useState("");
+
+  // ✅ RESET khi valueSelect đổi
+  useEffect(() => {
+    setTextList([]);
+    setInputText("");
+  }, [valueSelect?.id]);
 
   const fetchDataNote = useCallback(async () => {
     if (!valueSelect?.id) return;

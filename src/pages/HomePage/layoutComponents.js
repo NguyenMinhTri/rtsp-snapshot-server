@@ -2,16 +2,22 @@
 // LAYOUT COMPONENTS - Reusable Grid Wrappers
 // ============================================
 
-import React from "react";
+import React,  {useRef ,  useEffect ,useState } from "react";
 import { 
   Grid, 
   Skeleton, 
   Paper, 
   Typography, 
+  Box,
   TextField, 
   Button, 
+  Divider,
+  Chip,
   Stack 
 } from "@mui/material";
+import SendIcon from '@mui/icons-material/Send';
+import ImageIcon from '@mui/icons-material/Image';
+import ImageNote from "../../components/ImageNote";
 // Styles
 import "./CoilGridSection.scss";
 import moment from "moment";
@@ -235,78 +241,280 @@ export const MapSection = ({
 /**
  * Notes/Chat Section
  */
+
+
+// Enhanced NotesSection Component
 export const NotesSection = ({
   gridConfig,
   deviceId,
   deviceType,
-  textList,
+  textList = [],
   inputText,
   handleInputChange,
   handleKeyPress,
   addTextToList,
   classes,
   IFrameExcelCheckList,
-  ImageNote, // Add ImageNote as prop
+  isLoading = false, // Thêm prop isLoading
 }) => {
+  const [contentHeight, setContentHeight] = useState(0);
+  const contentRef = useRef(null);
+  
   const isNNV = deviceId?.includes("NNV");
   const isBienTan = deviceId?.includes("A-BIENTAN-1");
   const showNotes = deviceId?.includes("NNV") || deviceId?.includes("TPN") || deviceType !== 0;
 
+  // Tính chiều cao của content
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentHeight(contentRef.current.scrollHeight);
+    }
+  }, [textList]);
+
   if (!showNotes) return null;
+
+ 
+  // Format timestamp
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    return moment(timestamp).format("HH:mm DD/MM/YYYY");
+  };
 
   return (
     <ResponsiveGridItem gridConfig={gridConfig}>
-      <div className={classes.container}>
-        <div className={classes.inputContainer}>
-          {isNNV ? (
-            <Grid xs={12} sm={12}>
-              <Stack spacing={1} direction="row">
-                <TextField
-                  className={classes.input}
-                  label="Type a message"
-                  value={inputText}
-                  onChange={handleInputChange}
-                  onKeyPress={handleKeyPress}
-                  size="small"
-                  multiline
-                  variant="outlined"
-                />
-                <Button variant="contained" color="primary" onClick={addTextToList}>
-                  Send
-                </Button>
-              </Stack>
-            </Grid>
-          ) : (
-            <span style={{ fontSize: "18px", marginBottom: "10px", fontWeight: "600" }}>
-              Danh sách ghi chú
-            </span>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 2, 
+          borderBottom: 1, 
+          borderColor: 'divider',
+          bgcolor: 'background.default'
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Typography variant="h6" fontWeight={600} color="text.primary">
+            {isNNV ? '💬 Tin nhắn' : '📝 Danh sách ghi chú'}
+          </Typography>
+          {textList.length > 0 && (
+            <Chip 
+              label={textList.length} 
+              size="small" 
+              color="primary"
+              sx={{ 
+                minWidth: 32,
+                fontWeight: 600,
+                height: 24
+              }}
+            />
           )}
-        </div>
+        </Stack>
+      </Paper>
 
-        {isBienTan ? (
-          <IFrameExcelCheckList valueSelectId="https://docs.google.com/spreadsheets/d/1dKFjIrD4pPdA8BgLOaDNBWlXOFIEIel0_7n1zokufbs/edit?usp=sharing&rm=minimal&single=false&zoom=75" />
-        ) : (
-          <Paper className={classes.chatContainer}>
-            {textList.map((message, index) => (
-              <div className={classes.message} key={index}>
-                <Stack sx={{ p: 1 }} spacing={0.5}>
-                  <Typography variant="subtitle1" color="primary">
-                    {message.name} - {moment( message.timestamp).format("HH:mm:ss DD/MM/YYYY")}
-                  </Typography>
-                  <Typography variant="body1">{message.content}</Typography>
-                </Stack>
-                {message.Image?.map((urlImg, idx) => (
-                  <ImageNote key={idx} imageUrl={urlImg} />
+      {/* Content */}
+      {isBienTan ? (
+        <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+          <IFrameExcelCheckList 
+            valueSelectId="https://docs.google.com/spreadsheets/d/1dKFjIrD4pPdA8BgLOaDNBWlXOFIEIel0_7n1zokufbs/edit?usp=sharing&rm=minimal&single=false&zoom=75" 
+          />
+        </Box>
+      ) : (
+        <Paper 
+          elevation={0}
+          sx={{ 
+            flexGrow: 1,
+            bgcolor: '#fafafa',
+            position: 'relative',
+            overflow: contentHeight > 392 ? 'auto' : 'visible',
+            maxHeight: contentHeight > 392 ? '392px' : 'none',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              bgcolor: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              bgcolor: 'rgba(0,0,0,0.2)',
+              borderRadius: '4px',
+              '&:hover': {
+                bgcolor: 'rgba(0,0,0,0.3)',
+              }
+            }
+          }}
+        >
+          {isLoading ? (
+            <Box sx={{ p: 2 }}>
+              <Stack spacing={2}>
+                {[1, 2, 3].map((item) => (
+                  <Box key={item}>
+                    <Stack spacing={1}>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <Skeleton variant="text" width={120} height={20} />
+                        <Skeleton variant="text" width={100} height={16} />
+                      </Stack>
+                      <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+                    </Stack>
+                    {item < 3 && <Divider sx={{ my: 1.5 }} />}
+                  </Box>
                 ))}
-              </div>
-            ))}
-          </Paper>
-        )}
-      </div>
+              </Stack>
+            </Box>
+          ) : (
+            <Stack spacing={0} sx={{ p: 2 }} ref={contentRef}>
+              {textList.length === 0 ? (
+                <Box 
+                  sx={{ 
+                    textAlign: 'center', 
+                    py: 8,
+                    color: 'text.secondary'
+                  }}
+                >
+                  <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
+                  <Typography variant="body1" sx={{ opacity: 0.6 }}>
+                    Đang tải ghi chú...
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1, opacity: 0.5 }}>
+                    Vui lòng chờ trong giây lát
+                  </Typography>
+                </Box>
+              ) : (
+                textList.map((message, index) => (
+                  <Box key={index}>
+                    <Stack 
+                      spacing={0.75}
+                      sx={{ 
+                        py: 2,
+                        px: 1.5,
+                        borderRadius: 1,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(0,0,0,0.03)',
+                        }
+                      }}
+                    >
+                      <Stack 
+                        direction="row" 
+                        alignItems="center" 
+                        spacing={1.5}
+                        flexWrap="wrap"
+                      >
+                        <Typography 
+                          variant="subtitle2" 
+                          fontWeight={600}
+                          color="primary"
+                          sx={{ fontSize: '0.9rem' }}
+                        >
+                          {message.name}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ 
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                            fontSize: '0.75rem'
+                          }}
+                        >
+                          🕒 {formatTime(message.timestamp)}
+                        </Typography>
+                      </Stack>
+                      
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          whiteSpace: 'pre-wrap',
+                          wordBreak: 'break-word',
+                          lineHeight: 1.6,
+                          color: 'text.primary'
+                        }}
+                      >
+                        {message.content}
+                      </Typography>
+
+                      {message.Image && message.Image.length > 0 && (
+                        <Stack 
+                          direction="row" 
+                          spacing={1.5} 
+                          flexWrap="wrap"
+                          sx={{ mt: 1, gap: 1.5 }}
+                        >
+                          {message.Image.map((urlImg, idx) => (
+                            <ImageNote key={idx} imageUrl={urlImg} />
+                          ))}
+                        </Stack>
+                      )}
+                    </Stack>
+                    {index < textList.length - 1 && (
+                      <Divider sx={{ my: 0.5, opacity: 0.6 }} />
+                    )}
+                  </Box>
+                ))
+              )}
+            </Stack>
+          )}
+        </Paper>
+      )}
+
+      {/* Input Area */}
+      {isNNV && (
+        <Paper 
+          elevation={4}
+          sx={{ 
+            p: 2,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper'
+          }}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="flex-end">
+            <TextField
+              fullWidth
+              placeholder="Nhập tin nhắn của bạn..."
+              value={inputText}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              size="small"
+              multiline
+              maxRows={4}
+              variant="outlined"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: '#f5f5f5',
+                  '&:hover': {
+                    bgcolor: '#eeeeee'
+                  },
+                  '&.Mui-focused': {
+                    bgcolor: 'background.paper'
+                  }
+                }
+              }}
+            />
+            <Button 
+              variant="contained" 
+              onClick={addTextToList}
+              disabled={!inputText?.trim()}
+              startIcon={<SendIcon />}
+              sx={{ 
+                minWidth: 100,
+                height: 40,
+                px: 2,
+                boxShadow: 2,
+                '&:hover': {
+                  boxShadow: 4
+                }
+              }}
+            >
+              Gửi
+            </Button>
+          </Stack>
+        </Paper>
+      )}
+    </Box>
     </ResponsiveGridItem>
   );
 };
-
 /**
  * Chart Section with Date Controls
  */
