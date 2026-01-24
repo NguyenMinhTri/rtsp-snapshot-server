@@ -323,6 +323,114 @@
     }
 }
 
+// Value trend animations
+@keyframes value-increase {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes value-decrease {
+    0% {
+        transform: scale(1);
+    }
+
+    25% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes trend-icon-bounce {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.2);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes trend-icon-bounce-down {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.5);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(4px) scale(1.2);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+// Trend icon styles
+.trend-icon {
+    font-size: 22px !important;
+    margin-left: 4px;
+    vertical-align: middle;
+    color: inherit;
+
+    &.trend-up-icon {
+        animation: trend-icon-bounce 0.5s ease-out;
+        filter: brightness(1.3) drop-shadow(0 0 4px rgba(255, 255, 255, 0.5));
+    }
+
+    &.trend-down-icon {
+        animation: trend-icon-bounce-down 0.5s ease-out;
+        filter: brightness(0.8) drop-shadow(0 0 4px rgba(0, 0, 0, 0.3));
+    }
+}
+
+// Trend state classes for value container
+.sensor_item-value {
+    &.trend-up {
+        .value-number {
+            animation: value-increase 0.6s ease-out;
+            filter: brightness(1.2);
+            text-shadow:
+                0 0 12px rgba(255, 255, 255, 0.6),
+                0 2px 6px rgba(0, 0, 0, 0.3) !important;
+        }
+    }
+
+    &.trend-down {
+        .value-number {
+            animation: value-decrease 0.6s ease-out;
+            filter: brightness(0.85);
+            text-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.4) !important;
+        }
+    }
+}
+
+// Value animating class for number pop effect
+.value-animating {
+    transition: filter 0.3s ease, text-shadow 0.3s ease;
+}
+
 // Responsive adjustments for smaller screens
 @media (max-width: 1200px) {
     .sensor_item {

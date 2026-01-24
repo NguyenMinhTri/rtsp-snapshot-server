@@ -289,7 +289,7 @@ function Header({ handleOpenSidebar }) {
         <Avatar
           alt="user"
           src={
-            !imgUserLogin || imgUserLogin === "undefined"
+            !imgUserLogin || imgUserLogin === "undefined" || imgUserLogin === "null"
               ? "/image/navis.png"
               : imgUserLogin
           }
@@ -314,8 +314,8 @@ function Header({ handleOpenSidebar }) {
           </MenuItem>
         </Menu>
 
-        <p className="header_username">{username}</p>
-        <p className="header_mail">({email})</p>
+        <p className="header_username">{username && username !== "null" ? username : "Navis"}</p>
+        {email && email !== "null" && <p className="header_mail">({email})</p>}
 
         {/* Notifications Dialog */}
         <Dialog

@@ -3,6 +3,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { IconButton, Tooltip } from "@mui/material";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import "./CardValueSensor.scss";
 import Chart from "chart.js/auto";
 
@@ -39,6 +42,11 @@ export default function CardValueSensor({
   const chartRef = useRef(null);
   const [chartInstance, setChartInstance] = useState(null);
 
+  // Track previous value for trend animation
+  const [previousValue, setPreviousValue] = useState(null);
+  const [trend, setTrend] = useState("stable"); // "up", "down", "stable"
+  const [isAnimating, setIsAnimating] = useState(false);
+
   // Individual sound control for this sensor
   const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
     const saved = localStorage.getItem(`sensor-sound-${deviceId}`);
@@ -49,6 +57,33 @@ export default function CardValueSensor({
   useEffect(() => {
     localStorage.setItem(`sensor-sound-${deviceId}`, isSoundEnabled);
   }, [isSoundEnabled, deviceId]);
+
+  // Track value changes for trend animation
+  useEffect(() => {
+    const currentVal = parseFloat(value);
+    const prevVal = parseFloat(previousValue);
+
+    if (previousValue !== null && !isNaN(currentVal) && !isNaN(prevVal)) {
+      if (currentVal > prevVal) {
+        setTrend("up");
+        setIsAnimating(true);
+      } else if (currentVal < prevVal) {
+        setTrend("down");
+        setIsAnimating(true);
+      } else {
+        setTrend("stable");
+      }
+
+      // Reset animation after 1.5 seconds
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+
+    setPreviousValue(value);
+  }, [value]);
 
   // Check alarm state and update global alarm
   useEffect(() => {
@@ -68,7 +103,7 @@ export default function CardValueSensor({
       isErrorLV2 = true;
     }
 
-     // LV1 HIGH
+    // LV1 HIGH
     if ((AL.IsAlarmHigh1 || typeof AL.IsAlarmHigh1 === "undefined") &&
       value > AL.HighAlarmSetting1 &&
       (AL.IsSendHighAlarm1 || AL.DelayTime == 0 || typeof AL.DelayTime == "undefined")) {
@@ -283,12 +318,20 @@ export default function CardValueSensor({
 
           </div>
 
-          <div className="sensor_item-value">
+          <div className={`sensor_item-value ${isAnimating ? `trend-${trend}` : ''}`}>
             <p>
-              <span className="value-number">{(deviceId.includes("_") || deviceId.includes("HCM"))
-                ? formatValue(value)
-                : value
-              }</span>
+              <span className={`value-number ${isAnimating ? 'value-animating' : ''}`}>
+                {(deviceId.includes("_") || deviceId.includes("HCM"))
+                  ? formatValue(value)
+                  : value
+                }
+              </span>
+              {isAnimating && trend === "up" && (
+                <TrendingUpIcon className="trend-icon trend-up-icon" />
+              )}
+              {isAnimating && trend === "down" && (
+                <TrendingDownIcon className="trend-icon trend-down-icon" />
+              )}
               <span className="value-unit">{unit}</span>
             </p>
           </div>

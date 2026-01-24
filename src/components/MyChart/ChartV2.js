@@ -156,11 +156,9 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
     const endDataChart = Array.from(dataChart.values());
     setLoading(false);
 
-    if (
-      [...listSensorExistData].length > 0 &&
-      endDataChart.length > 0 &&
-      endDataChart.length >= chartData.length
-    ) {
+    // Always set data if we have valid results
+    // Removed `endDataChart.length >= chartData.length` check as it uses stale closure value
+    if ([...listSensorExistData].length > 0 && endDataChart.length > 0) {
       setCategoryTime([...timeCategory]);
       setChartData(endDataChart);
       dispatch(listSensorChartAction([...listSensorExistData]));
