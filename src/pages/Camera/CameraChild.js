@@ -76,19 +76,24 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
     }, [ipCamera]);
 
     // Calculate grid size based on camera count and dialog mode
+    // For homepage: 2+ cameras use 2x2 grid (6 cols each)
     const getGridSize = useCallback((cameraCount) => {
         if (resDialog) {
             return cameraCount > 1 ? 6 : 12;
         }
-        return 12;
+        // Homepage: use 2x2 grid for 2+ cameras
+        return cameraCount > 1 ? 6 : 12;
     }, [resDialog]);
 
-    // Calculate video height
+    // Calculate video height - smaller for grid display
     const getVideoHeight = useCallback((cameraCount) => {
         if (resDialog) {
-            return cameraCount > 1 ? 450 : 600;
+            return cameraCount > 1 ? 350 : 500;
         }
-        return cameraCount > 1 ? 280 : 450;
+        // Homepage: smaller heights for compact grid
+        if (cameraCount === 1) return 280;
+        if (cameraCount === 2) return 180;
+        return 220; // 3-4 cameras in 2x2 grid
     }, [resDialog]);
 
     // Empty camera list state

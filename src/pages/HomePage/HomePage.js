@@ -1266,11 +1266,22 @@ function HomePage() {
         return [];
     }, [listDevice, valueSelect]);
 
-    // Layout configuration
+    // Determine if map/notes should show (for grid calculation)
+    const shouldShowNotes = deviceTypeHelpers.needsNotes(valueSelect?.id, deviceType);
+    const hasValidCoordinates = valueSelect &&
+        listDevice[valueSelect?.id]?.latitude &&
+        listDevice[valueSelect?.id]?.longitude;
+    const shouldShowDoubleMap = deviceTypeHelpers.needsDoubleMap(valueSelect?.id, deviceType);
+
+    // Layout configuration - pass visibility flags for dynamic sizing
     const gridLayout = useResponsiveGrid({
         hasSensors: layoutConditions.shouldShowSensors(dataSensor),
         hasCoils: layoutConditions.shouldShowCoils(dataCoil),
         hasCameras: layoutConditions.shouldShowCameras(cameraList, licenseLockLV1),
+        // Map shows when: has coordinates AND (not showing notes OR shouldShowDoubleMap)
+        hasMap: hasValidCoordinates && (!shouldShowNotes || shouldShowDoubleMap),
+        // Notes show when has data or is NNV
+        hasNotes: shouldShowNotes && (textList?.length > 0 || valueSelect?.id?.includes("NNV")),
         deviceType,
         deviceId: valueSelect?.id || "",
         sensorCount: dataSensor?.[0]?.length || 0,
@@ -1279,8 +1290,6 @@ function HomePage() {
 
     const chartType = getChartComponent(valueSelect?.id || "");
     const isCNVDevice = layoutConditions.isCNVDevice(valueSelect);
-    const shouldShowNotes = deviceTypeHelpers.needsNotes(valueSelect?.id, deviceType);
-    const shouldShowDoubleMap = deviceTypeHelpers.needsDoubleMap(valueSelect?.id, deviceType);
 
     // Export buttons configuration with handlers
     const exportButtons = useMemo(() => {
@@ -1503,10 +1512,10 @@ function HomePage() {
                                 <div style={{ margin: "10px 0" }}>
                                     <Grid container spacing={1.5}>
 
-                                        {/* Notes or Map 1 */}
-                                        {shouldShowNotes ? (
+                                        {/* Notes Section - uses notes grid config */}
+                                        {shouldShowNotes && (
                                             <NotesSection
-                                                gridConfig={gridLayout.map}
+                                                gridConfig={gridLayout.notes}
                                                 deviceId={valueSelect?.id}
                                                 deviceType={deviceType}
                                                 textList={textList}
@@ -1518,25 +1527,16 @@ function HomePage() {
                                                 IFrameExcelCheckList={IFrameExcelCheckList}
                                                 ImageNote={ImageNote}
                                             />
-                                        ) : (
-                                            <MapSection
-                                                gridConfig={gridLayout.map}
-                                                valueSelect={valueSelect}
-                                                dataCoordinates={dataCoordinates}
-                                                listDevice={listDevice}
-                                                MapComponent={MapD}
-                                            />
                                         )}
 
-                                        {/* Map 2 */}
-                                        {shouldShowDoubleMap && (
+                                        {/* Map Section - shows alongside notes when shouldShowDoubleMap */}
+                                        {(shouldShowDoubleMap || (!shouldShowNotes && hasValidCoordinates)) && (
                                             <MapSection
                                                 gridConfig={gridLayout.map}
                                                 valueSelect={valueSelect}
                                                 dataCoordinates={dataCoordinates}
                                                 listDevice={listDevice}
                                                 MapComponent={MapD}
-                                                zoomDefault={12}
                                             />
                                         )}
 

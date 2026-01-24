@@ -395,7 +395,7 @@ const OptimizedCameraPlayer = memo(({
                 style={{
                     width: "100%",
                     height: "100%",
-                    objectFit: "contain",
+                    objectFit: "cover", // Fill entire space
                     opacity: status === VideoStatus.PLAYING ? 1 : 0,
                     transition: "opacity 0.3s ease",
                 }}
