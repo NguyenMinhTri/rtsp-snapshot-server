@@ -428,7 +428,7 @@ const OptimizedCameraPlayer = memo(({
                     left: 0,
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
+                    objectFit: "contain",
                     zIndex: showCanvas ? 2 : 0,
                     opacity: showCanvas ? 1 : 0,
                     transition: "opacity 0.3s ease",
@@ -441,7 +441,7 @@ const OptimizedCameraPlayer = memo(({
                 style={{
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover",
+                    objectFit: "contain",
                     opacity: !showCanvas && status === VideoStatus.PLAYING ? 1 : showCanvas ? 0 : 0.3,
                     transition: "opacity 0.3s ease",
                 }}
