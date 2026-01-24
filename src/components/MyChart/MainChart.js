@@ -79,7 +79,7 @@ function MainChart({ endDate, startDate, deviceUser, dataRealTime, isLiveMode })
 
         const now = new Date();
         const point = {
-            time: moment(now).format("DD/MM HH:mm"),
+            time: moment(now).format("DD/MM HH:mm:ss"),
             timestamp: now.getTime(),
         };
 
@@ -350,7 +350,7 @@ function MainChart({ endDate, startDate, deviceUser, dataRealTime, isLiveMode })
                     return obj;
                 });
 
-                c.push({ time: moment(v.time).format("DD/MM HH:mm") });
+                c.push({ time: moment(v.time).format("DD/MM HH:mm:ss") });
                 c.push({ timestamp: new Date(v.time).getTime() });
                 if (i === arr.length - 1) {
                     for (let key in previousDataSensor) {

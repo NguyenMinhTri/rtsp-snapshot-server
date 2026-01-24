@@ -88,15 +88,18 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
     }, [resDialog]);
 
     // Calculate video height based on camera count
+    // Optimized for 420px section height (header ~44px, padding ~8px)
+    // Available height: ~368px for cameras
     const getVideoHeight = useCallback((cameraCount) => {
         if (resDialog) {
-            return cameraCount === 4 ? 300 : 400;
+            // Dialog mode: more space available
+            return cameraCount === 4 ? 320 : 450;
         }
-        // Homepage heights - larger for fewer cameras
-        if (cameraCount === 1) return 320;
-        if (cameraCount === 2) return 250;
-        if (cameraCount === 3) return 200;
-        return 200; // 4 cameras in 2x2 grid
+        // Homepage heights - optimized for 420px section
+        if (cameraCount === 1) return 360;
+        if (cameraCount === 2) return 180;
+        if (cameraCount === 3) return 115;
+        return 175; // 4 cameras in 2x2 grid
     }, [resDialog]);
 
     // Empty camera list state

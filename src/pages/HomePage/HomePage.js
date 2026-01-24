@@ -201,6 +201,17 @@ const globalStyle = `
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes logoFloat {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1) translateY(0);
+  }
+  50% { 
+    opacity: 0.8; 
+    transform: scale(1.05) translateY(-5px);
+  }
+}
 `;
 
 const saveSubscribedTopics = (token, topics) => {
@@ -226,8 +237,20 @@ export const LoadingState = (props) => (
             open={!props.loaded}
         >
             <Stack direction="column" spacing={3} alignItems="center">
-                {/* RING LOADER */}
-                <Box sx={ringStyle} />
+                {/* NAVIS LOGO LOADER */}
+                <Box
+                    component="img"
+                    src="/image/navis.png"
+                    alt="Đang tải"
+                    sx={{
+                        width: 100,
+                        height: 100,
+                        objectFit: "contain",
+                        borderRadius: "20px",
+                        animation: "logoFloat 2s ease-in-out infinite",
+                        filter: "drop-shadow(0 0 20px rgba(255,255,255,0.5))",
+                    }}
+                />
 
                 {/* Text typing */}
                 <Typography

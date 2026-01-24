@@ -26,9 +26,25 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
   // Real-time data refs
   const lastCaptureTimeRef = useRef(null);
   const MAX_REALTIME_POINTS = 120; // 10 minutes at 5 second intervals
+  const prevDeviceIdRef = useRef(deviceId);
 
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+
+  // Reset chart when device changes
+  useEffect(() => {
+    if (prevDeviceIdRef.current !== deviceId) {
+      // Device changed - reset everything
+      setCategoryTime([]);
+      setChartData([]);
+      setCumulativeFlow({});
+      setTemplateOptions(null);
+      setLoading(true);
+      initialLoadDoneRef.current = false;
+      lastFetchParamsRef.current = { deviceId: null, startDate: null, endDate: null, listSensor: null };
+      prevDeviceIdRef.current = deviceId;
+    }
+  }, [deviceId]);
 
   // Hàm điều chỉnh thời gian (trừ 7 giờ)
   const subTract7Hour = (startDateChoose, endDateChoose) => {
@@ -240,26 +256,48 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
 
   useEffect(() => {
     if (chartData.length > 0) {
-      let chartObj = chartComponentRef.current?.chart;
-      if (sensorChartShow) {
-        chartData.map((v) => {
-          delete v.visible;
-          if (sensorChartShow == "1") {
-            v.visible = true;
-          } else {
-            if (v.name != sensorChartShow) {
-              v.visible = false;
-            } else {
-              v.visible = true;
-            }
+      // Make a deep copy of chartData to avoid mutation issues
+      const processedChartData = chartData.map((v) => {
+        const series = { ...v, data: [...v.data] };
+        delete series.visible;
+        if (sensorChartShow === "1") {
+          series.visible = true;
+        } else {
+          series.visible = v.name === sensorChartShow;
+        }
+        return series;
+      });
+
+      // Calculate yAxis min/max based on visible series only
+      let yMin = null;
+      let yMax = null;
+      processedChartData.forEach(series => {
+        if (series.visible && series.data.length > 0) {
+          const validData = series.data.filter(d => d !== null && !isNaN(d));
+          if (validData.length > 0) {
+            const seriesMin = Math.min(...validData);
+            const seriesMax = Math.max(...validData);
+            if (yMin === null || seriesMin < yMin) yMin = seriesMin;
+            if (yMax === null || seriesMax > yMax) yMax = seriesMax;
           }
-          return v;
-        });
+        }
+      });
+
+      // Add 10% padding to yAxis range
+      if (yMin !== null && yMax !== null) {
+        const range = yMax - yMin;
+        const padding = range * 0.1 || 1; // At least 1 unit padding
+        yMin = yMin - padding;
+        yMax = yMax + padding;
       }
+
       const templateOptions = {
         chart: {
           type: "spline",
-          height: 500,
+          height: 480,
+          animation: false,
+          spacingBottom: 40,
+          marginBottom: 120,
         },
         title: null,
         exporting: {
@@ -269,20 +307,70 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
           title: {
             text: "Số liệu",
           },
+          min: sensorChartShow !== "1" ? yMin : null,
+          max: sensorChartShow !== "1" ? yMax : null,
+          startOnTick: true,
+          endOnTick: true,
         },
         tooltip: {
           crosshairs: true,
           shared: true,
         },
         xAxis: {
-          categories: [...categoryTime],
+          categories: categoryTime.map(t => {
+            // Format: "HH:mm:ss DD/MM" with seconds
+            const parts = t.split(' ');
+            if (parts.length >= 2) {
+              const time = parts[0].substring(0, 8); // HH:mm:ss
+              const date = parts[1].substring(0, 5); // DD/MM
+              return `${time}\n${date}`;
+            }
+            return t;
+          }),
+          labels: {
+            enabled: true,
+            rotation: 0,
+            style: {
+              fontSize: '10px',
+              color: '#333'
+            },
+            step: Math.max(1, Math.ceil(categoryTime.length / 6)),
+            y: 25,
+            overflow: 'allow',
+            useHTML: true,
+            formatter: function () {
+              const val = this.value;
+              if (val && val.includes && val.includes('\n')) {
+                const [time, date] = val.split('\n');
+                return `<div style="text-align:center"><span>${time}</span><br/><span style="font-size:8px;color:#666">${date}</span></div>`;
+              }
+              return val;
+            }
+          },
         },
         legend: {
           layout: "horizontal",
           align: "center",
-          verticalAlign: "bottom",
+          verticalAlign: "top",
+          margin: 15,
+          itemStyle: {
+            fontSize: '11px'
+          }
         },
-        series: [...chartData],
+        series: processedChartData,
+        plotOptions: {
+          series: {
+            animation: false, // Disable series animation
+            connectNulls: true, // Connect line through null points
+            lineWidth: 2,
+          },
+          spline: {
+            connectNulls: true,
+            marker: {
+              enabled: false,
+            }
+          }
+        },
         responsive: {
           rules: [
             {
@@ -293,7 +381,7 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
                 legend: {
                   layout: "horizontal",
                   align: "center",
-                  verticalAlign: "bottom",
+                  verticalAlign: "top",
                 },
               },
             },
@@ -301,6 +389,13 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
         },
       };
       setTemplateOptions(templateOptions);
+
+      // Force chart redraw when sensor selection changes
+      if (chartComponentRef.current?.chart) {
+        setTimeout(() => {
+          chartComponentRef.current?.chart?.reflow();
+        }, 100);
+      }
     }
   }, [categoryTime, chartData, sensorChartShow]);
 
@@ -331,9 +426,61 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
           ref={chartComponentRef}
         />
       ) : (
-        <Box style={{ height: "500px", backgroundColor: "white" }}>
-          {loading && <LinearProgress />}
-          <Typography sx={{ p: 2 }}>Không có dữ liệu</Typography>
+        <Box
+          sx={{
+            height: "420px",
+            backgroundColor: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {loading ? (
+            <>
+              <Box
+                component="img"
+                src="/image/navis.png"
+                alt="Loading"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  objectFit: "contain",
+                  borderRadius: "16px",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                  "@keyframes pulse": {
+                    "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                    "50%": { opacity: 0.5, transform: "scale(0.95)" },
+                  },
+                }}
+              />
+              <Typography sx={{ mt: 2, color: "text.secondary" }}>
+                Đang tải dữ liệu biểu đồ...
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Box
+                component="img"
+                src="/image/navis.png"
+                alt="No data"
+                sx={{
+                  width: 60,
+                  height: 60,
+                  objectFit: "contain",
+                  borderRadius: "12px",
+                  opacity: 0.4,
+                  filter: "grayscale(50%)",
+                }}
+              />
+              <Typography sx={{ mt: 2, fontWeight: 600, color: "text.primary" }}>
+                Không có dữ liệu
+              </Typography>
+              <Typography sx={{ mt: 0.5, color: "text.secondary", fontSize: "0.9rem" }}>
+                Vui lòng chọn thời điểm khác hoặc kiểm tra kết nối
+              </Typography>
+            </>
+          )}
         </Box>
       )}
     </>

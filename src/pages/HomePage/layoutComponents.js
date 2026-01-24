@@ -254,6 +254,9 @@ export const DashboardCard = ({ title, icon, children, noPadding = false, minHei
  * Map Section - Compact mode with expand button
  * Uses Google Maps with full height display
  */
+// Fixed height constant for consistent section heights
+const SECTION_HEIGHT = 560;
+
 export const MapSection = ({
   gridConfig,
   valueSelect,
@@ -281,12 +284,37 @@ export const MapSection = ({
 
   return (
     <>
-      {/* Map Card - Full Height */}
+      {/* Map Card - Fixed Height */}
       <ResponsiveGridItem gridConfig={gridConfig}>
-        <DashboardCard
-          title="📍 Vị trí"
-          noPadding
-          action={
+        <Paper
+          elevation={0}
+          sx={{
+            height: SECTION_HEIGHT,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'grey.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+              📍 Vị trí
+            </Typography>
             <IconButton
               size="small"
               onClick={() => setIsExpanded(true)}
@@ -300,14 +328,13 @@ export const MapSection = ({
             >
               <OpenInFullIcon sx={{ fontSize: 16 }} />
             </IconButton>
-          }
-        >
-          {/* Full height map container */}
+          </Box>
+          {/* Map container */}
           <Box
             sx={{
-              height: 'calc(100% - 0px)', // Full height inside card
-              minHeight: '300px',
+              flexGrow: 1,
               cursor: 'pointer',
+              overflow: 'hidden',
             }}
             onClick={() => setIsExpanded(true)}
           >
@@ -323,7 +350,7 @@ export const MapSection = ({
               showButtonHideLabel={false}
             />
           </Box>
-        </DashboardCard>
+        </Paper>
       </ResponsiveGridItem>
 
       {/* Full Screen Map Dialog */}
@@ -392,6 +419,7 @@ export const NotesSection = ({
   isLoading = false,
 }) => {
   const [contentHeight, setContentHeight] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
   const contentRef = useRef(null);
 
   const isNNV = deviceId?.includes("NNV");
@@ -420,21 +448,415 @@ export const NotesSection = ({
     return moment(timestamp).format("HH:mm DD/MM/YYYY");
   };
 
+  // Render notes content (reused in both card and dialog)
+  const renderNotesContent = (inDialog = false) => (
+    <Box
+      sx={{
+        flexGrow: 1,
+        bgcolor: '#fafafa',
+        overflow: 'auto',
+        maxHeight: inDialog ? 'calc(85vh - 180px)' : 'none',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          bgcolor: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          bgcolor: 'rgba(0,0,0,0.2)',
+          borderRadius: '4px',
+          '&:hover': {
+            bgcolor: 'rgba(0,0,0,0.3)',
+          }
+        }
+      }}
+    >
+      {isLoading ? (
+        <Box sx={{ p: 2 }}>
+          <Stack spacing={2}>
+            {[1, 2, 3].map((item) => (
+              <Box key={item}>
+                <Stack spacing={1}>
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Skeleton variant="text" width={120} height={20} />
+                    <Skeleton variant="text" width={100} height={16} />
+                  </Stack>
+                  <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+                </Stack>
+                {item < 3 && <Divider sx={{ my: 1.5 }} />}
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+      ) : textList.length === 0 ? (
+        <Box
+          sx={{
+            textAlign: 'center',
+            py: 8,
+            color: 'text.secondary'
+          }}
+        >
+          <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
+          <Typography variant="body1" sx={{ opacity: 0.6 }}>
+            Đang tải ghi chú...
+          </Typography>
+        </Box>
+      ) : (
+        <Stack spacing={0} sx={{ p: 2 }}>
+          {textList.map((message, index) => (
+            <Box key={index}>
+              <Stack
+                spacing={0.75}
+                sx={{
+                  py: 2,
+                  px: 1.5,
+                  borderRadius: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: 'rgba(0,0,0,0.03)',
+                  }
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1.5}
+                  flexWrap="wrap"
+                >
+                  <Typography
+                    variant="subtitle2"
+                    fontWeight={600}
+                    color="primary"
+                    sx={{ fontSize: '0.9rem' }}
+                  >
+                    {message.name}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    🕒 {formatTime(message.timestamp)}
+                  </Typography>
+                </Stack>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    lineHeight: 1.6,
+                    color: 'text.primary'
+                  }}
+                >
+                  {message.content}
+                </Typography>
+
+                {message.Image && message.Image.length > 0 && (
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    flexWrap="wrap"
+                    sx={{ mt: 1, gap: 1.5 }}
+                  >
+                    {message.Image.map((urlImg, idx) => (
+                      <ImageNote key={idx} imageUrl={urlImg} />
+                    ))}
+                  </Stack>
+                )}
+              </Stack>
+              {index < textList.length - 1 && (
+                <Divider sx={{ my: 0.5, opacity: 0.6 }} />
+              )}
+            </Box>
+          ))}
+        </Stack>
+      )}
+    </Box>
+  );
+
   return (
-    <ResponsiveGridItem gridConfig={gridConfig}>
-      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
+    <>
+      <ResponsiveGridItem gridConfig={gridConfig}>
         <Paper
           elevation={0}
           sx={{
-            p: 2,
-            borderBottom: 1,
+            height: SECTION_HEIGHT,
+            borderRadius: 3,
+            border: '1px solid',
             borderColor: 'divider',
-            bgcolor: 'background.default'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
+          {/* Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1.5,
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'grey.50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Typography variant="subtitle1" fontWeight={600} color="text.primary">
+                {isNNV ? '💬 Tin nhắn' : '📝 Danh sách ghi chú'}
+              </Typography>
+              {textList.length > 0 && (
+                <Chip
+                  label={textList.length}
+                  size="small"
+                  color="primary"
+                  sx={{
+                    minWidth: 32,
+                    fontWeight: 600,
+                    height: 24
+                  }}
+                />
+              )}
+            </Stack>
+            <IconButton
+              size="small"
+              onClick={() => setIsExpanded(true)}
+              sx={{
+                bgcolor: 'primary.main',
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
+                width: 28,
+                height: 28,
+              }}
+            >
+              <OpenInFullIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Box>
+
+          {/* Content */}
+          {isBienTan ? (
+            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
+              <IFrameExcelCheckList
+                valueSelectId="https://docs.google.com/spreadsheets/d/1dKFjIrD4pPdA8BgLOaDNBWlXOFIEIel0_7n1zokufbs/edit?usp=sharing&rm=minimal&single=false&zoom=75"
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                flexGrow: 1,
+                bgcolor: '#fafafa',
+                overflow: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  bgcolor: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: 'rgba(0,0,0,0.2)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    bgcolor: 'rgba(0,0,0,0.3)',
+                  }
+                }
+              }}
+            >
+              {isLoading ? (
+                <Box sx={{ p: 2 }}>
+                  <Stack spacing={2}>
+                    {[1, 2, 3].map((item) => (
+                      <Box key={item}>
+                        <Stack spacing={1}>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <Skeleton variant="text" width={120} height={20} />
+                            <Skeleton variant="text" width={100} height={16} />
+                          </Stack>
+                          <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+                        </Stack>
+                        {item < 3 && <Divider sx={{ my: 1.5 }} />}
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+              ) : (
+                <Stack spacing={0} sx={{ p: 2 }} ref={contentRef}>
+                  {textList.length === 0 ? (
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        py: 8,
+                        color: 'text.secondary'
+                      }}
+                    >
+                      <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
+                      <Typography variant="body1" sx={{ opacity: 0.6 }}>
+                        Đang tải ghi chú...
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1, opacity: 0.5 }}>
+                        Vui lòng chờ trong giây lát
+                      </Typography>
+                    </Box>
+                  ) : (
+                    textList.map((message, index) => (
+                      <Box key={index}>
+                        <Stack
+                          spacing={0.75}
+                          sx={{
+                            py: 2,
+                            px: 1.5,
+                            borderRadius: 1,
+                            transition: 'all 0.2s ease',
+                            '&:hover': {
+                              bgcolor: 'rgba(0,0,0,0.03)',
+                            }
+                          }}
+                        >
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1.5}
+                            flexWrap="wrap"
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              fontWeight={600}
+                              color="primary"
+                              sx={{ fontSize: '0.9rem' }}
+                            >
+                              {message.name}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                fontSize: '0.75rem'
+                              }}
+                            >
+                              🕒 {formatTime(message.timestamp)}
+                            </Typography>
+                          </Stack>
+
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              lineHeight: 1.6,
+                              color: 'text.primary'
+                            }}
+                          >
+                            {message.content}
+                          </Typography>
+
+                          {message.Image && message.Image.length > 0 && (
+                            <Stack
+                              direction="row"
+                              spacing={1.5}
+                              flexWrap="wrap"
+                              sx={{ mt: 1, gap: 1.5 }}
+                            >
+                              {message.Image.map((urlImg, idx) => (
+                                <ImageNote key={idx} imageUrl={urlImg} />
+                              ))}
+                            </Stack>
+                          )}
+                        </Stack>
+                        {index < textList.length - 1 && (
+                          <Divider sx={{ my: 0.5, opacity: 0.6 }} />
+                        )}
+                      </Box>
+                    ))
+                  )}
+                </Stack>
+              )}
+            </Box>
+          )}
+
+          {/* Input Area */}
+          {isNNV && (
+            <Box
+              sx={{
+                p: 1.5,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                flexShrink: 0,
+              }}
+            >
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TextField
+                  fullWidth
+                  placeholder="Nhập tin nhắn..."
+                  value={inputText}
+                  onChange={handleInputChange}
+                  onKeyPress={handleKeyPress}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: '#f5f5f5',
+                      borderRadius: 2,
+                      '&:hover': {
+                        bgcolor: '#eeeeee'
+                      },
+                      '&.Mui-focused': {
+                        bgcolor: 'background.paper'
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={addTextToList}
+                  disabled={!inputText?.trim()}
+                  sx={{
+                    minWidth: 60,
+                    height: 38,
+                    borderRadius: 2,
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: 18 }} />
+                </Button>
+              </Stack>
+            </Box>
+          )}
+        </Paper>
+      </ResponsiveGridItem>
+
+      {/* Full Screen Notes Dialog */}
+      <Dialog
+        open={isExpanded}
+        onClose={() => setIsExpanded(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '85vh',
+            maxHeight: '85vh',
+          }
+        }}
+      >
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}>
           <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Typography variant="h6" fontWeight={600} color="text.primary">
+            <Typography variant="h6" fontWeight={600}>
               {isNNV ? '💬 Tin nhắn' : '📝 Danh sách ghi chú'}
             </Typography>
             {textList.length > 0 && (
@@ -442,192 +864,40 @@ export const NotesSection = ({
                 label={textList.length}
                 size="small"
                 color="primary"
-                sx={{
-                  minWidth: 32,
-                  fontWeight: 600,
-                  height: 24
-                }}
+                sx={{ fontWeight: 600 }}
               />
             )}
           </Stack>
-        </Paper>
-
-        {/* Content */}
-        {isBienTan ? (
-          <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-            <IFrameExcelCheckList
-              valueSelectId="https://docs.google.com/spreadsheets/d/1dKFjIrD4pPdA8BgLOaDNBWlXOFIEIel0_7n1zokufbs/edit?usp=sharing&rm=minimal&single=false&zoom=75"
-            />
-          </Box>
-        ) : (
-          <Paper
-            elevation={0}
-            sx={{
-              flexGrow: 1,
-              bgcolor: '#fafafa',
-              position: 'relative',
-              overflow: contentHeight > 392 ? 'auto' : 'visible',
-              maxHeight: contentHeight > 392 ? '392px' : 'none',
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                bgcolor: 'transparent',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                bgcolor: 'rgba(0,0,0,0.2)',
-                borderRadius: '4px',
-                '&:hover': {
-                  bgcolor: 'rgba(0,0,0,0.3)',
-                }
-              }
-            }}
-          >
-            {isLoading ? (
-              <Box sx={{ p: 2 }}>
-                <Stack spacing={2}>
-                  {[1, 2, 3].map((item) => (
-                    <Box key={item}>
-                      <Stack spacing={1}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Skeleton variant="text" width={120} height={20} />
-                          <Skeleton variant="text" width={100} height={16} />
-                        </Stack>
-                        <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
-                      </Stack>
-                      {item < 3 && <Divider sx={{ my: 1.5 }} />}
-                    </Box>
-                  ))}
-                </Stack>
-              </Box>
-            ) : (
-              <Stack spacing={0} sx={{ p: 2 }} ref={contentRef}>
-                {textList.length === 0 ? (
-                  <Box
-                    sx={{
-                      textAlign: 'center',
-                      py: 8,
-                      color: 'text.secondary'
-                    }}
-                  >
-                    <ImageIcon sx={{ fontSize: 48, opacity: 0.3, mb: 2 }} />
-                    <Typography variant="body1" sx={{ opacity: 0.6 }}>
-                      Đang tải ghi chú...
-                    </Typography>
-                    <Typography variant="body2" sx={{ mt: 1, opacity: 0.5 }}>
-                      Vui lòng chờ trong giây lát
-                    </Typography>
-                  </Box>
-                ) : (
-                  textList.map((message, index) => (
-                    <Box key={index}>
-                      <Stack
-                        spacing={0.75}
-                        sx={{
-                          py: 2,
-                          px: 1.5,
-                          borderRadius: 1,
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            bgcolor: 'rgba(0,0,0,0.03)',
-                          }
-                        }}
-                      >
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={1.5}
-                          flexWrap="wrap"
-                        >
-                          <Typography
-                            variant="subtitle2"
-                            fontWeight={600}
-                            color="primary"
-                            sx={{ fontSize: '0.9rem' }}
-                          >
-                            {message.name}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 0.5,
-                              fontSize: '0.75rem'
-                            }}
-                          >
-                            🕒 {formatTime(message.timestamp)}
-                          </Typography>
-                        </Stack>
-
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            whiteSpace: 'pre-wrap',
-                            wordBreak: 'break-word',
-                            lineHeight: 1.6,
-                            color: 'text.primary'
-                          }}
-                        >
-                          {message.content}
-                        </Typography>
-
-                        {message.Image && message.Image.length > 0 && (
-                          <Stack
-                            direction="row"
-                            spacing={1.5}
-                            flexWrap="wrap"
-                            sx={{ mt: 1, gap: 1.5 }}
-                          >
-                            {message.Image.map((urlImg, idx) => (
-                              <ImageNote key={idx} imageUrl={urlImg} />
-                            ))}
-                          </Stack>
-                        )}
-                      </Stack>
-                      {index < textList.length - 1 && (
-                        <Divider sx={{ my: 0.5, opacity: 0.6 }} />
-                      )}
-                    </Box>
-                  ))
-                )}
-              </Stack>
-            )}
-          </Paper>
-        )}
-
-        {/* Input Area */}
+          <IconButton onClick={() => setIsExpanded(false)}>
+            <CloseFullscreenIcon />
+          </IconButton>
+        </Box>
+        <Box sx={{ flexGrow: 1, height: 'calc(100% - 64px)', overflow: 'auto' }}>
+          {renderNotesContent(true)}
+        </Box>
+        {/* Input Area in Dialog */}
         {isNNV && (
-          <Paper
-            elevation={4}
+          <Box
             sx={{
               p: 2,
-              borderTop: 1,
+              borderTop: '1px solid',
               borderColor: 'divider',
-              bgcolor: 'background.paper'
+              bgcolor: 'background.paper',
             }}
           >
-            <Stack direction="row" spacing={1.5} alignItems="flex-end">
+            <Stack direction="row" spacing={1.5} alignItems="center">
               <TextField
                 fullWidth
-                placeholder="Nhập tin nhắn của bạn..."
+                placeholder="Nhập tin nhắn..."
                 value={inputText}
                 onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
                 size="small"
-                multiline
-                maxRows={4}
                 variant="outlined"
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     bgcolor: '#f5f5f5',
-                    '&:hover': {
-                      bgcolor: '#eeeeee'
-                    },
-                    '&.Mui-focused': {
-                      bgcolor: 'background.paper'
-                    }
+                    borderRadius: 2,
                   }
                 }}
               />
@@ -637,22 +907,18 @@ export const NotesSection = ({
                 disabled={!inputText?.trim()}
                 startIcon={<SendIcon />}
                 sx={{
-                  minWidth: 100,
+                  minWidth: 80,
                   height: 40,
-                  px: 2,
-                  boxShadow: 2,
-                  '&:hover': {
-                    boxShadow: 4
-                  }
+                  borderRadius: 2,
                 }}
               >
                 Gửi
               </Button>
             </Stack>
-          </Paper>
+          </Box>
         )}
-      </Box>
-    </ResponsiveGridItem>
+      </Dialog>
+    </>
   );
 };
 /**
@@ -812,8 +1078,8 @@ export const ChartSection = ({
 };
 
 /**
- * Camera Section - Shows all cameras with dynamic height
- * Height adjusts based on camera count to fit all cameras
+ * Camera Section - Optimized width and consistent height
+ * Uses SECTION_HEIGHT for consistency with other sections
  */
 export const CameraSection = ({ gridConfig, cameraList, CameraDialog }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -823,26 +1089,40 @@ export const CameraSection = ({ gridConfig, cameraList, CameraDialog }) => {
   // Don't render if no cameras
   if (!cameraList || cameraList.length === 0) return null;
 
-  // Calculate dynamic height based on camera count
-  // Increased heights to show all cameras properly without cutting off
-  const getCardHeight = () => {
-    const count = cameraList.length;
-    if (count === 1) return '320px';
-    if (count === 2) return '400px';
-    return '520px'; // 3-4 cameras use 2x2 grid - needs more height
-  };
-
-  const cardHeight = getCardHeight();
-
   return (
     <>
-      {/* Camera Card - Full display */}
+      {/* Camera Card - Fixed Height matching other sections */}
       <ResponsiveGridItem gridConfig={gridConfig}>
-        <DashboardCard
-          title={`📹 Camera (${cameraList.length})`}
-          noPadding
-          minHeight={cardHeight}
-          action={
+        <Paper
+          elevation={0}
+          sx={{
+            height: SECTION_HEIGHT,
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            bgcolor: '#1a1a2e',
+          }}
+        >
+          {/* Header */}
+          <Box
+            sx={{
+              px: 2,
+              py: 1,
+              borderBottom: '1px solid',
+              borderColor: 'rgba(255,255,255,0.1)',
+              bgcolor: 'rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0,
+            }}
+          >
+            <Typography variant="subtitle1" fontWeight={600} color="white">
+              📹 Camera ({cameraList.length})
+            </Typography>
             <IconButton
               size="small"
               onClick={() => setIsExpanded(true)}
@@ -856,17 +1136,21 @@ export const CameraSection = ({ gridConfig, cameraList, CameraDialog }) => {
             >
               <OpenInFullIcon sx={{ fontSize: 16 }} />
             </IconButton>
-          }
-        >
+          </Box>
+          {/* Camera container - full width, minimal padding */}
           <Box
             sx={{
-              height: 'auto', // Let content determine height
-              minHeight: cardHeight,
+              flexGrow: 1,
+              overflow: 'hidden',
+              p: 0.5,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             <CameraDialog cameraList={cameraList} />
           </Box>
-        </DashboardCard>
+        </Paper>
       </ResponsiveGridItem>
 
       {/* Full Screen Camera Dialog */}
@@ -879,6 +1163,7 @@ export const CameraSection = ({ gridConfig, cameraList, CameraDialog }) => {
           sx: {
             height: '90vh',
             maxHeight: '90vh',
+            bgcolor: '#1a1a2e',
           }
         }}
       >
@@ -888,16 +1173,17 @@ export const CameraSection = ({ gridConfig, cameraList, CameraDialog }) => {
           alignItems: 'center',
           p: 2,
           borderBottom: '1px solid',
-          borderColor: 'divider'
+          borderColor: 'rgba(255,255,255,0.1)',
+          bgcolor: 'rgba(0,0,0,0.3)',
         }}>
-          <Typography variant="h6" fontWeight={600}>
+          <Typography variant="h6" fontWeight={600} color="white">
             📹 Camera giám sát ({cameraList.length})
           </Typography>
-          <IconButton onClick={() => setIsExpanded(false)}>
+          <IconButton onClick={() => setIsExpanded(false)} sx={{ color: 'white' }}>
             <CloseFullscreenIcon />
           </IconButton>
         </Box>
-        <Box sx={{ flexGrow: 1, height: 'calc(100% - 64px)', p: 2 }}>
+        <Box sx={{ flexGrow: 1, height: 'calc(100% - 64px)', p: 1 }}>
           <CameraDialog cameraList={cameraList} resDialog={true} />
         </Box>
       </Dialog>

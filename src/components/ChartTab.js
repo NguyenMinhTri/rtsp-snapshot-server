@@ -67,21 +67,32 @@ function ChartTab({ startDate, endDate, deviceId, inputLstSensor, isLiveMode, da
                                 : { fontWeight: "bold" }
                         }
                     />
-                    {listSensorChart && listSensorChart.length > 0 ? [...listSensorChart].sort(compareElements).map((v) => (
-                        <Tab
-                            label={v}
-                            value={v}
-                            style={
-                                value == v
-                                    ? {
-                                        backgroundColor: "#eee",
-                                        padding: "5px",
-                                        fontWeight: "bold"
-                                    }
-                                    : { fontWeight: "bold" }
-                            }
-                        />
-                    )) : null}
+                    {listSensorChart && listSensorChart.length > 0 ?
+                        // Sort chart tabs to match sensor card order (inputLstSensor)
+                        [...listSensorChart].sort((a, b) => {
+                            const indexA = listSensor.indexOf(a);
+                            const indexB = listSensor.indexOf(b);
+                            // If not found in listSensor, put at end
+                            if (indexA === -1 && indexB === -1) return 0;
+                            if (indexA === -1) return 1;
+                            if (indexB === -1) return -1;
+                            return indexA - indexB;
+                        }).map((v) => (
+                            <Tab
+                                key={v}
+                                label={v}
+                                value={v}
+                                style={
+                                    value == v
+                                        ? {
+                                            backgroundColor: "#eee",
+                                            padding: "5px",
+                                            fontWeight: "bold"
+                                        }
+                                        : { fontWeight: "bold" }
+                                }
+                            />
+                        )) : null}
 
                 </Tabs>
             </Box>

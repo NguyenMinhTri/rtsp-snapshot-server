@@ -69,13 +69,22 @@ const CameraSkeleton = memo(({ height, cameraName }) => (
             }}
         />
 
-        {/* Camera icon */}
-        <VideocamIcon
+        {/* Navis Logo */}
+        <Box
+            component="img"
+            src="/image/navis.png"
+            alt="Loading"
             sx={{
-                fontSize: 48,
-                color: "rgba(255,255,255,0.3)",
+                width: 60,
+                height: 60,
+                objectFit: "contain",
+                borderRadius: "12px",
                 mb: 2,
                 animation: "pulse 1.5s ease-in-out infinite",
+                "@keyframes pulse": {
+                    "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                    "50%": { opacity: 0.6, transform: "scale(0.95)" },
+                },
             }}
         />
 
@@ -428,7 +437,7 @@ const OptimizedCameraPlayer = memo(({
                 position: "relative",
                 width: "100%",
                 height: height,
-                backgroundColor: "#000",
+                backgroundColor: "#1a1a2e",
                 borderRadius: "8px",
                 overflow: "hidden",
             }}
