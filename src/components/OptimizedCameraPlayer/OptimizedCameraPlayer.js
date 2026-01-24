@@ -377,6 +377,29 @@ const OptimizedCameraPlayer = memo(({
         };
     }, []);
 
+    // TikTok-like behavior: Pause when tab not visible, resume when visible
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            const video = videoRef.current;
+            if (!video) return;
+
+            if (document.hidden) {
+                // Tab is hidden - pause video to save resources
+                video.pause();
+            } else {
+                // Tab is visible - auto-play if was playing or reconnecting
+                if (status === VideoStatus.PLAYING || status === VideoStatus.RECONNECTING) {
+                    video.play().catch(() => { });
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
+    }, [status]);
+
     // Manual retry
     const handleRetry = useCallback(() => {
         setRetryCount(0);

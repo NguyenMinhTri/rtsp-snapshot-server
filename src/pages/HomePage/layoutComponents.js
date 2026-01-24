@@ -672,6 +672,9 @@ export const ChartSection = ({
   handleChangeEndDate,
   handleApplyDate,
   exportButtons,
+  dataRealTime,
+  isLiveMode,
+  handleToggleLiveMode,
   ChartTab,
   MainChart,
   ColumnChartSensor,
@@ -696,11 +699,14 @@ export const ChartSection = ({
         >
           <div className="home_chart">
             <ChartComponent
+              key={`main-chart-${valueSelect.id}`}
               endDate={endDate}
               startDate={startDate}
               deviceId={valueSelect.id}
               deviceUser={valueSelect.id}
               inputLstSensor={listSensor}
+              dataRealTime={dataRealTime}
+              isLiveMode={isLiveMode}
             />
           </div>
         </Grid>
@@ -710,9 +716,11 @@ export const ChartSection = ({
           <Grid item xl={6} lg={6} md={6} sm={6} xs={6}>
             <div className="home_chart">
               <ColumnChartSensor
+                key={`col-chart-${valueSelect.id}`}
                 endDate={endDate}
                 startDate={startDate}
                 deviceUser={valueSelect.id}
+                isLiveMode={isLiveMode}
               />
             </div>
           </Grid>
@@ -720,22 +728,70 @@ export const ChartSection = ({
 
         {/* Date Controls */}
         <Grid item xs={12}>
-          <Grid container spacing={1}>
-            <Grid item xs={3}>
+          <Grid container spacing={1} alignItems="center">
+            {/* Live Mode Indicator & Toggle */}
+            <Grid item xs={1.5}>
+              <Box
+                onClick={handleToggleLiveMode}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                  p: 1,
+                  borderRadius: 2,
+                  cursor: 'pointer',
+                  bgcolor: isLiveMode ? '#e8f5e9' : '#fafafa',
+                  border: isLiveMode ? '2px solid #4CAF50' : '1px solid #ddd',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    bgcolor: isLiveMode ? '#c8e6c9' : '#f0f0f0',
+                    transform: 'scale(1.02)'
+                  }
+                }}
+              >
+                {isLiveMode && (
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: '#4CAF50',
+                      animation: 'livePulse 1.5s ease-in-out infinite',
+                      '@keyframes livePulse': {
+                        '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+                        '50%': { opacity: 0.5, transform: 'scale(1.3)' }
+                      }
+                    }}
+                  />
+                )}
+                <Typography
+                  variant="body2"
+                  fontWeight={600}
+                  sx={{
+                    color: isLiveMode ? '#2E7D32' : '#666',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  {isLiveMode ? 'LIVE' : 'Đã dừng'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid item xs={2.5}>
               <MyDateRange
                 label="Bắt đầu"
                 onChange={handleChangeStartDate}
                 value={startDateTemp}
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2.5}>
               <MyDateRange
                 label="Kết thúc"
                 onChange={handleChangeEndDate}
                 value={endDateTemp}
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={2.5}>
               <MyButton icon={null} name="Áp dụng" onClick={handleApplyDate} />
             </Grid>
             <Grid item xs={3}>

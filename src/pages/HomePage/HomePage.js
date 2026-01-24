@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { IconButton, Tooltip } from "@mui/material";
@@ -306,12 +306,72 @@ function HomePage() {
     const [cameraList, setCameraList] = useState([]);
     const [gridSplitRatio, setGridSplitRatio] = useState(null);
     const [isEnglishLanguage, setIsEnglishLanguage] = useState(true);
+    const [isStationChanging, setIsStationChanging] = useState(false);
 
     // Date range
     const [startDate, setStartDate] = useState(moment(new Date()).subtract(2, "hour").format("MM/DD/YYYY HH:mm:ss"));
     const [endDate, setEndDate] = useState(moment(new Date()).format("MM/DD/YYYY HH:mm:ss"));
     const [startDateTemp, setStartDateTemp] = useState(startDate);
     const [endDateTemp, setEndDateTemp] = useState(endDate);
+
+    // Live mode for chart - updates end date to current time
+    const [isLiveMode, setIsLiveMode] = useState(true);
+    const inactivityTimerRef = useRef(null);
+    const liveUpdateIntervalRef = useRef(null);
+
+    // Live mode effect - update end date every 10 seconds when in live mode
+    useEffect(() => {
+        if (isLiveMode) {
+            // Update immediately
+            const now = moment(new Date());
+            setEndDate(now.format("MM/DD/YYYY HH:mm:ss"));
+            setEndDateTemp(now.format("HH:mm MM-DD-YYYY"));
+            setStartDate(moment(new Date()).subtract(2, "hour").format("MM/DD/YYYY HH:mm:ss"));
+            setStartDateTemp(moment(new Date()).subtract(2, "hour").format("HH:mm MM-DD-YYYY"));
+
+            // Set up interval for live updates
+            liveUpdateIntervalRef.current = setInterval(() => {
+                const now = moment(new Date());
+                setEndDate(now.format("MM/DD/YYYY HH:mm:ss"));
+                setEndDateTemp(now.format("HH:mm MM-DD-YYYY"));
+            }, 10000); // Update every 10 seconds
+
+            return () => {
+                if (liveUpdateIntervalRef.current) {
+                    clearInterval(liveUpdateIntervalRef.current);
+                }
+            };
+        } else {
+            if (liveUpdateIntervalRef.current) {
+                clearInterval(liveUpdateIntervalRef.current);
+            }
+        }
+    }, [isLiveMode]);
+
+    // Reset inactivity timer - called when user interacts with date controls
+    const resetInactivityTimer = useCallback(() => {
+        // Clear existing timer
+        if (inactivityTimerRef.current) {
+            clearTimeout(inactivityTimerRef.current);
+        }
+
+        // Set new timer for 5 minutes (300000ms)
+        inactivityTimerRef.current = setTimeout(() => {
+            setIsLiveMode(true);
+        }, 300000); // 5 minutes
+    }, []);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+            if (liveUpdateIntervalRef.current) {
+                clearInterval(liveUpdateIntervalRef.current);
+            }
+        };
+    }, []);
 
     // Dialogs
     const [isOpenDialog, setIsOpenDialog] = useState(false);
@@ -650,16 +710,51 @@ function HomePage() {
         });
     }, [dataRealTime, fullRS485Data]);
 
+    // Disable live mode when station is offline
+    useEffect(() => {
+        if (!dataRealTime || dataRealTime.length === 0 || !valueSelect?.id) return;
+
+        // Find the current station's data
+        const currentStationData = dataRealTime.find(d => d.id_station === valueSelect.id);
+        if (!currentStationData) return;
+
+        // Check if station is offline (NOOK status)
+        const statusStation = currentStationData.status_station?.split("*")[1] || "0";
+        if (statusStation === "NOOK" && isLiveMode) {
+            setIsLiveMode(false);
+        }
+    }, [dataRealTime, valueSelect?.id, isLiveMode]);
+
     // Handlers
     const handleOnChangeSelectStation = useCallback((e, v) => {
-        if (v !== null) {
-            AsyncLocalStorage.setItem("home_station", JSON.stringify(v)).then(() => {
-                dispatch(chooseSensorAction("1"));
-                setValueSelect(v);
-                setCameraList(listDevice[v.id]?.cameraList || []);
-            });
+        if (v !== null && v.id !== valueSelect?.id) {
+            // Set station changing to true - this will clear all UI
+            setIsStationChanging(true);
+
+            // Short delay to allow UI to clear, then change station
+            setTimeout(() => {
+                AsyncLocalStorage.setItem("home_station", JSON.stringify(v)).then(() => {
+                    dispatch(chooseSensorAction("1"));
+                    setValueSelect(v);
+                    setCameraList(listDevice[v.id]?.cameraList || []);
+
+                    // Reset live mode and date range to current time
+                    const now = moment(new Date());
+                    const start = moment(new Date()).subtract(2, "hour");
+                    setIsLiveMode(true);
+                    setStartDate(start.format("MM/DD/YYYY HH:mm:ss"));
+                    setEndDate(now.format("MM/DD/YYYY HH:mm:ss"));
+                    setStartDateTemp(start.format("HH:mm MM-DD-YYYY"));
+                    setEndDateTemp(now.format("HH:mm MM-DD-YYYY"));
+
+                    // After station is set, wait for data to load before showing UI
+                    setTimeout(() => {
+                        setIsStationChanging(false);
+                    }, 800); // Allow 800ms for initial data fetch
+                });
+            }, 100);
         }
-    }, [dispatch, listDevice]);
+    }, [dispatch, listDevice, valueSelect?.id]);
 
     const handleGridSplitChange = useCallback((newSplit) => {
         setGridSplitRatio(newSplit);
@@ -1229,17 +1324,37 @@ function HomePage() {
     const handleChangeStartDate = useCallback((e) => {
         const startTime = moment(e.$d).format("HH:mm MM-DD-YYYY");
         setStartDateTemp(startTime);
-    }, []);
+        // Exit live mode when user changes date
+        setIsLiveMode(false);
+        resetInactivityTimer();
+    }, [resetInactivityTimer]);
 
     const handleChangeEndDate = useCallback((e) => {
         const endTime = moment(e.$d).format("HH:mm MM-DD-YYYY");
         setEndDateTemp(endTime);
-    }, []);
+        // Exit live mode when user changes date
+        setIsLiveMode(false);
+        resetInactivityTimer();
+    }, [resetInactivityTimer]);
 
     const handleApplyDate = useCallback(() => {
         setStartDate(startDateTemp);
         setEndDate(endDateTemp);
-    }, [startDateTemp, endDateTemp]);
+        // Exit live mode when user applies custom date range
+        setIsLiveMode(false);
+        resetInactivityTimer();
+    }, [startDateTemp, endDateTemp, resetInactivityTimer]);
+
+    // Toggle live mode manually
+    const handleToggleLiveMode = useCallback(() => {
+        if (!isLiveMode) {
+            // Switch to live mode - clear inactivity timer
+            if (inactivityTimerRef.current) {
+                clearTimeout(inactivityTimerRef.current);
+            }
+        }
+        setIsLiveMode(!isLiveMode);
+    }, [isLiveMode]);
 
     const handleKeyPress = useCallback((event) => {
         if (event.key === "Enter") {
@@ -1372,7 +1487,7 @@ function HomePage() {
             <div className="home_page" style={{ position: "relative" }}>
 
                 {/* ----------- LOADING OVERLAY ----------- */}
-                {!loaded && (
+                {(!loaded || isStationChanging) && (
                     <Stack
                         direction="column"
                         alignItems="center"
@@ -1556,6 +1671,9 @@ function HomePage() {
                                                 handleChangeEndDate={handleChangeEndDate}
                                                 handleApplyDate={handleApplyDate}
                                                 exportButtons={exportButtons}
+                                                dataRealTime={dataRealTime}
+                                                isLiveMode={isLiveMode}
+                                                handleToggleLiveMode={handleToggleLiveMode}
                                                 ChartTab={ChartTab}
                                                 MainChart={MainChart}
                                                 ColumnChartSensor={ColumnChartSensor}
@@ -1566,6 +1684,7 @@ function HomePage() {
 
                                         {/* Camera */}
                                         <CameraSection
+                                            key={`camera-${valueSelect?.id}`}
                                             gridConfig={gridLayout.camera}
                                             cameraList={cameraList}
                                             CameraDialog={CameraDialog}

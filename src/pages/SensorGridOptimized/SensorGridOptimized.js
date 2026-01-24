@@ -70,15 +70,18 @@ export default function SensorGridOptimized({
     <div className="sensor-grid-container">
       {Object.entries(grouped).map(([groupName, sensors], groupIndex) => (
         <div key={groupIndex} >
-          
+
           {/* TIÊU ĐỀ NHÓM - giống Coil */}
           <div
             style={{
               fontSize: 16,
               fontWeight: 700,
-              marginBottom: 8,
+              marginTop: groupIndex > 0 ? 20 : 0, // Add margin-top for groups after the first one
+              marginBottom: 10,
               color: "#4FC3F7",
               paddingLeft: 4,
+              paddingTop: groupIndex > 0 ? 12 : 0, // Add padding for visual separation
+              borderTop: groupIndex > 0 ? '1px solid rgba(79, 195, 247, 0.2)' : 'none', // Subtle separator line
             }}
           >
             {groupName.toUpperCase()}
@@ -86,7 +89,7 @@ export default function SensorGridOptimized({
 
           <Grid
             className="grid-margin sensor-grid"
-            
+
             spacing={1.5}
             style={{
               "--scale-factor": scaleFactor,

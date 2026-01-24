@@ -2,7 +2,7 @@ import { Skeleton } from "@mui/material";
 import { child, get, getDatabase, ref } from "firebase/database";
 import { httpsCallable } from "firebase/functions";
 import moment from "moment";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useState, memo, useRef } from "react";
 import {
     LineChart,
@@ -32,7 +32,7 @@ const COLOR = [
     "#3A8891",
 ];
 
-function ColumnChartSensor({ endDate, startDate, deviceUser }) {
+function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode }) {
     const [dataSensorRange, setDataSensorRange] = useState([]);
     const [countGet, setCountGet] = useState(0);
     const [listSensor, setListSensor] = useState([]);
@@ -40,6 +40,10 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
     const db = ref(getDatabase());
 
     let count = useRef(0);
+
+    // Track if initial data has been loaded to prevent API refetch in live mode
+    const initialLoadDoneRef = useRef(false);
+    const lastFetchParamsRef = useRef({ deviceUser: null, startDate: null, endDate: null });
 
     const getDataOfSensorRealtime = (
         idStation,
@@ -85,10 +89,9 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
                         value: {
                             name:
                                 nameSensor +
-                                `${
-                                    typeof unit !== "undefined"
-                                        ? `(${unit})`
-                                        : ""
+                                `${typeof unit !== "undefined"
+                                    ? `(${unit})`
+                                    : ""
                                 }`,
                             val: v.avg_value,
                             min: v.min_value,
@@ -110,6 +113,19 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
     // let sensorName = localStorage.getItem('sensor').split(',');
 
     useEffect(() => {
+        // Skip refetch if in live mode and initial data already loaded
+        const shouldFetch =
+            deviceUser !== lastFetchParamsRef.current.deviceUser ||
+            (!isLiveMode && (
+                startDate !== lastFetchParamsRef.current.startDate ||
+                endDate !== lastFetchParamsRef.current.endDate
+            )) ||
+            !initialLoadDoneRef.current;
+
+        if (!shouldFetch) {
+            return;
+        }
+
         setCountGet(0);
         setDataSensorRange([]);
         // const deviceUser = localStorage.getItem('home_station');
@@ -138,11 +154,10 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
                         unitLst.push(v.Unit);
                         tempNameUnit.push(
                             v.Name +
-                                `${
-                                    typeof v.Unit !== "undefined"
-                                        ? `(${v.Unit})`
-                                        : ""
-                                }`
+                            `${typeof v.Unit !== "undefined"
+                                ? `(${v.Unit})`
+                                : ""
+                            }`
                         );
                     });
                     // console.log({ s });
@@ -158,6 +173,10 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
                         );
                         counter++;
                     });
+
+                    // Mark initial load as done and save fetch params
+                    initialLoadDoneRef.current = true;
+                    lastFetchParamsRef.current = { deviceUser, startDate, endDate };
                 } else {
                     console.log("No data available");
                 }
@@ -165,12 +184,16 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
             .catch((error) => {
                 console.error(error);
             });
-    }, [startDate, endDate, deviceUser]);
+    }, [startDate, endDate, deviceUser, isLiveMode]);
 
-    // console.log({ count: countGet, leng: listSensor.length });
+    // Memoize chart data processing to prevent data loss on re-render
+    const endDataForChart = useMemo(() => {
+        // Only process when all sensors have loaded
+        if (countGet !== listSensor.length || listSensor.length === 0) {
+            return [];
+        }
 
-    let output = [];
-    if (countGet === listSensor.length) {
+        let output = [];
         const handleObjectSameKeyInArr = (arr) => {
             arr.forEach(function (item) {
                 var existing = output.filter(function (v, i) {
@@ -188,66 +211,53 @@ function ColumnChartSensor({ endDate, startDate, deviceUser }) {
                     if (typeof item.value == "object") {
                         item.value = arr;
                     }
-                    // console.log(item);
                     output.push(item);
                 }
             });
         };
 
         handleObjectSameKeyInArr(dataSensorRange);
-    }
 
-    console.log(JSON.stringify(dataSensorRange));
-    let previousDataSensor = {};
-    const mergeItemObjectArrToObject = (arr) => {
-        return arr.map((v) => {
-            let c = v.value.map((v2) => {
-                let b = v2.val;
-                let a = v2.name;
-                let obj = { [a]: Number((v2.max - v2.min).toFixed(2)) };
+        if (output.length === 0) {
+            return [];
+        }
 
-                // previousDataSensor[a]=b;
-                return obj;
+        const mergeItemObjectArrToObject = (arr) => {
+            return arr.map((v) => {
+                let c = v.value.map((v2) => {
+                    let b = v2.val;
+                    let a = v2.name;
+                    let obj = { [a]: Number((v2.max - v2.min).toFixed(2)) };
+                    return obj;
+                });
+
+                c.push({ time: moment(v.time).format("DD-MM HH:mm") });
+
+                let r = [];
+                let o = {};
+
+                c.map((v) => {
+                    let a = Object.keys(v)[0];
+                    let b = String(Object.values(v)[0]);
+                    r.push({ a, b });
+                });
+                r.map((v) => {
+                    o[v.a] = v.b;
+                });
+
+                return o;
             });
+        };
 
-            console.log(c);
-            c.push({ time: moment(v.time).format("DD-MM HH:mm") });
-            // for (let key in previousDataSensor) {
-            //     if(typeof c[key] === "undefined"){
-            //         let tempPreviousSensor ={};
-            //         tempPreviousSensor[key]=previousDataSensor[key];
-            //         c.push(tempPreviousSensor);
-            //         console.log("Key " +key+":"+ c[key] );
-            //     }
-            //   }
-
-            let r = [];
-            let o = {};
-
-            c.map((v) => {
-                let a = Object.keys(v)[0];
-                let b = String(Object.values(v)[0]);
-
-                r.push({ a, b });
-            });
-            r.map((v) => {
-                o[v.a] = v.b;
-            });
-
-            return o;
-        });
-    };
-    let endDataForChart = [];
-    if (output.length > 0) {
-        endDataForChart = mergeItemObjectArrToObject(output);
-    }
+        return mergeItemObjectArrToObject(output);
+    }, [dataSensorRange, listSensor.length, countGet]);
 
     // console.log({ endDataForChart });
 
     return (
         <>
             {endDataForChart.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={400}>
                     <BarChart width={600} height={300} data={endDataForChart}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="time" />

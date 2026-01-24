@@ -6,10 +6,10 @@ import { SENSOR_OF_DEVICE_KEY } from "../constants";
 import { chooseSensorAction } from "../redux/reducer/chooseSensorChart";
 import { listSensorChartSelector } from "../redux/reducer/listSensorChart";
 
-function ChartTab({startDate, endDate, deviceId, inputLstSensor}) {
+function ChartTab({ startDate, endDate, deviceId, inputLstSensor, isLiveMode, dataRealTime }) {
     const [value, setValue] = React.useState("1");
     const dispatch = useDispatch()
-    let listSensorChart = useSelector(listSensorChartSelector) 
+    let listSensorChart = useSelector(listSensorChartSelector)
     const handleChange = (event, newValue) => {
         setValue(newValue);
         dispatch(chooseSensorAction(newValue))
@@ -20,31 +20,31 @@ function ChartTab({startDate, endDate, deviceId, inputLstSensor}) {
     useEffect(() => {
         //check nếu khác nhau mới render lại
 
-         setListSensor([]);
-       
-    }, [deviceId ])
+        setListSensor([]);
+
+    }, [deviceId])
     useEffect(() => {
         //check nếu khác nhau mới render lại
-        if(typeof inputLstSensor !== "undefined" && typeof inputLstSensor.length !== "undefined" && !compareElements(inputLstSensor,listSensor))
-         setListSensor(inputLstSensor);
-        else if(typeof inputLstSensor === "undefined" || typeof inputLstSensor.length === "undefined" ){
+        if (typeof inputLstSensor !== "undefined" && typeof inputLstSensor.length !== "undefined" && !compareElements(inputLstSensor, listSensor))
+            setListSensor(inputLstSensor);
+        else if (typeof inputLstSensor === "undefined" || typeof inputLstSensor.length === "undefined") {
             setListSensor([]);
         }
-       
-    }, [startDate,endDate,deviceId, inputLstSensor])
+
+    }, [startDate, endDate, deviceId, inputLstSensor])
     function compareElements(mang1, mang2) {
-        if(mang1.length !== mang2.length) return false;
+        if (mang1.length !== mang2.length) return false;
         for (let i = 0; i < mang1.length; i++) {
-          if (mang2.includes(mang1[i])) {
-            return true; // Nếu có phần tử giống nhau, trả về true
-          }
+            if (mang2.includes(mang1[i])) {
+                return true; // Nếu có phần tử giống nhau, trả về true
+            }
         }
         return false; // Nếu không có phần tử nào giống nhau, trả về false
-      }
+    }
 
     return (
         <Box >
-            {listSensor && listSensor.length > 0  ? <><Box
+            {listSensor && listSensor.length > 0 ? <><Box
                 sx={{
                     borderBottom: 1,
                     borderColor: "divider",
@@ -64,21 +64,21 @@ function ChartTab({startDate, endDate, deviceId, inputLstSensor}) {
                         style={
                             value == 1
                                 ? { backgroundColor: "#eee", padding: "5px" }
-                                : {fontWeight: "bold"}
+                                : { fontWeight: "bold" }
                         }
                     />
-                    {listSensorChart && listSensorChart.length>0 ? [...listSensorChart].sort(compareElements).map((v) => (
+                    {listSensorChart && listSensorChart.length > 0 ? [...listSensorChart].sort(compareElements).map((v) => (
                         <Tab
                             label={v}
                             value={v}
                             style={
                                 value == v
                                     ? {
-                                          backgroundColor: "#eee",
-                                          padding: "5px",
-                                            fontWeight: "bold"
-                                      }
-                                    : {fontWeight: "bold"}
+                                        backgroundColor: "#eee",
+                                        padding: "5px",
+                                        fontWeight: "bold"
+                                    }
+                                    : { fontWeight: "bold" }
                             }
                         />
                     )) : null}
@@ -86,13 +86,15 @@ function ChartTab({startDate, endDate, deviceId, inputLstSensor}) {
                 </Tabs>
             </Box>
 
-            <ChartV2
-                listSensor={listSensor}
-                deviceId={deviceId}
-                startDate={startDate}
-                endDate={endDate}
-            /></> : <></>}
-            
+                <ChartV2
+                    listSensor={listSensor}
+                    deviceId={deviceId}
+                    startDate={startDate}
+                    endDate={endDate}
+                    isLiveMode={isLiveMode}
+                    dataRealTime={dataRealTime}
+                /></> : <></>}
+
         </Box>
     );
 }

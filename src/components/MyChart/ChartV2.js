@@ -10,7 +10,7 @@ import { chooseSensorSelector } from "../../redux/reducer/chooseSensorChart";
 import { listSensorChartAction } from "../../redux/reducer/listSensorChart";
 import BackDropLoading from "./../BackDropLoading";
 
-function ChartV2({ listSensor, deviceId, startDate, endDate }) {
+function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRealTime }) {
   const chartComponentRef = useRef(null);
   const [templateOptions, setTemplateOptions] = useState(null);
   const [categoryTime, setCategoryTime] = useState([]);
@@ -18,6 +18,14 @@ function ChartV2({ listSensor, deviceId, startDate, endDate }) {
   // State lưu trữ giá trị tích lũy (m³) cho sensor có chứa "flow"
   const [cumulativeFlow, setCumulativeFlow] = useState({});
   const sensorChartShow = useSelector(chooseSensorSelector);
+
+  // Track if initial data has been loaded to prevent API refetch in live mode
+  const initialLoadDoneRef = useRef(false);
+  const lastFetchParamsRef = useRef({ deviceId: null, startDate: null, endDate: null, listSensor: null });
+
+  // Real-time data refs
+  const lastCaptureTimeRef = useRef(null);
+  const MAX_REALTIME_POINTS = 120; // 10 minutes at 5 second intervals
 
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
@@ -60,6 +68,10 @@ function ChartV2({ listSensor, deviceId, startDate, endDate }) {
   const run = async () => {
     setLoading(true);
     let res = await handleData(startDate, endDate, deviceId, listSensor);
+    if (!res || !Array.isArray(res)) {
+      setLoading(false);
+      return;
+    }
     const timeCategory = new Set();
     const dataChart = new Map();
     console.log({ res });
@@ -71,7 +83,19 @@ function ChartV2({ listSensor, deviceId, startDate, endDate }) {
     // Object chứa dữ liệu dạng mảng gồm timestamp và giá trị flow để tính tích lũy
     const sensorPoints = {};
 
+    // Track seen time+sensor combinations to deduplicate
+    const seenEntries = new Set();
+
     res.forEach((v) => {
+      // Create unique key for this time+sensor combination
+      const entryKey = `${v.time.value}_${v.sensor}`;
+
+      // Skip if we've already processed this time+sensor combination
+      if (seenEntries.has(entryKey)) {
+        return;
+      }
+      seenEntries.add(entryKey);
+
       // Xây dựng category time và dữ liệu cho biểu đồ (như cũ)
       timeCategory.add(
         moment(v.time.value).format("HH:mm:ss DD/MM/YYYY")
@@ -128,12 +152,91 @@ function ChartV2({ listSensor, deviceId, startDate, endDate }) {
   };
 
   useEffect(() => {
-    if (listSensor.length > 0) {
-      setChartData([]);
-      run();
+    // Skip refetch if in live mode and initial data already loaded
+    // Only refetch when:
+    // 1. Device changes, OR
+    // 2. listSensor changes, OR
+    // 3. User manually changes date range (not in live mode)
+    const listSensorChanged = JSON.stringify(listSensor) !== JSON.stringify(lastFetchParamsRef.current.listSensor);
+    const shouldFetch =
+      deviceId !== lastFetchParamsRef.current.deviceId ||
+      listSensorChanged ||
+      (!isLiveMode && (
+        startDate !== lastFetchParamsRef.current.startDate ||
+        endDate !== lastFetchParamsRef.current.endDate
+      )) ||
+      !initialLoadDoneRef.current;
+
+    if (!shouldFetch || listSensor.length === 0) {
+      return;
     }
+
+    setChartData([]);
+    run();
+
+    // Mark initial load as done and save fetch params
+    initialLoadDoneRef.current = true;
+    lastFetchParamsRef.current = { deviceId, startDate, endDate, listSensor: [...listSensor] };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate, endDate, deviceId, listSensor]);
+  }, [startDate, endDate, deviceId, listSensor, isLiveMode]);
+
+  // Real-time data capture effect - append points to chart state
+  useEffect(() => {
+    if (!isLiveMode || !dataRealTime || dataRealTime.length === 0) {
+      return;
+    }
+
+    // Don't add points if chart data is empty (still loading)
+    if (chartData.length === 0) {
+      return;
+    }
+
+    const now = Date.now();
+    if (lastCaptureTimeRef.current && (now - lastCaptureTimeRef.current) < 5000) {
+      return;
+    }
+    lastCaptureTimeRef.current = now;
+
+    const sensorData = dataRealTime[0]?.data_sensor || [];
+    if (sensorData.length === 0) return;
+
+    const timeStr = moment(new Date()).format("HH:mm:ss DD/MM/YYYY");
+
+    setCategoryTime(prev => {
+      const newCategories = [...prev, timeStr];
+      if (newCategories.length > MAX_REALTIME_POINTS) {
+        return newCategories.slice(-MAX_REALTIME_POINTS);
+      }
+      return newCategories;
+    });
+
+    setChartData(prev => {
+      return prev.map(series => {
+        const seriesName = series.name;
+        // Use exact match first to prevent CO2 matching O2
+        const sensor = sensorData.find(s => {
+          // Exact match
+          if (seriesName === s.Name) return true;
+          // Series name starts with sensor name followed by non-letter (e.g., "O2(ppm)" matches "O2")
+          const pattern = new RegExp(`^${s.Name}(?![a-zA-Z])`, 'i');
+          if (pattern.test(seriesName)) return true;
+          // Sensor name exact match to beginning of series name
+          if (seriesName.toLowerCase() === s.Name.toLowerCase()) return true;
+          return false;
+        });
+
+        const newValue = sensor ? parseFloat(sensor.Value) : null;
+        let newData = [...series.data, !isNaN(newValue) ? newValue : null];
+
+        if (newData.length > MAX_REALTIME_POINTS) {
+          newData = newData.slice(-MAX_REALTIME_POINTS);
+        }
+
+        return { ...series, data: newData };
+      });
+    });
+
+  }, [dataRealTime, isLiveMode, chartData.length]);
 
   useEffect(() => {
     if (chartData.length > 0) {
@@ -207,17 +310,17 @@ function ChartV2({ listSensor, deviceId, startDate, endDate }) {
       <Box sx={{ p: 2, display: "flex", alignItems: "center" }}>
         {listSensor && listSensor.length > 0
           ? listSensor.map((v) =>
-              v.toLowerCase().includes("flow") && (
-                <div key={v} style={{ marginRight: 20 }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold", mr: 2 }}>
-                    {v}
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: "blue" }}>
-                    {chartData.length == 0 ?"...": (cumulativeFlow[v] ? cumulativeFlow[v].toFixed(2) : 0)} m³
-                  </Typography>
-                </div>
-              )
+            v.toLowerCase().includes("flow") && (
+              <div key={v} style={{ marginRight: 20 }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mr: 2 }}>
+                  {v}
+                </Typography>
+                <Typography variant="h6" sx={{ color: "blue" }}>
+                  {chartData.length == 0 ? "..." : (cumulativeFlow[v] ? cumulativeFlow[v].toFixed(2) : 0)} m³
+                </Typography>
+              </div>
             )
+          )
           : null}
       </Box>
       {/* Phần biểu đồ giữ nguyên như trước đó */}
