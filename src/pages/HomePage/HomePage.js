@@ -112,14 +112,14 @@ const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValu
     <Box
         sx={{
             background: "white",
-            mb: 1.5,
-            p: 1.5,
+            mb: 0.5,
+            p: 1,
             borderRadius: 2,
             border: "1px solid #e0e0e0",
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             display: "flex",
             alignItems: "center",
-            gap: 2,
+            gap: 1.5,
         }}
     >
         <Box
@@ -203,15 +203,31 @@ const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValu
     </Box>
 ));
 
-const LicenseWarnings = memo(({ licenseDay, licenseMessage, isDeviceOffline, IsDemoUI, lastimeActive }) => (
-    <>
-        {licenseDay > 10 && licenseDay !== -1 && <NormalNote text={`Bạn còn ${licenseDay} ngày sử dụng.`} />}
-        {licenseDay < 10 && licenseDay > 0 && <AlarmNote text={`Thiết bị sắp hết hạn sử dụng. Bạn còn ${licenseDay} ngày sử dụng.`} />}
-        {licenseDay === 0 && <AlarmNote text="Thiết bị đã hết hạn sử dụng. Vui lòng liên hệ nhà cung cấp." />}
-        {isDeviceOffline && !IsDemoUI && <AlarmNote text={`Trạm bị mất kết nối từ ${moment(lastimeActive.slice(0, -1)).format("HH:mm DD/MM/YYYY")}. Vui lòng kiểm tra.`} />}
-        {licenseMessage && <AlarmNote text={licenseMessage} />}
-    </>
-));
+const LicenseWarnings = memo(({ licenseDay, licenseMessage, isDeviceOffline, IsDemoUI, lastimeActive, alarmCoils = [] }) => {
+    // Check if any warning should be shown
+    const hasLicenseWarning = (licenseDay > 10 && licenseDay !== -1) ||
+        (licenseDay < 10 && licenseDay > 0) ||
+        licenseDay === 0;
+    const hasOfflineWarning = isDeviceOffline && !IsDemoUI;
+    const hasMessage = !!licenseMessage;
+    const hasAlarmCoils = alarmCoils && alarmCoils.length > 0;
+
+    // Don't render anything if no warnings
+    if (!hasLicenseWarning && !hasOfflineWarning && !hasMessage && !hasAlarmCoils) {
+        return null;
+    }
+
+    return (
+        <Box sx={{ mb: 1 }}>
+            {licenseDay > 10 && licenseDay !== -1 && <NormalNote text={`Bạn còn ${licenseDay} ngày sử dụng.`} />}
+            {licenseDay < 10 && licenseDay > 0 && <AlarmNote text={`Thiết bị sắp hết hạn sử dụng. Bạn còn ${licenseDay} ngày sử dụng.`} />}
+            {licenseDay === 0 && <AlarmNote text="Thiết bị đã hết hạn sử dụng. Vui lòng liên hệ nhà cung cấp." />}
+            {hasOfflineWarning && <AlarmNote text={`Trạm bị mất kết nối từ ${moment(lastimeActive.slice(0, -1)).format("HH:mm DD/MM/YYYY")}. Vui lòng kiểm tra.`} />}
+            {licenseMessage && <AlarmNote text={licenseMessage} />}
+            {hasAlarmCoils && <AlarmNote text={`Cảnh báo: ${alarmCoils.join(", ")}`} />}
+        </Box>
+    );
+});
 /* Hiệu ứng ring loader */
 const ringStyle = {
     width: 70,
@@ -787,6 +803,47 @@ function HomePage() {
             }) || [];
         });
     }, [dataRealTime, fullRS485Data]);
+
+    // Extract triggered alarm coils for display in warnings
+    const alarmCoils = useMemo(() => {
+        if (!dataCoil || dataCoil.length === 0) return [];
+
+        const triggered = [];
+        dataCoil.forEach(coilGroup => {
+            coilGroup?.forEach(coil => {
+                // Check if coil has IsHighAlarm=true and value=1 (alarm triggered)
+                // But exclude if IsHide=true (these are hidden even when triggered)
+                if (coil.IsHighAlarm && coil.value?.split("*")[0] === "1" && !coil.item?.IsHide) {
+                    triggered.push(coil.sensor || coil.item?.Name);
+                }
+            });
+        });
+        return triggered;
+    }, [dataCoil]);
+
+    // Calculate visible coil count (after filtering hidden coils)
+    const visibleCoilCount = useMemo(() => {
+        if (!dataCoil || dataCoil.length === 0) return 0;
+
+        let count = 0;
+        dataCoil.forEach(coilGroup => {
+            coilGroup?.forEach(coil => {
+                // If IsHighAlarm=true AND IsHide=true, always hide this coil
+                if (coil.item?.IsHighAlarm && coil.item?.IsHide) {
+                    return;
+                }
+                // Normal IsHide logic
+                const shouldHide = coil.item?.IsHide &&
+                    (!coil.item?.IsHighAlarm ||
+                        (coil.item?.IsHighAlarm && coil.item?.Value === 0));
+
+                if (!shouldHide) {
+                    count++;
+                }
+            });
+        });
+        return count;
+    }, [dataCoil]);
 
     // Disable live mode when station is offline
     useEffect(() => {
@@ -1469,7 +1526,7 @@ function HomePage() {
     // Layout configuration - pass visibility flags for dynamic sizing
     const gridLayout = useResponsiveGrid({
         hasSensors: layoutConditions.shouldShowSensors(dataSensor),
-        hasCoils: layoutConditions.shouldShowCoils(dataCoil),
+        hasCoils: visibleCoilCount > 0 || fullRS485Data?.IsPIDAnimation,
         hasCameras: layoutConditions.shouldShowCameras(cameraList, licenseLockLV1),
         // Map shows when: has coordinates AND (not showing notes OR shouldShowDoubleMap)
         hasMap: hasValidCoordinates && (!shouldShowNotes || shouldShowDoubleMap),
@@ -1478,6 +1535,8 @@ function HomePage() {
         deviceType,
         deviceId: valueSelect?.id || "",
         sensorCount: dataSensor?.[0]?.length || 0,
+        coilCount: visibleCoilCount,
+        hasPID: fullRS485Data?.IsPIDAnimation || false,
         gridSplitRatio,
     });
 
@@ -1648,18 +1707,14 @@ function HomePage() {
                                 )}
                         </Box>
 
-
-
-
-                        <Box sx={{ mb: 2 }}>
-                            <LicenseWarnings
-                                licenseDay={licenseDay}
-                                licenseMessage={licenseMessage}
-                                isDeviceOffline={isDeviceOffline}
-                                IsDemoUI={IsDemoUI}
-                                lastimeActive={lastimeActive}
-                            />
-                        </Box>
+                        <LicenseWarnings
+                            licenseDay={licenseDay}
+                            licenseMessage={licenseMessage}
+                            isDeviceOffline={isDeviceOffline}
+                            IsDemoUI={IsDemoUI}
+                            lastimeActive={lastimeActive}
+                            alarmCoils={alarmCoils}
+                        />
 
                         {!licenseLockLV2 && (
                             <Box sx={{ flexGrow: 1 }}>

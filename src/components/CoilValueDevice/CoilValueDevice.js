@@ -6,15 +6,15 @@ import LockIcon from '@mui/icons-material/Lock';
 import Tooltip from '@mui/material/Tooltip';
 import './CoilValueDevice.scss';
 
-export default function CoilValueDevice({ 
-  label, 
-  value, 
-  unit, 
-  state, 
-  fillColor = '#0E5E6F', 
-  isHighAlarm, 
+export default function CoilValueDevice({
+  label,
+  value,
+  unit,
+  state,
+  fillColor = '#0E5E6F',
+  isHighAlarm,
   item,
-  IsRevHighAlarm = false, 
+  IsRevHighAlarm = false,
 }) {
   const labelRef = useRef(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
@@ -37,22 +37,22 @@ export default function CoilValueDevice({
 
   // Determine icon to display
   const getIcon = () => {
-    const isPump = label.toLowerCase().includes("pump") || 
-                   label.toLowerCase().includes("bơm") || 
-                   label.toLowerCase().includes("p0");
+    const isPump = label.toLowerCase().includes("pump") ||
+      label.toLowerCase().includes("bơm") ||
+      label.toLowerCase().includes("p0");
 
     if (isHighAlarm !== true) {
       if (isPump) {
         return (
-          <img 
-            src="/image/pump.svg" 
-            alt="Pump" 
+          <img
+            src="/image/pump.svg"
+            alt="Pump"
             className="coil-icon pump-icon"
           />
         );
       }
       return (
-        <Check 
+        <Check
           className="coil-icon check-icon"
         />
       );
@@ -61,34 +61,38 @@ export default function CoilValueDevice({
     // High alarm case
     if (value == "0") {
       return (
-        <Check 
+        <Check
           className="coil-icon check-icon"
         />
       );
     }
 
     return (
-      <WarningIcon 
+      <WarningIcon
         className="coil-icon warning-icon"
-        style={{ color: value == "1" ? "yellow" : "gray" }} 
+        style={{ color: value == "1" ? "yellow" : "gray" }}
       />
     );
   };
 
   // Determine state class
+  // IsHighAlarm=true: value=0 -> gray (off), value=1 -> red (error)
+  // IsHighAlarm=false: normal coil behavior
   const getStateClass = () => {
-    if (value == "1") {
-      return isHighAlarm ? "error" : "normal";
+    if (isHighAlarm) {
+      // Alarm coil: gray when OK (value=0), red when alarm triggered (value=1)
+      return value == "1" ? "error" : "off";
     }
-    return isHighAlarm && IsRevHighAlarm !== true ? "normal" : "off";
+    // Normal coil: cyan when ON, gray when OFF
+    return value == "1" ? "normal" : "off";
   };
 
   return (
     <div className={`coil_item coil_state-${getStateClass()} ${previousValue !== value ? 'state-transitioning' : ''}`}>
       <div className="coil_item-header">
-        <Tooltip 
-          title={label} 
-          arrow 
+        <Tooltip
+          title={label}
+          arrow
           placement="top"
           disableHoverListener={!isOverflowing}
           enterDelay={300}

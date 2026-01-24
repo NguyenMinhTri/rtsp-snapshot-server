@@ -113,6 +113,12 @@ export const CoilGridSection = ({
   const rawCoils = dataCoil?.[0] || [];
 
   const visibleCoils = rawCoils.filter((obj) => {
+    // If IsHighAlarm=true AND IsHide=true, always hide this coil
+    if (obj.item?.IsHighAlarm && obj.item?.IsHide) {
+      return false;
+    }
+
+    // Normal IsHide logic: hide if IsHide=true and (not alarm OR alarm with value=0)
     const shouldHide =
       obj.item?.IsHide &&
       (!obj.item.IsHighAlarm ||
@@ -120,6 +126,11 @@ export const CoilGridSection = ({
 
     return !shouldHide;
   });
+
+  // If no visible coils and no PID, don't render the section
+  if (visibleCoils.length === 0 && !fullRS485Data?.IsPIDAnimation) {
+    return null;
+  }
 
   // GROUPING
   const grouped = visibleCoils.reduce((acc, coil) => {
@@ -136,7 +147,7 @@ export const CoilGridSection = ({
   return (
     <ResponsiveGridItem gridConfig={gridConfig}>
       <BorderedContent>
-        <Grid container spacing={2}>
+        <Grid container spacing={1}>
           {/* --- IFrameSVGWrapper --- */}
           {fullRS485Data?.IsPIDAnimation && (
             <Grid item xs={12}>
@@ -160,7 +171,7 @@ export const CoilGridSection = ({
               <div className="coil-group-box">
                 <div className="coil-group-title">{groupName}</div>
 
-                <Grid container spacing={1.2}>
+                <Grid container spacing={0.8}>
                   {items.map((v, index) => (
                     <Grid
                       key={index}

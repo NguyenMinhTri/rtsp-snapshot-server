@@ -31,18 +31,37 @@ export const useResponsiveGrid = (config) => {
     const getSensorGridSize = () => {
       if (!hasSensors || sensorCount === 0) return { xs: 0 };
 
+      // Special case: CNV device - sensor panel takes 9 columns
+      const isCNV = deviceId.includes("A-CNV-3");
+      if (isCNV && hasCoils) {
+        return { xs: 9, sx: { my: 1 } };
+      }
+
+      // If custom ratio is set, use it
       if (gridSplitRatio && hasCoils) {
         return { xs: gridSplitRatio.sensor, sx: { my: 1 } };
       }
 
       if (hasCoils) {
-        const sizeMap = {
-          1: 2.1,
-          2: 6,
-          3: 8,
-          default: 8,
-        };
-        return { xs: sizeMap[sensorCount] || sizeMap.default, sx: { my: 1 } };
+        const coilCount = config.coilCount || 0;
+        const hasPID = config.hasPID || false;
+
+        // Calculate based on content ratio
+        // If PID exists, coils need more space
+        // If many coils relative to sensors, sensors should be smaller
+
+        if (sensorCount === 1) {
+          // 1 sensor: give minimal space
+          return { xs: hasPID ? 2 : 2.5, sx: { my: 1 } };
+        } else if (sensorCount === 2) {
+          return { xs: hasPID ? 3 : 4, sx: { my: 1 } };
+        } else if (sensorCount <= 4) {
+          return { xs: hasPID ? 4 : 5, sx: { my: 1 } };
+        } else if (sensorCount <= 6) {
+          return { xs: 6, sx: { my: 1 } };
+        } else {
+          return { xs: 8, sx: { my: 1 } };
+        }
       }
 
       return { xs: 12, sx: { my: 1 } };
@@ -52,18 +71,32 @@ export const useResponsiveGrid = (config) => {
     const getCoilGridSize = () => {
       if (!hasCoils) return { xs: 0 };
 
+      // Special case: CNV device - coil panel takes 3 columns
+      const isCNV = deviceId.includes("A-CNV-3");
+      if (isCNV && hasSensors) {
+        return { xs: 3, sx: { my: 1 } };
+      }
+
+      // If custom ratio is set, use it
       if (gridSplitRatio && hasSensors) {
         return { xs: gridSplitRatio.coil, sx: { my: 1 } };
       }
 
       if (hasSensors && sensorCount > 0) {
-        const sizeMap = {
-          1: 9.9,
-          2: 6,
-          3: 4,
-          default: 4,
-        };
-        return { xs: sizeMap[sensorCount] || sizeMap.default, sx: { my: 1 } };
+        const hasPID = config.hasPID || false;
+
+        // Coil gets remaining space after sensor
+        if (sensorCount === 1) {
+          return { xs: hasPID ? 10 : 9.5, sx: { my: 1 } };
+        } else if (sensorCount === 2) {
+          return { xs: hasPID ? 9 : 8, sx: { my: 1 } };
+        } else if (sensorCount <= 4) {
+          return { xs: hasPID ? 8 : 7, sx: { my: 1 } };
+        } else if (sensorCount <= 6) {
+          return { xs: 6, sx: { my: 1 } };
+        } else {
+          return { xs: 4, sx: { my: 1 } };
+        }
       }
 
       return { xs: 12, sx: { my: 1 } };
