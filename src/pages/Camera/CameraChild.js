@@ -1,188 +1,167 @@
-import { useState, useEffect, useRef, useLayoutEffect } from "react";
-import {
-    Autocomplete,
-    Button,
-    CardMedia,
-    Grid,
-    TextField,
-} from "@mui/material";
+import { useState, useEffect, useCallback, memo } from "react";
+import { Grid, Box, Typography } from "@mui/material";
 import React from "react";
-import Nothing from "../../components/Nothing";
-import SubHeader from "../../components/SubHeader";
+import VideocamOffIcon from "@mui/icons-material/VideocamOff";
 import "./Camera.scss";
 import asyncLocalStorage from "../../utils/async_localstorage";
-import Loading from "../../components/Loading";
-import CircularProgress from "@mui/material/CircularProgress";
-function CameraChild({ cameraList, resDialog }) {
+import OptimizedCameraPlayer from "../../components/OptimizedCameraPlayer";
 
-
-    const [dataChange, setDataChange] = useState(false);
-    const [valueSelect, setValueSelect] = useState("");
-    const [menuValue, setMenuSelect] = useState([]);
-    const [detailMonitor, setDetailMonitor] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
-
+/**
+ * CameraChild - Optimized camera grid component
+ * Uses OptimizedCameraPlayer for faster load time with skeleton loading
+ */
+const CameraChild = memo(({ cameraList, resDialog }) => {
     const [ipCamera, setValueIP] = useState("");
+    const [isReady, setIsReady] = useState(false);
+
     const deviceUser = localStorage.getItem("device_user");
-    const listDevice = JSON.parse(deviceUser);
-    const [visible, setVisible] = useState(true);
-    
-    useEffect(() => {   
-        for (let camera in cameraList) {
-            if (cameraList[camera].includes("navis-cloud-camera")) {
-                let id = cameraList[camera].split("monitor=")[1].split("&")[0];
-                if(!resDialog)
-                fetch(
-                    `https://navis-cloud-camera.iotdaiviet.com/zm/api/monitors/${id}.json`,
-                    {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        body: "Monitor[Function]=Monitor",
-                    }
-                );
-                setTimeout(function () {
-                    setIsLoading(false);
-                }, 5000);
-            } else {
-                setIsLoading(false);
-            }
-        }
+    const listDevice = deviceUser ? JSON.parse(deviceUser) : null;
 
-        return () => {
-          
+    // Initialize IP camera and mark ready
+    useEffect(() => {
+        asyncLocalStorage.getItem("ip_camera").then((ipcamera) => {
+            setValueIP(ipcamera || "");
+            setIsReady(true);
+        });
+    }, []);
 
-            for (let camera in cameraList) {
-                if (cameraList[camera].includes("navis-cloud-camera")) {
-                    let id = cameraList[camera]
-                        .split("monitor=")[1]
-                        .split("&")[0];
-                    if(!resDialog)
+    // Handle navis-cloud-camera monitor activation/deactivation
+    useEffect(() => {
+        if (!cameraList || !Array.isArray(cameraList)) return;
+
+        // Activate monitors
+        cameraList.forEach((camera) => {
+            if (camera.includes("navis-cloud-camera") && !resDialog) {
+                const id = camera.split("monitor=")[1]?.split("&")[0];
+                if (id) {
                     fetch(
                         `https://navis-cloud-camera.iotdaiviet.com/zm/api/monitors/${id}.json`,
                         {
                             method: "POST",
                             headers: {
-                                "Content-Type":
-                                    "application/x-www-form-urlencoded",
+                                "Content-Type": "application/x-www-form-urlencoded",
                             },
-                            body: "Monitor[Function]=None",
+                            body: "Monitor[Function]=Monitor",
                         }
-                    );
-                } else {
+                    ).catch(console.error);
                 }
             }
-        };
-    }, [cameraList]);
-    let devices = [];
-    useEffect(() => {
-        setIsLoading(true);
-        setTimeout(function () {
-            setIsLoading(false);
-        }, 2000);
-    }, [cameraList]);
-    useEffect(() => {
-        if (listDevice) {
-            const id = Object.keys(listDevice);
-            id.forEach((v) => {
-                devices.push({
-                    id: v,
-                    label: listDevice[v]["FullName"],
-                });
-            });
-        }
-        setMenuSelect(devices);
-    }, []);
-
-
-    useEffect(() => {
-        asyncLocalStorage.getItem("ip_camera").then((ipcamera) => {
-            setValueIP(ipcamera);
-            asyncLocalStorage.getItem("home_station").then((station) => {
-                if (station) {
-                    let stationUser = JSON.parse(station);
-                    setValueSelect(stationUser);
-                    cameraList = listDevice[stationUser.id]["cameraList"];
-                } else {
-                    setValueSelect(devices[0]);
-                    cameraList = listDevice[devices[0].id]["cameraList"];
-                }
-
-                if (ipcamera)
-                    for (let camera in cameraList) {
-                        camera = camera.replace("[ip]", ipcamera);
-                    }
-            });
         });
-    }, []);
 
-    // console.log({ valueSelect });
+        // Cleanup: deactivate monitors on unmount
+        return () => {
+            cameraList.forEach((camera) => {
+                if (camera.includes("navis-cloud-camera") && !resDialog) {
+                    const id = camera.split("monitor=")[1]?.split("&")[0];
+                    if (id) {
+                        fetch(
+                            `https://navis-cloud-camera.iotdaiviet.com/zm/api/monitors/${id}.json`,
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/x-www-form-urlencoded",
+                                },
+                                body: "Monitor[Function]=None",
+                            }
+                        ).catch(console.error);
+                    }
+                }
+            });
+        };
+    }, [cameraList, resDialog]);
 
-    return isLoading ? (
-        <div style={{ display: "flex", justifyContent: "center", alignItems:"center", marginTop : '20px' }}>
-            <CircularProgress />
-        </div>
-    ) : (
-        <div className="camera_card">
-            {/* <SubHeader text={'GIÁM SÁT TRỰC TUYẾN TRẠM NƯỚC THẢI'} /> */}
+    // Get resolved RTSP URL
+    const getRtspUrl = useCallback((cameraUrl) => {
+        return cameraUrl.replace("[ip]", ipCamera);
+    }, [ipCamera]);
 
-            <Grid
-                container
-                style={{
-                    border: "1px solid #ccc",
-                    height: "100%",
-                    borderRadius: "8px",
-                    
+    // Calculate grid size based on camera count and dialog mode
+    const getGridSize = useCallback((cameraCount) => {
+        if (resDialog) {
+            return cameraCount > 1 ? 6 : 12;
+        }
+        return 12;
+    }, [resDialog]);
+
+    // Calculate video height
+    const getVideoHeight = useCallback((cameraCount) => {
+        if (resDialog) {
+            return cameraCount > 1 ? 450 : 600;
+        }
+        return cameraCount > 1 ? 280 : 450;
+    }, [resDialog]);
+
+    // Empty camera list state
+    if (!cameraList || cameraList.length === 0) {
+        return (
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 200,
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: 2,
+                    p: 4,
                 }}
             >
-                {cameraList.length ? (
-                    cameraList.map((v, index) => {
-                        return (
-                            <Grid
-                                key={index}
-                                item
-                                xl={resDialog  ? (cameraList.length >1 ? 6 : 12) : 12}
-                                lg={resDialog ? (cameraList.length >1 ? 6 : 12) : 12}
-                                md={resDialog ? (cameraList.length >1 ? 6 : 12) : 12}
-                                sm={12}
-                                xs={12}
-                               
-                            >
-                                <CardMedia
-                                
-                                    // onLoad={handleVideoLoad}
-                                    component="video"
-                                    height={
-                                        resDialog ? (cameraList.length >1 ? "500" : "700") : cameraList.length > 1 ? "250" : "500"
-                                    }
-                                    autoPlay
-                                    controls
-                                    playsInline
-                                    loop
-                                    muted
-                                    src={"https://rtsp-mp4.vercel.app/api/video?tagid="+v.replace("[ip]",ipCamera)}
-                                    alt="Camera"
-                                />
-                     
-                            </Grid>
-                        )
-                    })
-                ) : (
-                    <div
-                        style={{
-                            textAlign: "center",
-                            marginTop: "100px",
-                            width: "100%",
-                        }}
+                <VideocamOffIcon sx={{ fontSize: 48, color: "#999", mb: 2 }} />
+                <Typography variant="body1" color="text.secondary">
+                    Không có camera để giám sát
+                </Typography>
+            </Box>
+        );
+    }
+
+    // Wait for IP camera resolution
+    if (!isReady) {
+        return null; // OptimizedCameraPlayer will show skeleton
+    }
+
+    const gridSize = getGridSize(cameraList.length);
+    const videoHeight = getVideoHeight(cameraList.length);
+
+    return (
+        <Box className="camera_card">
+            <Grid
+                container
+                spacing={1}
+                sx={{
+                    border: "1px solid #e0e0e0",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    backgroundColor: "#1a1a2e",
+                }}
+            >
+                {cameraList.map((cameraUrl, index) => (
+                    <Grid
+                        key={`camera-${index}`}
+                        item
+                        xl={gridSize}
+                        lg={gridSize}
+                        md={gridSize}
+                        sm={12}
+                        xs={12}
                     >
-                        <p>Không có camera để giám sát</p>
-                    </div>
-                )}
+                        <OptimizedCameraPlayer
+                            rtspUrl={getRtspUrl(cameraUrl)}
+                            height={videoHeight}
+                            cameraName={`Camera ${index + 1}`}
+                            autoPlay
+                            muted
+                            controls
+                            maxRetries={3}
+                            retryDelay={3000}
+                        />
+                    </Grid>
+                ))}
             </Grid>
-        </div>
+        </Box>
     );
-}
+});
+
+CameraChild.displayName = "CameraChild";
 
 export default CameraChild;
 // <video width="750" height="500" controls muted autoPlay={true} preLoad="auto" loop>
