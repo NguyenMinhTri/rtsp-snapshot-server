@@ -172,8 +172,13 @@ const CameraError = memo(({ height, onRetry, retryCount, maxRetries }) => (
     </Box>
 ));
 
-// Status badge component
-const StatusBadge = memo(({ status }) => {
+// Status badge component - only shows RECONNECTING after timeout
+const StatusBadge = memo(({ status, showReconnecting = false }) => {
+    // Hide badge during normal reconnection (only show after 60s)
+    if (status === VideoStatus.RECONNECTING && !showReconnecting) {
+        return null;
+    }
+
     const getStatusConfig = () => {
         switch (status) {
             case VideoStatus.PLAYING:
@@ -231,17 +236,19 @@ const OptimizedCameraPlayer = memo(({
     const [status, setStatus] = useState(VideoStatus.LOADING);
     const [retryCount, setRetryCount] = useState(0);
     const [videoKey, setVideoKey] = useState(0);
-    const [showCanvas, setShowCanvas] = useState(false); // Show canvas with last frame
+    const [showCanvas, setShowCanvas] = useState(false);
+    const [showReconnectingIndicator, setShowReconnectingIndicator] = useState(false);
 
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const retryTimeoutRef = useRef(null);
+    const reconnectIndicatorTimeoutRef = useRef(null);
     const isFirstLoad = useRef(true);
     const hasPlayedOnce = useRef(false);
 
-    // Build video URL with optimized settings
+    // Build video URL - 45s segments (max allowed by server)
     const currentVideoUrl = buildVideoUrl(rtspUrl, {
-        duration: 30,
+        duration: 45, // Max 45s to reduce reconnect frequency
         lowQuality: true,
         fps: 10,
         width: 426,
@@ -249,13 +256,13 @@ const OptimizedCameraPlayer = memo(({
         autoFps: true,
     }) + `&t=${videoKey}`;
 
-    // Update status and notify parent
+    // Update status
     const updateStatus = useCallback((newStatus) => {
         setStatus(newStatus);
         onStatusChange?.(newStatus);
     }, [onStatusChange]);
 
-    // Capture current video frame to canvas
+    // Capture frame to canvas
     const captureFrame = useCallback(() => {
         const video = videoRef.current;
         const canvas = canvasRef.current;
@@ -268,38 +275,47 @@ const OptimizedCameraPlayer = memo(({
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
             return true;
         } catch (e) {
-            console.error("Error capturing frame:", e);
             return false;
         }
     }, []);
 
-    // Handle video load start
+    // Clear reconnect indicator timer
+    const clearReconnectTimer = useCallback(() => {
+        if (reconnectIndicatorTimeoutRef.current) {
+            clearTimeout(reconnectIndicatorTimeoutRef.current);
+            reconnectIndicatorTimeoutRef.current = null;
+        }
+        setShowReconnectingIndicator(false);
+    }, []);
+
+    // Handle load start
     const handleLoadStart = useCallback(() => {
         if (isFirstLoad.current) {
             updateStatus(VideoStatus.LOADING);
         }
     }, [updateStatus]);
 
-    // Handle video can play - hide canvas, show video
+    // Handle can play
     const handleCanPlay = useCallback(() => {
         isFirstLoad.current = false;
         hasPlayedOnce.current = true;
-        setShowCanvas(false); // Hide canvas, show video
+        setShowCanvas(false);
+        clearReconnectTimer();
         updateStatus(VideoStatus.PLAYING);
         setRetryCount(0);
-    }, [updateStatus]);
+    }, [updateStatus, clearReconnectTimer]);
 
-    // Handle video playing
+    // Handle playing
     const handlePlaying = useCallback(() => {
         setShowCanvas(false);
+        clearReconnectTimer();
         updateStatus(VideoStatus.PLAYING);
-    }, [updateStatus]);
+    }, [updateStatus, clearReconnectTimer]);
 
-    // Handle video error - capture frame first, then retry
+    // Handle error
     const handleError = useCallback((e) => {
         console.error("Video error:", e);
 
-        // Capture frame before showing reconnecting state
         if (hasPlayedOnce.current) {
             captureFrame();
             setShowCanvas(true);
@@ -308,6 +324,13 @@ const OptimizedCameraPlayer = memo(({
         if (retryCount < maxRetries) {
             updateStatus(VideoStatus.RECONNECTING);
             setRetryCount((prev) => prev + 1);
+
+            // Start 60-second timer for showing indicator
+            if (!reconnectIndicatorTimeoutRef.current) {
+                reconnectIndicatorTimeoutRef.current = setTimeout(() => {
+                    setShowReconnectingIndicator(true);
+                }, 60000);
+            }
 
             if (retryTimeoutRef.current) {
                 clearTimeout(retryTimeoutRef.current);
@@ -321,22 +344,19 @@ const OptimizedCameraPlayer = memo(({
         }
     }, [retryCount, maxRetries, retryDelay, updateStatus, captureFrame]);
 
-    // Handle video ended - capture frame, then load next segment
+    // Handle ended - silent transition
     const handleEnded = useCallback(() => {
-        // Capture the last frame before changing src
         captureFrame();
         setShowCanvas(true);
-
         updateStatus(VideoStatus.RECONNECTING);
         setVideoKey((prev) => prev + 1);
     }, [updateStatus, captureFrame]);
 
-    // Update video src when videoKey changes
+    // Update video src
     useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
-        // Capture frame before changing src (if we have played before)
         if (hasPlayedOnce.current && video.readyState >= 2) {
             captureFrame();
             setShowCanvas(true);
@@ -349,12 +369,11 @@ const OptimizedCameraPlayer = memo(({
         }
     }, [currentVideoUrl, autoPlay, captureFrame]);
 
-    // Cleanup on unmount
+    // Cleanup
     useEffect(() => {
         return () => {
-            if (retryTimeoutRef.current) {
-                clearTimeout(retryTimeoutRef.current);
-            }
+            if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+            if (reconnectIndicatorTimeoutRef.current) clearTimeout(reconnectIndicatorTimeoutRef.current);
         };
     }, []);
 
@@ -363,11 +382,11 @@ const OptimizedCameraPlayer = memo(({
         setRetryCount(0);
         isFirstLoad.current = true;
         setShowCanvas(false);
+        clearReconnectTimer();
         setVideoKey((prev) => prev + 1);
         updateStatus(VideoStatus.LOADING);
-    }, [updateStatus]);
+    }, [updateStatus, clearReconnectTimer]);
 
-    // Show error UI if max retries exceeded
     if (status === VideoStatus.ERROR) {
         return (
             <CameraError
@@ -391,54 +410,16 @@ const OptimizedCameraPlayer = memo(({
                 overflow: "hidden",
             }}
         >
-            {/* Status badge */}
-            <StatusBadge status={status} />
+            <StatusBadge status={status} showReconnecting={showReconnectingIndicator} />
 
-            {/* Skeleton loader - ONLY on first load */}
             {status === VideoStatus.LOADING && isFirstLoad.current && (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        inset: 0,
-                        zIndex: 5,
-                    }}
-                >
+                <Box sx={{ position: "absolute", inset: 0, zIndex: 5 }}>
                     <CameraSkeleton height={height} cameraName={cameraName} />
                 </Box>
             )}
 
-            {/* Reconnecting overlay */}
-            {status === VideoStatus.RECONNECTING && (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        zIndex: 10,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        backgroundColor: "rgba(0,0,0,0.6)",
-                        borderRadius: "4px",
-                        padding: "4px 8px",
-                    }}
-                >
-                    <Box
-                        sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            backgroundColor: "#ff9800",
-                            animation: "pulse 1s ease-in-out infinite",
-                        }}
-                    />
-                    <Typography variant="caption" sx={{ color: "#fff", fontSize: "0.65rem" }}>
-                        Đang kết nối lại...
-                    </Typography>
-                </Box>
-            )}
+            {/* Reconnecting indicator removed - video just shows last frame silently */}
 
-            {/* Canvas - shows last captured frame during reconnection */}
             <canvas
                 ref={canvasRef}
                 style={{
@@ -455,16 +436,13 @@ const OptimizedCameraPlayer = memo(({
                 }}
             />
 
-            {/* Video element */}
             <video
                 ref={videoRef}
                 style={{
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",
-                    opacity: !showCanvas && status === VideoStatus.PLAYING ? 1 :
-                        showCanvas ? 0 :
-                            (status === VideoStatus.RECONNECTING ? 0.3 : 0),
+                    opacity: !showCanvas && status === VideoStatus.PLAYING ? 1 : showCanvas ? 0 : 0.3,
                     transition: "opacity 0.3s ease",
                 }}
                 muted={muted}
@@ -484,4 +462,3 @@ OptimizedCameraPlayer.displayName = "OptimizedCameraPlayer";
 
 export default OptimizedCameraPlayer;
 export { VideoStatus, buildVideoUrl };
-
