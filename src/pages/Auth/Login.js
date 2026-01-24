@@ -51,7 +51,7 @@ export default function Login() {
 
     const [disableBtnPhoneNumber, setDisableBtPhoneNumber] = useState(false);
 
-    const [loading , setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const db = ref(getDatabase());
     const navigate = useNavigate();
     const auth = getAuth();
@@ -61,29 +61,29 @@ export default function Login() {
             const reqGetSensors = listDevice.map((device) => {
                 return (async () => {
                     const res = await get(child(db, `Devices/DAIVIET-RS485/${device}`))
-                    if(res.exists()) {
+                    if (res.exists()) {
                         const listSensorOfDevice = new Set()
-                        const {RS485Data} = res.val();
-                        try{
+                        const { RS485Data } = res.val();
+                        try {
                             RS485Data.forEach((sensor) => {
                                 listSensorOfDevice.add(sensor.Name)
                             })
                         }
-                        catch(e){
-                            
+                        catch (e) {
+
                         }
                         return {
-                            device : device,
-                            sensors : [...listSensorOfDevice]
+                            device: device,
+                            sensors: [...listSensorOfDevice]
                         }
                     }
                 })()
             })
-    
-            const  res = await Promise.all(reqGetSensors)
+
+            const res = await Promise.all(reqGetSensors)
             localStorage.setItem(SENSOR_OF_DEVICE_KEY, JSON.stringify(res))
         }
-        catch(error) {
+        catch (error) {
             Toast(
                 "error",
                 "Đã xảy ra lỗi trong quá trình đăng nhập"
@@ -91,15 +91,15 @@ export default function Login() {
             setLoading(false)
             throw Error(error)
         }
-        
-        
+
+
     }
 
     // get deviced user
     const getDeviceUser = (author, accessToken) => {
         author.getIdToken().then((data) => {
             const token = `Bearer ${data}`;
-            
+
 
             fetch(
                 "https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/api/getListDevices",
@@ -129,16 +129,12 @@ export default function Login() {
                     asyncLocalStorage
                         .setItem("device_user", JSON.stringify(filteredObj))
                         .then(() => {
-                           
+
                             Cookies.set("auth_token", accessToken, {
                                 expires: 2147483647,
                             });
                             Toast("success", "Đăng nhập thành công");
-                            if(author.email !== null && (author.email.includes("datalogger") || author.email.includes("tttservice"))){
-                                navigate("/generality");
-                            } else {
-                                navigate("/home");
-                            }                        
+                            navigate("/home");
                             setCompleteLogin(true);
                             setLoading(false)
                         })
@@ -202,7 +198,7 @@ export default function Login() {
             .then((userCredential) => {
                 const author = userCredential.user;
                 const isVerify = author.emailVerified;
-               
+
                 const accessToken = userCredential.user.accessToken;
                 localStorage.setItem("loginUserName", author.displayName);
                 localStorage.setItem("loginEmail", author.email);
@@ -379,62 +375,62 @@ export default function Login() {
     };
 
     return (
-        <> 
-                {loading && <BackDropLoading/>}
-                <div className="form_login">
-                    {/* <img src="/image/logo_cpn.png" width={200} height={100} alt="" /> */}
-                    <h1>ĐĂNG NHẬP</h1>
-                    <div id="recaptcha-container"></div>
-                    <div>
-                        <div className="form_input">
-                            {/* <p style={{ marginBottom: '10px' }}>Nhập email của bạn</p> */}
-                            <TextField
-                                required
-                                error={validateEmail}
-                                id="outlined-required"
-                                type={"email"}
-                                label="Nhập email của bạn"
-                                defaultValue=""
-                                size="small"
-                                color="success"
-                                fullWidth
-                                onChange={(e) => {
-                                    setValidateEmail(false);
-                                    setEmail(e.target.value);
-                                }}
-                            />
-                        </div>
-                        <div className="form_input">
-                            {/* <p style={{ marginBottom: '10px' }}>Nhập mật khẩu của bạn</p> */}
-                            <TextField
-                                required
-                                error={validateEmailPass}
-                                type={"password"}
-                                id="outlined-required"
-                                label="Nhập mật khẩu của bạn"
-                                defaultValue=""
-                                size="small"
-                                color="success"
-                                fullWidth
-                                onChange={(e) => {
-                                    setValidateEmailPass(false);
-                                    setEmailPass(e.target.value);
-                                }}
-                            />
-                        </div>
-                        <div style={{ marginTop: "5px" }}>
-                            <Button
-                                fullWidth
-                                variant="contained"
-                                size="large"
-                                style={{ backgroundColor: "#088f81" }}
-                                onClick={handleLoginEmail}
-                                disabled={completeLogin}
-                            >
-                                ĐĂNG NHẬP
-                            </Button>
-                        </div>
-                        {/* <div className="register_forgot">
+        <>
+            {loading && <BackDropLoading />}
+            <div className="form_login">
+                {/* <img src="/image/logo_cpn.png" width={200} height={100} alt="" /> */}
+                <h1>ĐĂNG NHẬP</h1>
+                <div id="recaptcha-container"></div>
+                <div>
+                    <div className="form_input">
+                        {/* <p style={{ marginBottom: '10px' }}>Nhập email của bạn</p> */}
+                        <TextField
+                            required
+                            error={validateEmail}
+                            id="outlined-required"
+                            type={"email"}
+                            label="Nhập email của bạn"
+                            defaultValue=""
+                            size="small"
+                            color="success"
+                            fullWidth
+                            onChange={(e) => {
+                                setValidateEmail(false);
+                                setEmail(e.target.value);
+                            }}
+                        />
+                    </div>
+                    <div className="form_input">
+                        {/* <p style={{ marginBottom: '10px' }}>Nhập mật khẩu của bạn</p> */}
+                        <TextField
+                            required
+                            error={validateEmailPass}
+                            type={"password"}
+                            id="outlined-required"
+                            label="Nhập mật khẩu của bạn"
+                            defaultValue=""
+                            size="small"
+                            color="success"
+                            fullWidth
+                            onChange={(e) => {
+                                setValidateEmailPass(false);
+                                setEmailPass(e.target.value);
+                            }}
+                        />
+                    </div>
+                    <div style={{ marginTop: "5px" }}>
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            size="large"
+                            style={{ backgroundColor: "#088f81" }}
+                            onClick={handleLoginEmail}
+                            disabled={completeLogin}
+                        >
+                            ĐĂNG NHẬP
+                        </Button>
+                    </div>
+                    {/* <div className="register_forgot">
                                 <p className="register" onClick={handleRegister}>
                                     Đăng ký ngay
                                 </p>
@@ -442,36 +438,36 @@ export default function Login() {
                                     Quên mật khẩu
                                 </p>
                             </div> */}
-                    </div>
+                </div>
 
-                    <div className="break_auth">
-                        <div className="break_first"></div>
-                        <span
-                            style={{
-                                fontWeight: "500",
-                                fontSize: "18px",
-                                margin: " 0 10px",
-                            }}
+                <div className="break_auth">
+                    <div className="break_first"></div>
+                    <span
+                        style={{
+                            fontWeight: "500",
+                            fontSize: "18px",
+                            margin: " 0 10px",
+                        }}
+                    >
+                        OR
+                    </span>
+                    <div className="break_second"></div>
+                </div>
+                <div className="login_social">
+                    <div className="login_social-gg">
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="error"
+                            size="medium"
+                            style={{ fontWeight: "500" }}
+                            startIcon={<GoogleIcon sx={{ color: "red" }} />}
+                            onClick={handleLoginGG}
                         >
-                            OR
-                        </span>
-                        <div className="break_second"></div>
+                            ĐĂNG NHẬP BẰNG GOOGLE
+                        </Button>
                     </div>
-                    <div className="login_social">
-                        <div className="login_social-gg">
-                            <Button
-                                fullWidth
-                                variant="outlined"
-                                color="error"
-                                size="medium"
-                                style={{ fontWeight: "500" }}
-                                startIcon={<GoogleIcon sx={{ color: "red" }} />}
-                                onClick={handleLoginGG}
-                            >
-                                ĐĂNG NHẬP BẰNG GOOGLE
-                            </Button>
-                        </div>
-                        {/* <div className="login_social-sms">
+                    {/* <div className="login_social-sms">
                             <Button
                                 fullWidth
                                 variant="outlined"
@@ -483,8 +479,8 @@ export default function Login() {
                             </Button>
                         </div> */}
 
-                        <QRLogin loading={loading} setLoading={setLoading} backToLogin={backToLogin} handleGetListSensorFromDevice={handleGetListSensorFromDevice} />
-                        {/* <div className="login_social-apple">
+                    <QRLogin loading={loading} setLoading={setLoading} backToLogin={backToLogin} handleGetListSensorFromDevice={handleGetListSensorFromDevice} />
+                    {/* <div className="login_social-apple">
                             <Button
                                 fullWidth
                                 variant="outlined"
@@ -496,8 +492,8 @@ export default function Login() {
                                 ĐĂNG NHẬP BẰNG APPLE
                             </Button>
                         </div> */}
-                    </div>
                 </div>
+            </div>
         </>
     );
 }

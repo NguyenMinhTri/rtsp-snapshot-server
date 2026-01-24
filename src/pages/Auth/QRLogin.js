@@ -109,12 +109,7 @@ export default function QRLogin({
                                 expires: 2147483647,
                             });
                             Toast("success", "Đăng nhập thành công");
-                            if ( author.email !== null &&
-                                (author.email.includes("datalogger") ||
-                                author.email.includes("tttservice"))
-                            ) {
-                                navigate("/generality");
-                            } else navigate("/home");
+                            navigate("/home");
                             setLoading(false);
                         })
                         .catch(() => {
