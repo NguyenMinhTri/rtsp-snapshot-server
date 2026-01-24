@@ -1,5 +1,5 @@
 // Optimized Sensor Grid Component with Grouping by GroupName
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { Grid, Skeleton } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import CardValueSensor from "../../components/CardValueSensor/CardValueSensor";
@@ -34,14 +34,18 @@ export default function SensorGridOptimized({
 }) {
   const { scaleFactor } = useUniformScaling(dataSensor);
 
-  // Cards per row state
-  const [cardsPerRow, setCardsPerRow] = useState(() => {
-    return parseInt(localStorage.getItem("cards-per-row") || "4");
-  });
+  // Auto-calculate optimal cards per row based on sensor count
+  const sensorCount = dataSensor?.[0]?.length || 0;
 
-  useEffect(() => {
-    localStorage.setItem("cards-per-row", cardsPerRow.toString());
-  }, [cardsPerRow]);
+  // Smart cards per row: optimize space based on sensor count
+  const getOptimalCardsPerRow = (count) => {
+    if (count <= 2) return 1;      // 1-2 sensors: full width each
+    if (count <= 4) return 2;      // 3-4 sensors: 2 per row
+    if (count <= 6) return 3;      // 5-6 sensors: 3 per row
+    return 4;                       // 7+ sensors: 4 per row
+  };
+
+  const cardsPerRow = getOptimalCardsPerRow(sensorCount);
 
   // Grid responsive size
   const getGridSize = (perRow) => ({
