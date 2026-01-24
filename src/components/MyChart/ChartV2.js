@@ -260,7 +260,8 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       const processedChartData = chartData.map((v) => {
         const series = { ...v, data: [...v.data] };
         delete series.visible;
-        if (sensorChartShow === "1") {
+        // Show all if sensorChartShow is "1", null, or undefined
+        if (sensorChartShow === "1" || !sensorChartShow) {
           series.visible = true;
         } else {
           series.visible = v.name === sensorChartShow;

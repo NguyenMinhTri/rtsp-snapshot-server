@@ -1,26 +1,50 @@
 .side_bar {
-    background-color: var(--side-color);
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
     height: 100%;
     display: flex;
     flex-direction: column;
+
     .side_icon {
-        color : var(--side-icon-color);
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.2s ease;
     }
-        .side_icon:hover {
-            color :white;
-            background-color: var(--side-icon-hover-color);
-            padding : 10px; 
-            border-radius: 8px;
-            transition: all linear 0.1s;
-        }
+
+    .side_icon:hover {
+        color: #fff;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 8px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+
     .side_text {
-        color: var(--side-icon-color);
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 500;
     }
+
     &-list {
-        // flex: 1
         height: 100vh;
         display: flex;
         flex-direction: column;
         align-content: space-between;
+        padding: 8px 4px;
+    }
+}
+
+// Drawer paper styling
+.MuiDrawer-paper {
+    border-right: none !important;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
+}
+
+// List item button hover effect
+.MuiListItemButton-root {
+    border-radius: 8px !important;
+    margin: 2px 4px !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
     }
 }

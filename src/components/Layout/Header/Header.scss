@@ -1,35 +1,47 @@
 @use '../../../scss/' as *;
 
 .header {
-    background-color: var(--primary-color) !important;
-    
-    @include mobile {
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
 
+    @include mobile {
         .header_title {
-            font-size: 16px;
-            
+            font-size: 14px;
+            font-weight: 600;
         }
+    }
+
+    .header_title {
+        font-weight: 600;
+        letter-spacing: 0.5px;
     }
 
     .header_username {
-        margin-left: 10px;
-        font-size: 20px;
+        margin-left: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        opacity: 0.95;
 
         @include mobile {
-            font-size: 16px;
+            font-size: 12px;
             display: none;
-
         }
     }
+
     .header_mail {
-        margin-top: 5px;
-        margin-left: 10px;
-        font-size: 12px;
+        margin-top: 2px;
+        margin-left: 8px;
+        font-size: 11px;
+        opacity: 0.8;
 
         @include mobile {
             font-size: 10px;
             display: none;
-
         }
     }
+}
+
+// Toolbar styling
+.MuiToolbar-root {
+    min-height: 56px !important;
 }

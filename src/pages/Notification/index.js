@@ -8,6 +8,7 @@ import {
     LinearProgress,
     Autocomplete,
     TextField,
+    Box,
 } from "@mui/material";
 import { CSVLink, CSVDownload } from "react-csv";
 
@@ -80,6 +81,7 @@ function Notification() {
 
     const disableBtnSearch = useRef(false);
     const btnExportExcel = useRef(null);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
     let previousData = {};
     // let sensorName = localStorage.getItem('sensor').split(',');
 
@@ -247,7 +249,7 @@ function Notification() {
                         // return obj;
                         dataEnd.push(obj);
                         // dataChart.push(objChart);
-                    } catch (e) {}
+                    } catch (e) { }
                     //
                 });
         });
@@ -317,12 +319,12 @@ function Notification() {
                 if (lstSensorName[indexSensor] !== "Alarms")
                     if (
                         typeof tempEndDataForChart[indexData][
-                            lstSensorName[indexSensor]
+                        lstSensorName[indexSensor]
                         ] !== "undefined"
                     ) {
                         previousData[lstSensorName[indexSensor]] =
                             tempEndDataForChart[indexData][
-                                lstSensorName[indexSensor]
+                            lstSensorName[indexSensor]
                             ];
                     } else {
                         if (
@@ -480,7 +482,7 @@ function Notification() {
                     avg_value: avgValue,
                     status:
                         avgValue.toLowerCase().includes("alarm") ||
-                        avgValue.toLowerCase().includes("cảnh báo")
+                            avgValue.toLowerCase().includes("cảnh báo")
                             ? 2
                             : 0,
                 });
@@ -534,12 +536,12 @@ function Notification() {
                 statusStation === "STATION_OFF"
                     ? "gray"
                     : stateSensor === "1"
-                    ? "orange"
-                    : stateSensor === "2"
-                    ? "red"
-                    : stateSensor === "0"
-                    ? "#11cc67"
-                    : "gray",
+                        ? "orange"
+                        : stateSensor === "2"
+                            ? "red"
+                            : stateSensor === "0"
+                                ? "#11cc67"
+                                : "gray",
         };
     };
 
@@ -588,8 +590,7 @@ function Notification() {
             endDate
         );
         try {
-            btnExportExcel.current.disabled = true;
-            btnExportExcel.current.innerHTML = "Waiting...";
+            setIsExportingExcel(true);
             const res = await axios.get(
                 "https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web",
                 {
@@ -618,13 +619,11 @@ function Notification() {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                btnExportExcel.current.disabled = false;
-                btnExportExcel.current.innerHTML = "Export Excel";
-                Toast("success", "Xuát dữ liệu thành công", 2000);
+                setIsExportingExcel(false);
+                Toast("success", "Xuất dữ liệu thành công", 2000);
             } else {
                 Toast("error", "Thất bại. Xin vui lòng thử lại sau", 2000);
-                btnExportExcel.current.disabled = false;
-                btnExportExcel.current.innerHTML = "Export Excel";
+                setIsExportingExcel(false);
             }
         } catch (err) {
             console.log({ err });
@@ -640,8 +639,7 @@ function Notification() {
                 Cookies.set("auth_token", tokenData, { expires: 2147483647 });
                 handleExportExcel();
             }
-            btnExportExcel.current.disabled = false;
-            btnExportExcel.current.innerHTML = "Export Excel";
+            setIsExportingExcel(false);
         }
     };
 
@@ -650,13 +648,13 @@ function Notification() {
             <SubHeader text={"TRA CỨU DỮ LIỆU CẢNH BÁO"} />
             {/* <SubHeader text={'GIÁM SÁT TRỰC TUYẾN TRẠM NƯỚC THẢI'} /> */}
             <div style={{
-                    border: "1.5px solid #ccc",
-                    marginBottom: "10px",
-                    padding: "10px",
-                    backgroundColor: "white",
-                    fontWeight: "600",
-                    borderRadius: "3px",
-                }}>
+                border: "1.5px solid #ccc",
+                marginBottom: "10px",
+                padding: "10px",
+                backgroundColor: "white",
+                fontWeight: "600",
+                borderRadius: "3px",
+            }}>
                 <Grid container spacing={1}>
                     <Grid item xl={3} lg={3} md={12} sm={12} xs={12}>
                         <Autocomplete

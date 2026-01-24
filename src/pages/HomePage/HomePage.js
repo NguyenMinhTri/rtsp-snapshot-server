@@ -47,6 +47,7 @@ import { SensorGridSection, CoilGridSection, MapSection, NotesSection, ChartSect
 // Utils
 import AsyncLocalStorage from "../../utils/async_localstorage";
 import Toast from "../../utils/toasts";
+import BackDropLoading from "../../components/BackDropLoading";
 import { getUniqueListBy } from "../../utils/function";
 import { handleGetSettingThreshold } from "../../utils/handleGetSettingThreshold";
 
@@ -108,62 +109,98 @@ const normalizeText = (str = "") =>
         .trim();
 // Memoized sub-components
 const StationSelector = memo(({ menuValue, valueSelect, inputValue, setInputValue, handleOnChangeSelectStation }) => (
-    <div style={{ border: "1.5px solid #ccc", marginBottom: "10px", padding: "10px", backgroundColor: "white", fontWeight: "600", borderRadius: "3px" }}>
-        <Grid container spacing={2}>
-            <Grid item xs={12}>
-                <Autocomplete
-                    size="small"
-                    options={menuValue}
-                    value={valueSelect || null}
-                    inputValue={inputValue}
-                    onInputChange={(_, newValue) => setInputValue(newValue)}
-                    onChange={handleOnChangeSelectStation}
-                    getOptionLabel={(option) => option.label || ""}
-                    isOptionEqualToValue={(option, value) =>
-                        option.id === value.id
+    <Box
+        sx={{
+            background: "white",
+            mb: 1.5,
+            p: 1.5,
+            borderRadius: 2,
+            border: "1px solid #e0e0e0",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+        }}
+    >
+        <Box
+            component="img"
+            src="/image/navis.png"
+            alt="Navis"
+            sx={{
+                height: 36,
+                width: 36,
+                objectFit: "contain",
+                borderRadius: 1,
+                flexShrink: 0,
+            }}
+        />
+        <Box sx={{ flex: 1 }}>
+            <Autocomplete
+                size="small"
+                options={menuValue}
+                value={valueSelect || null}
+                inputValue={inputValue}
+                onInputChange={(_, newValue) => setInputValue(newValue)}
+                onChange={handleOnChangeSelectStation}
+                getOptionLabel={(option) => option.label || ""}
+                isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                }
+
+
+                /* ================= FILTER LOGIC ================= */
+                filterOptions={(options, { inputValue }) => {
+                    const raw = inputValue.trim();
+
+                    // 👉 SEARCH THEO DEVICE ID (KHI CÓ ")
+                    if (raw.startsWith('"')) {
+                        const keyword = normalizeText(raw.replace(/"/g, ""));
+
+                        return options.filter(
+                            (opt) => normalizeText(opt.id) === keyword
+                        );
                     }
 
+                    // 👉 SEARCH THEO TÊN TRẠM (HỖ TRỢ KHÔNG DẤU)
+                    const keyword = normalizeText(raw);
 
-                    /* ================= FILTER LOGIC ================= */
-                    filterOptions={(options, { inputValue }) => {
-                        const raw = inputValue.trim();
+                    return options.filter((opt) =>
+                        normalizeText(opt.label).includes(keyword)
+                    );
+                }}
 
-                        // 👉 SEARCH THEO DEVICE ID (KHI CÓ ")
-                        if (raw.startsWith('"')) {
-                            const keyword = normalizeText(raw.replace(/"/g, ""));
+                /* ================================================= */
 
-                            return options.filter(
-                                (opt) => normalizeText(opt.id) === keyword
-                            );
-                        }
+                renderOption={(props, option) => (
+                    <li {...props}>
+                        <span>{option.label}</span>
+                    </li>
+                )}
 
-                        // 👉 SEARCH THEO TÊN TRẠM (HỖ TRỢ KHÔNG DẤU)
-                        const keyword = normalizeText(raw);
-
-                        return options.filter((opt) =>
-                            normalizeText(opt.label).includes(keyword)
-                        );
-                    }}
-
-                    /* ================================================= */
-
-                    renderOption={(props, option) => (
-                        <li {...props}>
-
-                            <span>{option.label}</span>
-                        </li>
-                    )}
-
-                    renderInput={(params) => (
-                        <TextField
-                            {...params}
-                            label='Chọn trạm'
-                        />
-                    )}
-                />
-            </Grid>
-        </Grid>
-    </div>
+                renderInput={(params) => (
+                    <TextField
+                        {...params}
+                        label='Chọn trạm'
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: 1.5,
+                                backgroundColor: "#f8f9fa",
+                                "& fieldset": {
+                                    borderColor: "#e0e0e0",
+                                },
+                                "&:hover fieldset": {
+                                    borderColor: "#1976d2",
+                                },
+                                "&.Mui-focused fieldset": {
+                                    borderColor: "#1976d2",
+                                },
+                            },
+                        }}
+                    />
+                )}
+            />
+        </Box>
+    </Box>
 ));
 
 const LicenseWarnings = memo(({ licenseDay, licenseMessage, isDeviceOffline, IsDemoUI, lastimeActive }) => (
@@ -228,15 +265,32 @@ export const LoadingState = (props) => (
             sx={{
                 color: "#fff",
                 zIndex: 9999,
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 display: "flex",
                 flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
                 backdropFilter: "blur(6px)",
                 background: "linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.75))",
                 animation: "fadeInUp 0.5s ease",
             }}
             open={!props.loaded}
         >
-            <Stack direction="column" spacing={3} alignItems="center">
+            <Stack
+                direction="column"
+                spacing={3}
+                alignItems="center"
+                sx={{
+                    position: "absolute",
+                    top: "40%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                }}
+            >
                 {/* NAVIS LOGO LOADER */}
                 <Box
                     component="img"
@@ -323,6 +377,7 @@ function HomePage() {
 
     // Local State
     const [loaded, setLoaded] = useState(false);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
     const [valueSelect, setValueSelect] = useState(null);
     const [menuValue, setMenuSelect] = useState([]);
     const [inputValue, setInputValue] = useState("");
@@ -1024,7 +1079,7 @@ function HomePage() {
         const { startDate: start, endDate: end } = subTract7Hour(startDate, endDate);
 
         try {
-            setLoaded(false);
+            setIsExportingExcel(true);
 
             if (!valueSelect.id.includes("_") &&
                 valueSelect.id !== "A-OMWATER-1" &&
@@ -1098,9 +1153,9 @@ function HomePage() {
                 }
             }
 
-            setLoaded(true);
+            setIsExportingExcel(false);
         } catch (err) {
-            setLoaded(true);
+            setIsExportingExcel(false);
             console.error("Export error:", err);
             Toast("error", "Thất bại. Xin vui lòng thử lại sau", 2000);
         }
@@ -1166,7 +1221,7 @@ function HomePage() {
         const { startDate: start, endDate: end } = subTract7Hour(startDate, endDate);
 
         try {
-            setLoaded(false);
+            setIsExportingExcel(true);
             const response = await axios({
                 url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web-cnv?startDate=${start}&endDate=${end}`,
                 method: "GET",
@@ -1181,9 +1236,9 @@ function HomePage() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(href);
-            setLoaded(true);
+            setIsExportingExcel(false);
         } catch (err) {
-            setLoaded(true);
+            setIsExportingExcel(false);
             console.error("Export CNV error:", err);
             Toast("error", "Thất bại. Xin vui lòng thử lại sau", 2000);
         }
@@ -1214,7 +1269,7 @@ function HomePage() {
         const { startDate: start, endDate: end } = subTract7Hour(startDate, endDate);
 
         try {
-            setLoaded(false);
+            setIsExportingExcel(true);
             const response = await axios({
                 url: `https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/history-khi-nam-phuong?startDate=${start}&endDate=${end}`,
                 method: "GET",
@@ -1229,9 +1284,9 @@ function HomePage() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(href);
-            setLoaded(true);
+            setIsExportingExcel(false);
         } catch (err) {
-            setLoaded(true);
+            setIsExportingExcel(false);
             console.error("Export Nam Phuong error:", err);
             Toast("error", "Thất bại. Xin vui lòng thử lại sau", 2000);
         }
@@ -1245,7 +1300,7 @@ function HomePage() {
         const totalMinute = endC.diff(startC, "minutes");
 
         try {
-            setLoaded(false);
+            setIsExportingExcel(true);
             let url;
 
             if (totalMinute < 3 && totalMinute > -3) {
@@ -1276,9 +1331,9 @@ function HomePage() {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(href);
-            setLoaded(true);
+            setIsExportingExcel(false);
         } catch (err) {
-            setLoaded(true);
+            setIsExportingExcel(false);
             console.error("Export certificate error:", err);
             Toast("error", "Thất bại. Xin vui lòng thử lại sau", 2000);
         }
@@ -1463,14 +1518,12 @@ function HomePage() {
     }
 
     if (!loaded || !fullRS485Data) {
-        return (
-            <Backdrop open={true}>
-                <CircularProgress color="inherit" />
-            </Backdrop>
-        );
+        return <LoadingState loaded={false} />;
     }
     return (
         <>
+            {/* Excel Export Loading Overlay */}
+            {isExportingExcel && <BackDropLoading text="Đang xuất Excel..." />}
             {/* --- Dialogs --- */}
             <ConfirmationDialogSensor
                 open={isOpenDialogSensor}
@@ -1598,16 +1651,18 @@ function HomePage() {
 
 
 
-                        <LicenseWarnings
-                            licenseDay={licenseDay}
-                            licenseMessage={licenseMessage}
-                            isDeviceOffline={isDeviceOffline}
-                            IsDemoUI={IsDemoUI}
-                            lastimeActive={lastimeActive}
-                        />
+                        <Box sx={{ mb: 2 }}>
+                            <LicenseWarnings
+                                licenseDay={licenseDay}
+                                licenseMessage={licenseMessage}
+                                isDeviceOffline={isDeviceOffline}
+                                IsDemoUI={IsDemoUI}
+                                lastimeActive={lastimeActive}
+                            />
+                        </Box>
 
                         {!licenseLockLV2 && (
-                            <Box sx={{ flexGrow: 1 }} style={{ margin: "-35px 0" }}>
+                            <Box sx={{ flexGrow: 1 }}>
 
 
                                 {/* ------------ SENSOR + COIL GRID ------------ */}

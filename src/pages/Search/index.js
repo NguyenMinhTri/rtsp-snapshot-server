@@ -66,7 +66,7 @@ import TabTable from "./components/TabTable";
 import { SENS, saveSensorOfDevice } from "./actions";
 
 import { getToken } from "firebase/messaging";
-import {  messaging } from "../../config/firebase";
+import { messaging } from "../../config/firebase";
 async function handleAuthStateChanged() {
     return new Promise((resolve, reject) => {
         const auth = getAuth();
@@ -108,6 +108,7 @@ function Search() {
 
     const disableBtnSearch = useRef(false);
     const btnExportExcel = useRef(null);
+    const [isExportingExcel, setIsExportingExcel] = useState(false);
     let previousData = {};
     // let sensorName = localStorage.getItem('sensor').split(',');
 
@@ -541,8 +542,7 @@ function Search() {
                         endDate
                     );
                     try {
-                        btnExportExcel.current.disabled = true;
-                        btnExportExcel.current.innerHTML = "Waiting...";
+                        setIsExportingExcel(true);
                         const res = await axios.get(
                             "https://httpexportexcel-lfh3wbxmyq-uc.a.run.app/api/excel-for-web",
                             {
@@ -571,17 +571,15 @@ function Search() {
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
-                            btnExportExcel.current.disabled = false;
-                            btnExportExcel.current.innerHTML = "Export Excel";
-                            Toast("success", "Xuát dữ liệu thành công", 2000);
+                            setIsExportingExcel(false);
+                            Toast("success", "Xuất dữ liệu thành công", 2000);
                         } else {
                             Toast(
                                 "error",
                                 "Thất bại. Xin vui lòng thử lại sau",
                                 2000
                             );
-                            btnExportExcel.current.disabled = false;
-                            btnExportExcel.current.innerHTML = "Export Excel";
+                            setIsExportingExcel(false);
                         }
                     } catch (err) {
                         console.log({ err });
@@ -598,8 +596,7 @@ function Search() {
                             });
                             handleExportExcel();
                         }
-                        btnExportExcel.current.disabled = false;
-                        btnExportExcel.current.innerHTML = "Export Excel";
+                        setIsExportingExcel(false);
                     }
                 } else {
                     console.log("No data available");
@@ -1049,21 +1046,21 @@ function Search() {
         setDataSearchHour(null);
         setDataSearchMonth(null);
     };
-  const bulkTopicAction = async (token, topics, isSub) => {
-    return await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        token,
-        topics,
-        isSub,
-      }),
-    }).then((res) => res.json());
-  };
+    const bulkTopicAction = async (token, topics, isSub) => {
+        return await fetch("https://asia-east2-weatherstationiotdaiviet.cloudfunctions.net/HttpPostRequest/bulk-topic-action", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                token,
+                topics,
+                isSub,
+            }),
+        }).then((res) => res.json());
+    };
 
-  const unsubscribeAllTopics = async (token) => {
+    const unsubscribeAllTopics = async (token) => {
         const key = `fcm_topics_${token.substring(0, 20)}`;
         const topicJson = localStorage.getItem(key);
 
@@ -1338,14 +1335,38 @@ function Search() {
                                     ref={btnExportExcel}
                                     className="btn_export-excel"
                                     style={{
-                                        backgroundColor: "rgb(17, 141, 79)",
+                                        backgroundColor: isExportingExcel ? "#f5f5f5" : "rgb(17, 141, 79)",
+                                        color: isExportingExcel ? "#666" : "white",
+                                        minHeight: 40,
                                     }}
                                     fullWidth
                                     onClick={handleClickExport}
-                                    disabled={loadingSearch}
+                                    disabled={loadingSearch || isExportingExcel}
                                     startIcon={null}
                                 >
-                                    Export Excel
+                                    {isExportingExcel ? (
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                                            <Box
+                                                component="img"
+                                                src="/image/navis.png"
+                                                alt="Loading"
+                                                sx={{
+                                                    width: 20,
+                                                    height: 20,
+                                                    objectFit: "contain",
+                                                    borderRadius: "4px",
+                                                    animation: "pulse 1s ease-in-out infinite",
+                                                    "@keyframes pulse": {
+                                                        "0%, 100%": { opacity: 1, transform: "scale(1)" },
+                                                        "50%": { opacity: 0.6, transform: "scale(0.9)" },
+                                                    },
+                                                }}
+                                            />
+                                            <span>Đang xuất...</span>
+                                        </Box>
+                                    ) : (
+                                        "Export Excel"
+                                    )}
                                 </Button>
                             </Grid>
                         )

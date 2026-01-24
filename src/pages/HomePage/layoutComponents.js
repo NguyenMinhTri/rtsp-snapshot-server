@@ -1058,7 +1058,7 @@ export const ChartSection = ({
               />
             </Grid>
             <Grid item xs={2.5}>
-              <MyButton icon={null} name="Áp dụng" onClick={handleApplyDate} />
+              <MyButton icon={null} name="Áp dụng" onClick={handleApplyDate} variant="excel" />
             </Grid>
             <Grid item xs={3}>
               {exportButtons.map((btn, idx) => (
@@ -1067,6 +1067,7 @@ export const ChartSection = ({
                   icon={null}
                   name={btn.label}
                   onClick={btn.onClick}
+                  variant="excel"
                 />
               ))}
             </Grid>
