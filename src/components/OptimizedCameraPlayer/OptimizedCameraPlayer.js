@@ -26,6 +26,7 @@ const buildVideoUrl = (rtspUrl, options = {}) => {
         width = 320, // Ultra-low: 320x180
         videoBitrate = 150,
         noAudio = true,
+        autoFps = true, // Enable server-side auto FPS reduction when overloaded
     } = options;
 
     const params = new URLSearchParams({
@@ -36,6 +37,7 @@ const buildVideoUrl = (rtspUrl, options = {}) => {
         w: width,
         vkbps: videoBitrate,
         audio: noAudio ? "0" : "1",
+        autofps: autoFps ? "1" : "0", // Server will auto reduce FPS when near capacity
     });
 
     return `${RTSP_SERVER_URL}?${params.toString()}`;
@@ -214,7 +216,7 @@ const StatusBadge = memo(({ status }) => {
     );
 });
 
-// Main OptimizedCameraPlayer component
+// Main OptimizedCameraPlayer component with canvas-based frame preservation
 const OptimizedCameraPlayer = memo(({
     rtspUrl,
     height = 300,
@@ -228,20 +230,24 @@ const OptimizedCameraPlayer = memo(({
 }) => {
     const [status, setStatus] = useState(VideoStatus.LOADING);
     const [retryCount, setRetryCount] = useState(0);
-    const [videoKey, setVideoKey] = useState(0); // Force re-render video element
+    const [videoKey, setVideoKey] = useState(0);
+    const [showCanvas, setShowCanvas] = useState(false); // Show canvas with last frame
 
     const videoRef = useRef(null);
-    const nextVideoRef = useRef(null); // For double-buffering
+    const canvasRef = useRef(null);
     const retryTimeoutRef = useRef(null);
+    const isFirstLoad = useRef(true);
+    const hasPlayedOnce = useRef(false);
 
     // Build video URL with optimized settings
-    const videoUrl = buildVideoUrl(rtspUrl, {
+    const currentVideoUrl = buildVideoUrl(rtspUrl, {
         duration: 30,
         lowQuality: true,
         fps: 10,
-        width: 426, // 426x240
+        width: 426,
         videoBitrate: 200,
-    });
+        autoFps: true,
+    }) + `&t=${videoKey}`;
 
     // Update status and notify parent
     const updateStatus = useCallback((newStatus) => {
@@ -249,90 +255,99 @@ const OptimizedCameraPlayer = memo(({
         onStatusChange?.(newStatus);
     }, [onStatusChange]);
 
+    // Capture current video frame to canvas
+    const captureFrame = useCallback(() => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (!video || !canvas || video.readyState < 2) return false;
+
+        try {
+            const ctx = canvas.getContext('2d');
+            canvas.width = video.videoWidth || 426;
+            canvas.height = video.videoHeight || 240;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return true;
+        } catch (e) {
+            console.error("Error capturing frame:", e);
+            return false;
+        }
+    }, []);
+
     // Handle video load start
     const handleLoadStart = useCallback(() => {
-        if (status !== VideoStatus.RECONNECTING) {
+        if (isFirstLoad.current) {
             updateStatus(VideoStatus.LOADING);
         }
-    }, [status, updateStatus]);
+    }, [updateStatus]);
 
-    // Handle video can play
+    // Handle video can play - hide canvas, show video
     const handleCanPlay = useCallback(() => {
+        isFirstLoad.current = false;
+        hasPlayedOnce.current = true;
+        setShowCanvas(false); // Hide canvas, show video
         updateStatus(VideoStatus.PLAYING);
         setRetryCount(0);
     }, [updateStatus]);
 
     // Handle video playing
     const handlePlaying = useCallback(() => {
+        setShowCanvas(false);
         updateStatus(VideoStatus.PLAYING);
     }, [updateStatus]);
 
-    // Handle video error
+    // Handle video error - capture frame first, then retry
     const handleError = useCallback((e) => {
         console.error("Video error:", e);
+
+        // Capture frame before showing reconnecting state
+        if (hasPlayedOnce.current) {
+            captureFrame();
+            setShowCanvas(true);
+        }
 
         if (retryCount < maxRetries) {
             updateStatus(VideoStatus.RECONNECTING);
             setRetryCount((prev) => prev + 1);
 
-            // Clear previous timeout
             if (retryTimeoutRef.current) {
                 clearTimeout(retryTimeoutRef.current);
             }
 
-            // Retry after delay
             retryTimeoutRef.current = setTimeout(() => {
-                setVideoKey((prev) => prev + 1); // Force re-render
+                setVideoKey((prev) => prev + 1);
             }, retryDelay);
         } else {
             updateStatus(VideoStatus.ERROR);
         }
-    }, [retryCount, maxRetries, retryDelay, updateStatus]);
+    }, [retryCount, maxRetries, retryDelay, updateStatus, captureFrame]);
 
-    // Handle video ended - seamlessly reload
+    // Handle video ended - capture frame, then load next segment
     const handleEnded = useCallback(() => {
-        // Immediately start next segment
-        setVideoKey((prev) => prev + 1);
-        updateStatus(VideoStatus.RECONNECTING);
-    }, [updateStatus]);
+        // Capture the last frame before changing src
+        captureFrame();
+        setShowCanvas(true);
 
-    // Handle timeupdate - preload next video when near end
-    const handleTimeUpdate = useCallback(() => {
+        updateStatus(VideoStatus.RECONNECTING);
+        setVideoKey((prev) => prev + 1);
+    }, [updateStatus, captureFrame]);
+
+    // Update video src when videoKey changes
+    useEffect(() => {
         const video = videoRef.current;
         if (!video) return;
 
-        const timeLeft = video.duration - video.currentTime;
-
-        // Start preloading 5 seconds before end
-        if (timeLeft <= 5 && timeLeft > 0 && !nextVideoRef.current) {
-            // Create hidden video element to preload next segment
-            const preloadVideo = document.createElement("video");
-            preloadVideo.src = buildVideoUrl(rtspUrl, {
-                duration: 30,
-                lowQuality: true,
-            }) + `&t=${Date.now()}`; // Cache bust
-            preloadVideo.preload = "auto";
-            preloadVideo.muted = true;
-            preloadVideo.style.display = "none";
-            document.body.appendChild(preloadVideo);
-            nextVideoRef.current = preloadVideo;
-
-            // Clean up after 30 seconds
-            setTimeout(() => {
-                if (nextVideoRef.current) {
-                    document.body.removeChild(nextVideoRef.current);
-                    nextVideoRef.current = null;
-                }
-            }, 30000);
+        // Capture frame before changing src (if we have played before)
+        if (hasPlayedOnce.current && video.readyState >= 2) {
+            captureFrame();
+            setShowCanvas(true);
         }
-    }, [rtspUrl]);
 
-    // Manual retry
-    const handleRetry = useCallback(() => {
-        setRetryCount(0);
-        setVideoKey((prev) => prev + 1);
-        updateStatus(VideoStatus.LOADING);
-    }, [updateStatus]);
+        video.src = currentVideoUrl;
+        video.load();
+        if (autoPlay) {
+            video.play().catch(() => { });
+        }
+    }, [currentVideoUrl, autoPlay, captureFrame]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -340,12 +355,17 @@ const OptimizedCameraPlayer = memo(({
             if (retryTimeoutRef.current) {
                 clearTimeout(retryTimeoutRef.current);
             }
-            if (nextVideoRef.current) {
-                document.body.removeChild(nextVideoRef.current);
-                nextVideoRef.current = null;
-            }
         };
     }, []);
+
+    // Manual retry
+    const handleRetry = useCallback(() => {
+        setRetryCount(0);
+        isFirstLoad.current = true;
+        setShowCanvas(false);
+        setVideoKey((prev) => prev + 1);
+        updateStatus(VideoStatus.LOADING);
+    }, [updateStatus]);
 
     // Show error UI if max retries exceeded
     if (status === VideoStatus.ERROR) {
@@ -374,8 +394,8 @@ const OptimizedCameraPlayer = memo(({
             {/* Status badge */}
             <StatusBadge status={status} />
 
-            {/* Skeleton loader - show while loading */}
-            {(status === VideoStatus.LOADING || status === VideoStatus.RECONNECTING) && (
+            {/* Skeleton loader - ONLY on first load */}
+            {status === VideoStatus.LOADING && isFirstLoad.current && (
                 <Box
                     sx={{
                         position: "absolute",
@@ -387,19 +407,66 @@ const OptimizedCameraPlayer = memo(({
                 </Box>
             )}
 
+            {/* Reconnecting overlay */}
+            {status === VideoStatus.RECONNECTING && (
+                <Box
+                    sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        zIndex: 10,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        backgroundColor: "rgba(0,0,0,0.6)",
+                        borderRadius: "4px",
+                        padding: "4px 8px",
+                    }}
+                >
+                    <Box
+                        sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            backgroundColor: "#ff9800",
+                            animation: "pulse 1s ease-in-out infinite",
+                        }}
+                    />
+                    <Typography variant="caption" sx={{ color: "#fff", fontSize: "0.65rem" }}>
+                        Đang kết nối lại...
+                    </Typography>
+                </Box>
+            )}
+
+            {/* Canvas - shows last captured frame during reconnection */}
+            <canvas
+                ref={canvasRef}
+                style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    zIndex: showCanvas ? 2 : 0,
+                    opacity: showCanvas ? 1 : 0,
+                    transition: "opacity 0.3s ease",
+                    pointerEvents: "none",
+                }}
+            />
+
             {/* Video element */}
             <video
-                key={videoKey}
                 ref={videoRef}
-                src={videoUrl + `&t=${videoKey}`} // Cache bust for each segment
                 style={{
                     width: "100%",
                     height: "100%",
-                    objectFit: "cover", // Fill entire space
-                    opacity: status === VideoStatus.PLAYING ? 1 : 0,
+                    objectFit: "cover",
+                    opacity: !showCanvas && status === VideoStatus.PLAYING ? 1 :
+                        showCanvas ? 0 :
+                            (status === VideoStatus.RECONNECTING ? 0.3 : 0),
                     transition: "opacity 0.3s ease",
                 }}
-                autoPlay={autoPlay}
                 muted={muted}
                 controls={controls}
                 playsInline
@@ -408,7 +475,6 @@ const OptimizedCameraPlayer = memo(({
                 onPlaying={handlePlaying}
                 onError={handleError}
                 onEnded={handleEnded}
-                onTimeUpdate={handleTimeUpdate}
             />
         </Box>
     );
@@ -418,3 +484,4 @@ OptimizedCameraPlayer.displayName = "OptimizedCameraPlayer";
 
 export default OptimizedCameraPlayer;
 export { VideoStatus, buildVideoUrl };
+

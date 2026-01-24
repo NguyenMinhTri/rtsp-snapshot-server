@@ -5,7 +5,7 @@
 .sensor-grid-container {
   position: relative;
   width: 100%;
-  
+
   // Control panel
   .control-panel {
     position: fixed;
@@ -20,11 +20,11 @@
     border-radius: 50px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
-    
+
     &:hover {
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
     }
-    
+
     // Cards per row control
     .cards-per-row-control {
       display: flex;
@@ -32,18 +32,18 @@
       gap: 8px;
       padding-right: 16px;
       border-right: 1px solid rgba(0, 0, 0, 0.1);
-      
+
       .control-group {
         display: flex;
         align-items: center;
         gap: 8px;
       }
-      
+
       .control-icon {
         color: #666;
         font-size: 20px;
       }
-      
+
       .MuiButtonGroup-root {
         .MuiButton-root {
           min-width: 36px;
@@ -51,23 +51,23 @@
           font-weight: 600;
           transition: all 0.2s ease;
           border-color: #1976d2;
-          
+
           &.MuiButton-contained,
           &.active {
             background-color: #1976d2 !important;
             color: white !important;
             border-color: #1976d2 !important;
-            
+
             &:hover {
               background-color: #1565c0 !important;
               border-color: #1565c0 !important;
             }
           }
-          
+
           &.MuiButton-outlined:not(.active) {
             color: #1976d2;
             border-color: rgba(25, 118, 210, 0.5);
-            
+
             &:hover {
               background-color: rgba(25, 118, 210, 0.08);
               border-color: #1976d2;
@@ -76,28 +76,28 @@
         }
       }
     }
-    
+
     // Sound toggle
     .sound-toggle {
       transition: all 0.3s ease;
-      
+
       &.enabled {
         color: #1976d2;
-        
+
         &:hover {
           background: rgba(25, 118, 210, 0.1);
         }
       }
-      
+
       &.disabled {
         color: #9e9e9e;
-        
+
         &:hover {
           background: rgba(0, 0, 0, 0.05);
         }
       }
     }
-    
+
     // Alarm indicator
     .alarm-indicator {
       font-size: 14px;
@@ -109,26 +109,27 @@
       border-left: 1px solid rgba(0, 0, 0, 0.1);
     }
   }
-  
-// Container grid for consistent sizing
-.sensor-grid {
+
+  // Container grid for consistent sizing
+  .sensor-grid {
     display: grid;
     width: 100%;
     margin-top: -30px;
-    // Ensure minimum card width of 350px
+
+    // Ensure minimum card width matches compact design
     .MuiGrid-item {
-        display: flex;
-    
-      min-width: 261px;
-      
+      display: flex;
+
+      min-width: 280px; // Match CardValueSensor min-width for large fonts
+
       .sensor-card-wrapper {
         width: 100%;
         display: flex;
-        
+
         flex-direction: column;
-        
+
         .loading-wrapper {
-     
+
           display: flex;
           justify-content: center;
           align-items: center;
@@ -146,34 +147,30 @@
   .sensor_item-name:first-of-type {
     font-size: calc(clamp(16px, 3.5vw, 22px) * var(--scale-factor, 1));
   }
-  
-  // Adjust value size based on cards per row
+
+  // Original value size - keep large for readability
   .sensor_item-value p {
-    font-size: calc(
-      clamp(
-        32px, 
-        calc(100vw / var(--cards-per-row, 4) * 0.15), 
-        48px
-      ) * var(--scale-factor, 1)
-    ) !important;
-    
-    .value-unit, small {
-      font-size: calc(
-        clamp(
-          16px, 
-          calc(100vw / var(--cards-per-row, 4) * 0.08), 
-          24px
-        ) * var(--scale-factor, 1)
-      ) !important;
+    font-size: calc(clamp(32px,
+          calc(100vw / var(--cards-per-row, 4) * 0.15),
+          48px) * var(--scale-factor, 1)) !important;
+
+    .value-unit,
+    small {
+      font-size: calc(clamp(16px,
+            calc(100vw / var(--cards-per-row, 4) * 0.08),
+            24px) * var(--scale-factor, 1)) !important;
     }
   }
 }
 
 // Blink animation for alarm indicator
 @keyframes blink {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.4;
   }
@@ -198,7 +195,7 @@
     right: 16px;
     padding: 10px 16px;
     gap: 12px;
-    
+
     .alarm-indicator {
       font-size: 13px;
     }
@@ -211,20 +208,20 @@
     align-items: flex-end;
     border-radius: 16px;
     padding: 12px;
-    
+
     .cards-per-row-control {
       border-right: none;
       border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       padding-right: 0;
       padding-bottom: 8px;
       width: 100%;
-      
+
       .control-group {
         width: 100%;
         justify-content: center;
       }
     }
-    
+
     .alarm-indicator {
       border-left: none;
       padding-left: 0;
@@ -236,7 +233,7 @@
   .control-panel {
     bottom: 12px;
     right: 12px;
-    
+
     .cards-per-row-control {
       .MuiButtonGroup-root {
         .MuiButton-root {
@@ -246,15 +243,15 @@
         }
       }
     }
-    
+
     .alarm-indicator {
       display: none;
     }
   }
-  
-  // Allow cards to be smaller on mobile
+
+  // Allow cards to be smaller on mobile  
   .sensor-grid .MuiGrid-item {
-    min-width: 280px;
+    min-width: 180px; // Compact for mobile
   }
 }
 
@@ -266,9 +263,9 @@
       }
     }
   }
-  
-  // Further reduce for very small screens
+
+  // Further reduce for very small screens - full width
   .sensor-grid .MuiGrid-item {
-    min-width: 100%;
+    min-width: 100%; // Stack on very small screens
   }
 }
