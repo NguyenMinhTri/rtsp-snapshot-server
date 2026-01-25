@@ -173,11 +173,26 @@ export const CoilGridSection = ({
 
           {/* --- GROUPS --- */}
           {Object.entries(grouped).map(([groupName, items], groupIndex) => {
-            // Coil item size based on items in THIS group
             const coilsInGroup = items.length;
+
+            // Check max name length in this group
+            const maxNameLength = items.reduce((max, item) => {
+              const nameLen = item.item?.Name?.length || 0;
+              return Math.max(max, nameLen);
+            }, 0);
+
+            // If names are long (>15 chars), use wider columns
+            const hasLongNames = maxNameLength > 15;
+            const hasVeryLongNames = maxNameLength > 25;
+
+            // Coil item size based on items in THIS group + name length
             let coilGridXL;
             if (coilsInGroup === 1) {
               coilGridXL = 12; // 1 coil in group: full width
+            } else if (hasVeryLongNames) {
+              coilGridXL = 12; // Very long names: 1 per row
+            } else if (hasLongNames) {
+              coilGridXL = 6; // Long names: max 2 per row
             } else if (coilsInGroup === 2) {
               coilGridXL = 6; // 2 coils: 2 per row
             } else if (coilsInGroup <= 4) {
