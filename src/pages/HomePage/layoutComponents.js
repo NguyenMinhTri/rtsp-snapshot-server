@@ -141,8 +141,22 @@ export const CoilGridSection = ({
   }, {});
   let sensorCount = (fullRS485Data.RS485Data.filter(item => item.MemoryType === 1))?.length || 0;
 
-  const isSingleGroup = Object.keys(grouped).length === 1; // chỉ 1 group
-  const coilGridXL = isSingleGroup ? 3 : 6; // 12 / 3 = 4 coil / dòng, 12 / 6 = 2 coil / dòng
+  const groupCount = Object.keys(grouped).length;
+  const isSingleGroup = groupCount === 1;
+  const totalCoils = visibleCoils.length;
+
+  // Group width: fit all groups in row if possible
+  // 1 group: 12, 2 groups: 6, 3 groups: 4, 4 groups: 3
+  let groupWidth;
+  if (isSingleGroup) {
+    groupWidth = 12;
+  } else if (groupCount === 2) {
+    groupWidth = 6;
+  } else if (groupCount === 3) {
+    groupWidth = 4;
+  } else {
+    groupWidth = 3; // 4+ groups: 4 per row
+  }
 
   return (
     <ResponsiveGridItem gridConfig={gridConfig}>
@@ -158,53 +172,68 @@ export const CoilGridSection = ({
           )}
 
           {/* --- GROUPS --- */}
-          {Object.entries(grouped).map(([groupName, items], groupIndex) => (
-            <Grid
-              key={groupIndex}
-              item
-              xl={isSingleGroup ? 12 : (sensorCount <= 1 ? 3 : 6)}
-              lg={isSingleGroup ? 12 : (sensorCount <= 1 ? 3 : 6)}
-              md={12}
-              sm={12}
-              xs={12}
-            >
-              <div className="coil-group-box">
-                <div className="coil-group-title">{groupName}</div>
+          {Object.entries(grouped).map(([groupName, items], groupIndex) => {
+            // Coil item size based on items in THIS group
+            const coilsInGroup = items.length;
+            let coilGridXL;
+            if (coilsInGroup === 1) {
+              coilGridXL = 12; // 1 coil in group: full width
+            } else if (coilsInGroup === 2) {
+              coilGridXL = 6; // 2 coils: 2 per row
+            } else if (coilsInGroup <= 4) {
+              coilGridXL = 6; // 3-4 coils: 2 per row
+            } else {
+              coilGridXL = 4; // 5+ coils: 3 per row
+            }
 
-                <Grid container spacing={0.8}>
-                  {items.map((v, index) => (
-                    <Grid
-                      key={index}
-                      item
-                      xl={coilGridXL}
-                      lg={coilGridXL}
-                      md={4}
-                      sm={6}
-                      xs={12}
-                    >
-                      <div
-                        className="coil-card-wrapper"
-                        onClick={() => onClickCoilDevice(v)}
+            return (
+              <Grid
+                key={groupIndex}
+                item
+                xl={groupWidth}
+                lg={groupWidth}
+                md={groupCount >= 3 ? 4 : 6}
+                sm={6}
+                xs={12}
+              >
+                <div className="coil-group-box">
+                  <div className="coil-group-title">{groupName}</div>
+
+                  <Grid container spacing={0.8}>
+                    {items.map((v, index) => (
+                      <Grid
+                        key={index}
+                        item
+                        xl={coilGridXL}
+                        lg={coilGridXL}
+                        md={6}
+                        sm={6}
+                        xs={6}
                       >
-                        <CoilValueDevice
-                          item={v.item}
-                          isHighAlarm={v.IsHighAlarm}
-                          label={v.item.Name}
-                          lastTime={dataChange.last_time}
-                          deviceId={valueSelect.id + v.sensor}
-                          value={v.value.split("*")[0]}
-                          unit={` ${v.unit || ""}`}
-                          state={styleForCard(v.value)}
-                          fillColor="red"
-                          IsRevHighAlarm={fullRS485Data?.IsHighAlarm || false}
-                        />
-                      </div>
-                    </Grid>
-                  ))}
-                </Grid>
-              </div>
-            </Grid>
-          ))}
+                        <div
+                          className="coil-card-wrapper"
+                          onClick={() => onClickCoilDevice(v)}
+                        >
+                          <CoilValueDevice
+                            item={v.item}
+                            isHighAlarm={v.IsHighAlarm}
+                            label={v.item.Name}
+                            lastTime={dataChange.last_time}
+                            deviceId={valueSelect.id + v.sensor}
+                            value={v.value.split("*")[0]}
+                            unit={` ${v.unit || ""}`}
+                            state={styleForCard(v.value)}
+                            fillColor="red"
+                            IsRevHighAlarm={fullRS485Data?.IsHighAlarm || false}
+                          />
+                        </div>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </div>
+              </Grid>
+            );
+          })}
         </Grid>
       </BorderedContent>
     </ResponsiveGridItem>
