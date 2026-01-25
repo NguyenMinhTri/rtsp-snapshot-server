@@ -46,12 +46,17 @@ export const useResponsiveGrid = (config) => {
         const coilCount = config.coilCount || 0;
         const hasPID = config.hasPID || false;
 
-        // Calculate based on content ratio
-        // If PID exists, coils need more space
-        // If many coils relative to sensors, sensors should be smaller
+        // Special case: Only 1 coil - give sensors maximum space
+        if (coilCount === 1 && sensorCount >= 3) {
+          return { xs: 10, sx: { my: 1 } }; // Sensor: 10, Coil: 2
+        }
 
+        if (coilCount <= 2 && sensorCount >= 4) {
+          return { xs: 9, sx: { my: 1 } }; // Sensor: 9, Coil: 3
+        }
+
+        // Calculate based on content ratio
         if (sensorCount === 1) {
-          // 1 sensor: give minimal space
           return { xs: hasPID ? 2 : 2.5, sx: { my: 1 } };
         } else if (sensorCount === 2) {
           return { xs: hasPID ? 3 : 4, sx: { my: 1 } };
@@ -83,7 +88,17 @@ export const useResponsiveGrid = (config) => {
       }
 
       if (hasSensors && sensorCount > 0) {
+        const coilCount = config.coilCount || 0;
         const hasPID = config.hasPID || false;
+
+        // Special case: Only 1 coil - give minimal space
+        if (coilCount === 1 && sensorCount >= 3) {
+          return { xs: 2, sx: { my: 1 } }; // Coil: 2, Sensor: 10
+        }
+
+        if (coilCount <= 2 && sensorCount >= 4) {
+          return { xs: 3, sx: { my: 1 } }; // Coil: 3, Sensor: 9
+        }
 
         // Coil gets remaining space after sensor
         if (sensorCount === 1) {
