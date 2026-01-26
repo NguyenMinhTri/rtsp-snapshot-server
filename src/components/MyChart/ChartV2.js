@@ -272,6 +272,25 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       });
     });
 
+    // Update cumulative flow for flow sensors in live mode
+    setCumulativeFlow(prevFlow => {
+      const updatedFlow = { ...prevFlow };
+      const intervalHours = 5 / 3600; // 5 seconds in hours
+
+      sensorData.forEach(sensor => {
+        if (sensor.Name && sensor.Name.toLowerCase().includes("flow")) {
+          const flowValue = parseFloat(sensor.Value);
+          if (!isNaN(flowValue)) {
+            // Add flow * time interval to cumulative
+            const currentCumulative = updatedFlow[sensor.Name] || 0;
+            updatedFlow[sensor.Name] = currentCumulative + (flowValue * intervalHours);
+          }
+        }
+      });
+
+      return updatedFlow;
+    });
+
   }, [dataRealTime, isLiveMode, chartData.length]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { Skeleton } from "@mui/material";
+import { Skeleton, Box, Typography } from "@mui/material";
 import { child, get, getDatabase, ref } from "firebase/database";
 import { httpsCallable } from "firebase/functions";
 import moment from "moment";
@@ -32,11 +32,13 @@ const COLOR = [
     "#3A8891",
 ];
 
-function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode }) {
+function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode, dataRealTime }) {
     const [dataSensorRange, setDataSensorRange] = useState([]);
     const [countGet, setCountGet] = useState(0);
     const [listSensor, setListSensor] = useState([]);
     const [dataSensorObject, setDataSensorObject] = useState({});
+    const [isLoading, setIsLoading] = useState(true);
+    const [cumulativeFlowLive, setCumulativeFlowLive] = useState({});
     const db = ref(getDatabase());
 
     let count = useRef(0);
@@ -126,6 +128,7 @@ function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode }) {
             return;
         }
 
+        setIsLoading(true);
         setCountGet(0);
         setDataSensorRange([]);
         // const deviceUser = localStorage.getItem('home_station');
@@ -183,8 +186,56 @@ function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode }) {
             })
             .catch((error) => {
                 console.error(error);
+                setIsLoading(false);
             });
     }, [startDate, endDate, deviceUser, isLiveMode]);
+
+    // Update loading state when data processing is complete
+    useEffect(() => {
+        if (countGet === listSensor.length && listSensor.length > 0) {
+            setIsLoading(false);
+        }
+    }, [countGet, listSensor.length]);
+
+    // Live flow accumulation update for column chart sensors
+    const lastFlowUpdateRef = useRef(null);
+    useEffect(() => {
+        if (!isLiveMode || !dataRealTime || dataRealTime.length === 0) {
+            return;
+        }
+
+        const now = Date.now();
+        if (lastFlowUpdateRef.current && (now - lastFlowUpdateRef.current) < 5000) {
+            return;
+        }
+        lastFlowUpdateRef.current = now;
+
+        const sensorData = dataRealTime[0]?.data_sensor || [];
+        if (sensorData.length === 0) return;
+
+        setCumulativeFlowLive(prevFlow => {
+            const updatedFlow = { ...prevFlow };
+            const intervalHours = 5 / 3600; // 5 seconds in hours
+
+            sensorData.forEach(sensor => {
+                // Check if this sensor is in our column chart list
+                const sensorNameWithUnit = listSensor.find(s =>
+                    s.toLowerCase().includes(sensor.Name?.toLowerCase() || '')
+                );
+
+                if (sensorNameWithUnit && sensor.Name) {
+                    const flowValue = parseFloat(sensor.Value);
+                    if (!isNaN(flowValue)) {
+                        // Add flow * time interval to cumulative
+                        const currentCumulative = updatedFlow[sensorNameWithUnit] || 0;
+                        updatedFlow[sensorNameWithUnit] = currentCumulative + (flowValue * intervalHours);
+                    }
+                }
+            });
+
+            return updatedFlow;
+        });
+    }, [dataRealTime, isLiveMode, listSensor]);
 
     // Memoize chart data processing to prevent data loss on re-render
     const endDataForChart = useMemo(() => {
@@ -255,54 +306,166 @@ function ColumnChartSensor({ endDate, startDate, deviceUser, isLiveMode }) {
     // console.log({ endDataForChart });
 
     return (
-        <>
+        <Box sx={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            p: 1,
+            pt: 0.5,
+            position: 'relative',
+        }}>
+            {/* Loading overlay when refetching data */}
+            {isLoading && endDataForChart.length > 0 && (
+                <Box sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(255,255,255,0.7)',
+                    zIndex: 10,
+                    borderRadius: 2,
+                }}>
+                    <Box sx={{ textAlign: 'center' }}>
+                        <Box
+                            sx={{
+                                width: 40,
+                                height: 40,
+                                border: '3px solid #e0e0e0',
+                                borderTop: '3px solid #1976d2',
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite',
+                                mx: 'auto',
+                                mb: 1,
+                                '@keyframes spin': {
+                                    '0%': { transform: 'rotate(0deg)' },
+                                    '100%': { transform: 'rotate(360deg)' },
+                                },
+                            }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                            Đang cập nhật...
+                        </Typography>
+                    </Box>
+                </Box>
+            )}
+
             {endDataForChart.length > 0 ? (
-                <ResponsiveContainer width="100%" height={400}>
-                    <BarChart width={600} height={300} data={endDataForChart}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend legendType="none" />
+                <ResponsiveContainer width="100%" height="95%">
+                    <BarChart
+                        data={endDataForChart}
+                        margin={{ top: 10, right: 20, left: 0, bottom: 5 }}
+                    >
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                        <XAxis
+                            dataKey="time"
+                            tick={{ fontSize: 11 }}
+                            tickLine={{ stroke: '#ccc' }}
+                        />
+                        <YAxis
+                            tick={{ fontSize: 11 }}
+                            tickLine={{ stroke: '#ccc' }}
+                        />
+                        <Tooltip
+                            contentStyle={{
+                                borderRadius: 8,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                border: 'none',
+                            }}
+                        />
+                        <Legend
+                            wrapperStyle={{
+                                paddingTop: 8,
+                                fontSize: 12,
+                            }}
+                        />
                         {listSensor.map((v, index) => (
-                            <Bar fill={COLOR[index]} dataKey={v} />
+                            <Bar
+                                key={v}
+                                fill={COLOR[index % COLOR.length]}
+                                dataKey={v}
+                                radius={[4, 4, 0, 0]}
+                            />
                         ))}
                     </BarChart>
                 </ResponsiveContainer>
             ) : (
-                <div style={{ position: "relative" }}>
+                <Box sx={{
+                    position: "relative",
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                }}>
                     <Skeleton
                         animation="wave"
                         variant="rounded"
-                        height={500}
-                        width={"100%"}
+                        height="90%"
+                        width="100%"
+                        sx={{ borderRadius: 2 }}
                     />
-                    <p
-                        style={{
+                    <Box
+                        sx={{
                             position: "absolute",
-                            top: "50%",
-                            left: "0",
-                            right: "0",
                             textAlign: "center",
-                            padding: "0 50px",
+                            px: 3,
                         }}
                     >
-                        <span
-                            style={{
-                                fontSize: "18px",
-                                marginBottom: "10px",
-                                fontWeight: "600",
-                            }}
-                        >
-                            Vui lòng chờ...
-                        </span>{" "}
-                        <br />
-                        Trường hợp không hiện thị vì không có dữ liệu bạn có thể
-                        chọn khoảng thời gian khác
-                    </p>
-                </div>
+                        {isLoading ? (
+                            <>
+                                <Box
+                                    sx={{
+                                        width: 50,
+                                        height: 50,
+                                        border: '4px solid #e0e0e0',
+                                        borderTop: '4px solid #1976d2',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite',
+                                        mx: 'auto',
+                                        mb: 2,
+                                        '@keyframes spin': {
+                                            '0%': { transform: 'rotate(0deg)' },
+                                            '100%': { transform: 'rotate(360deg)' },
+                                        },
+                                    }}
+                                />
+                                <Typography
+                                    variant="subtitle1"
+                                    fontWeight={600}
+                                    color="text.secondary"
+                                    gutterBottom
+                                >
+                                    Đang tải dữ liệu...
+                                </Typography>
+                                <Typography
+                                    variant="body2"
+                                    color="text.disabled"
+                                >
+                                    Vui lòng chờ trong giây lát
+                                </Typography>
+                            </>
+                        ) : (
+                            <>
+                                <Typography
+                                    variant="subtitle1"
+                                    fontWeight={600}
+                                    color="text.secondary"
+                                    gutterBottom
+                                >
+                                    Không có dữ liệu
+                                </Typography>
+                                <Typography
+                                    variant="body2"
+                                    color="text.disabled"
+                                >
+                                    Vui lòng chọn khoảng thời gian khác
+                                </Typography>
+                            </>
+                        )}
+                    </Box>
+                </Box>
             )}
-        </>
+        </Box>
     );
 }
 

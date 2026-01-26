@@ -1042,6 +1042,7 @@ export const ChartSection = ({
                 startDate={startDate}
                 deviceUser={valueSelect.id}
                 isLiveMode={isLiveMode}
+                dataRealTime={dataRealTime}
               />
             </div>
           </Grid>
