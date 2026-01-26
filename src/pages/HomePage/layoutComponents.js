@@ -1004,7 +1004,7 @@ export const ChartSection = ({
 }) => {
   if (!valueSelect) return null;
 
-  const ChartComponent = chartType === "ChartTab" ? ChartTab : MainChart;
+  const ChartComponent =ChartTab;
 
   return (
     <ResponsiveGridItem gridConfig={gridConfig}>

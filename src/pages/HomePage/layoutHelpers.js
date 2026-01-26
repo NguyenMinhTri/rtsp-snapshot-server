@@ -364,7 +364,7 @@ export const getExportButtonConfig = (deviceId) => {
 export const getChartComponent = (deviceId) => {
   // Safe check for undefined/null deviceId
   if (!deviceId) {
-    return "MainChart";
+    return "ChartTab";
   }
 
   const specialDevices = [
@@ -380,7 +380,7 @@ export const getChartComponent = (deviceId) => {
     deviceId.includes(device)
   );
 
-  return isSpecialDevice ? "ChartTab" : "MainChart";
+  return "ChartTab" ;
 };
 
 /**

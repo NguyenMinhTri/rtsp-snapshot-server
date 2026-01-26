@@ -65,6 +65,7 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
     const GetDataSensorByTime = httpsCallable(functions, "GetDataSensorByTime");
     const { startDate: start, endDate: end } = subTract7Hour(startDate, endDate);
     const data = {
+      enableFill: true,
       deviceId: idStation,
       startDate: moment(start).format("YYYY-MM-DD HH:mm:ss"),
       endDate: moment(end).format("YYYY-MM-DD HH:mm:ss"),
@@ -88,44 +89,54 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       setLoading(false);
       return;
     }
-    const timeCategory = new Set();
-    const dataChart = new Map();
+
     console.log({ res });
+
+    // Sort data theo thời gian ASC
     res = res.sort(
       (a, b) => new Date(a.time.value) - new Date(b.time.value)
     );
-    const listSensorExistData = new Set();
-
-    // Object chứa dữ liệu dạng mảng gồm timestamp và giá trị flow để tính tích lũy
-    const sensorPoints = {};
 
     // Track seen time+sensor combinations to deduplicate
     const seenEntries = new Set();
 
+    // Bước 1: Thu thập tất cả timestamps unique
+    const timeCategory = [];
+    const timeSet = new Set();
     res.forEach((v) => {
-      // Create unique key for this time+sensor combination
       const entryKey = `${v.time.value}_${v.sensor}`;
-
-      // Skip if we've already processed this time+sensor combination
-      if (seenEntries.has(entryKey)) {
-        return;
-      }
+      if (seenEntries.has(entryKey)) return;
       seenEntries.add(entryKey);
 
-      // Xây dựng category time và dữ liệu cho biểu đồ (như cũ)
-      timeCategory.add(
-        moment(v.time.value).format("HH:mm:ss DD/MM/YYYY")
-      );
-      listSensorExistData.add(v.sensor);
-      if (!dataChart.has(v.sensor)) {
-        dataChart.set(v.sensor, {
-          name: v.sensor,
-          data: [],
-        });
+      const timeStr = moment(v.time.value).format("HH:mm:ss DD/MM/YYYY");
+      if (!timeSet.has(timeStr)) {
+        timeSet.add(timeStr);
+        timeCategory.push(timeStr);
       }
-      dataChart.get(v.sensor).data.push(v.value);
+    });
 
-      // Nếu sensor có chứa "flow" thì lưu lại thời gian và giá trị để tính tích lũy
+    // Reset seenEntries for actual processing
+    seenEntries.clear();
+
+    // Bước 2: Thu thập danh sách sensors và tạo lookup map
+    const listSensorExistData = new Set();
+    const dataLookup = {}; // {sensor: {timeStr: value}}
+    const sensorPoints = {}; // For flow calculation
+
+    res.forEach((v) => {
+      const entryKey = `${v.time.value}_${v.sensor}`;
+      if (seenEntries.has(entryKey)) return;
+      seenEntries.add(entryKey);
+
+      const timeStr = moment(v.time.value).format("HH:mm:ss DD/MM/YYYY");
+      listSensorExistData.add(v.sensor);
+
+      if (!dataLookup[v.sensor]) {
+        dataLookup[v.sensor] = {};
+      }
+      dataLookup[v.sensor][timeStr] = v.value;
+
+      // Nếu sensor có chứa "flow" thì lưu lại để tính tích lũy
       if (v.sensor.toLowerCase().includes("flow")) {
         if (!sensorPoints[v.sensor]) {
           sensorPoints[v.sensor] = [];
@@ -137,16 +148,29 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       }
     });
 
+    // Bước 3: Tạo data arrays với null cho timestamps không có data
+    const dataChart = new Map();
+    listSensorExistData.forEach(sensor => {
+      const dataArray = timeCategory.map(timeStr => {
+        // Trả về value nếu có, null nếu không
+        return dataLookup[sensor][timeStr] !== undefined
+          ? dataLookup[sensor][timeStr]
+          : null;
+      });
+      dataChart.set(sensor, {
+        name: sensor,
+        data: dataArray,
+      });
+    });
+
     // Tính tích lũy lưu lượng (m³) cho mỗi sensor có chứa "flow"
     const cumulativeFlowMap = {};
     for (const sensor in sensorPoints) {
       const points = sensorPoints[sensor];
-      // Đảm bảo các điểm được sắp xếp theo thời gian
       points.sort((a, b) => a.time - b.time);
       let cumulative = 0;
       for (let i = 1; i < points.length; i++) {
         const dtHours = (points[i].time - points[i - 1].time) / (1000 * 3600);
-        // Tích phân đơn giản: dùng giá trị của điểm trước nhân với khoảng thời gian (giờ)
         cumulative += points[i - 1].value * dtHours;
       }
       cumulativeFlowMap[sensor] = cumulative;
@@ -156,10 +180,8 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
     const endDataChart = Array.from(dataChart.values());
     setLoading(false);
 
-    // Always set data if we have valid results
-    // Removed `endDataChart.length >= chartData.length` check as it uses stale closure value
     if ([...listSensorExistData].length > 0 && endDataChart.length > 0) {
-      setCategoryTime([...timeCategory]);
+      setCategoryTime(timeCategory);
       setChartData(endDataChart);
       dispatch(listSensorChartAction([...listSensorExistData]));
     }
