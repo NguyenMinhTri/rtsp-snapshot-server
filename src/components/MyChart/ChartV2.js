@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { Box, LinearProgress, Typography } from "@mui/material";
+import { Box, LinearProgress, Typography, Dialog, DialogTitle, DialogContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../../config/firebase";
 import moment from "moment";
@@ -17,6 +18,15 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
   const [chartData, setChartData] = useState([]);
   // State lưu trữ giá trị tích lũy (m³) cho sensor có chứa "flow"
   const [cumulativeFlow, setCumulativeFlow] = useState({});
+  // State lưu trữ thống kê status (calib/error)
+  const [statusStats, setStatusStats] = useState({ calib: 0, error: 0 });
+  // State lưu trữ status data cho từng sensor theo thời gian
+  const [statusLookup, setStatusLookup] = useState({});
+  // State lưu trữ chi tiết status để hiển thị trong dialog
+  const [statusDetails, setStatusDetails] = useState([]);
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState('calib'); // 'calib' or 'error'
   const sensorChartShow = useSelector(chooseSensorSelector);
 
   // Track if initial data has been loaded to prevent API refetch in live mode
@@ -38,6 +48,8 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       setCategoryTime([]);
       setChartData([]);
       setCumulativeFlow({});
+      setStatusStats({ calib: 0, error: 0 });
+      setStatusLookup({});
       setTemplateOptions(null);
       setLoading(true);
       initialLoadDoneRef.current = false;
@@ -121,7 +133,11 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
     // Bước 2: Thu thập danh sách sensors và tạo lookup map
     const listSensorExistData = new Set();
     const dataLookup = {}; // {sensor: {timeStr: value}}
+    const statusDataLookup = {}; // {sensor: {timeStr: status}}
     const sensorPoints = {}; // For flow calculation
+    const statusDetailsList = []; // Chi tiết các điểm có status
+    let calibCount = 0;
+    let errorCount = 0;
 
     res.forEach((v) => {
       const entryKey = `${v.time.value}_${v.sensor}`;
@@ -136,6 +152,34 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       }
       dataLookup[v.sensor][timeStr] = v.value;
 
+      // Track status data
+      if (!statusDataLookup[v.sensor]) {
+        statusDataLookup[v.sensor] = {};
+      }
+      const status = v.status !== undefined ? v.status : null;
+      statusDataLookup[v.sensor][timeStr] = status;
+
+      // Count status statistics and save details
+      if (status === 1) {
+        calibCount++;
+        statusDetailsList.push({
+          sensor: v.sensor,
+          time: timeStr,
+          value: v.value,
+          status: 1,
+          statusLabel: 'Calib'
+        });
+      } else if (status === 2) {
+        errorCount++;
+        statusDetailsList.push({
+          sensor: v.sensor,
+          time: timeStr,
+          value: v.value,
+          status: 2,
+          statusLabel: 'Lỗi'
+        });
+      }
+
       // Nếu sensor có chứa "flow" thì lưu lại để tính tích lũy
       if (v.sensor.toLowerCase().includes("flow")) {
         if (!sensorPoints[v.sensor]) {
@@ -148,14 +192,36 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       }
     });
 
+    // Update status lookup, stats and details
+    setStatusLookup(statusDataLookup);
+    setStatusStats({ calib: calibCount, error: errorCount });
+    setStatusDetails(statusDetailsList);
+
     // Bước 3: Tạo data arrays với null cho timestamps không có data
     const dataChart = new Map();
     listSensorExistData.forEach(sensor => {
-      const dataArray = timeCategory.map(timeStr => {
-        // Trả về value nếu có, null nếu không
-        return dataLookup[sensor][timeStr] !== undefined
+      const dataArray = timeCategory.map((timeStr, index) => {
+        const value = dataLookup[sensor][timeStr] !== undefined
           ? dataLookup[sensor][timeStr]
           : null;
+        const status = statusDataLookup[sensor][timeStr];
+
+        // Return object with value and marker info for status points
+        if (status === 1 || status === 2) {
+          return {
+            y: value,
+            marker: {
+              enabled: true,
+              radius: 4,
+              fillColor: status === 1 ? '#FFC107' : '#F44336', // Yellow for calib, Red for error
+              lineColor: status === 1 ? '#FFA000' : '#D32F2F',
+              lineWidth: 1,
+              symbol: 'circle'
+            },
+            status: status
+          };
+        }
+        return value;
       });
       dataChart.set(sensor, {
         name: sensor,
@@ -207,6 +273,9 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
       return;
     }
 
+    // Reset status stats and details when fetching new data
+    setStatusStats({ calib: 0, error: 0 });
+    setStatusDetails([]);
     setChartData([]);
     run();
 
@@ -262,7 +331,28 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
         });
 
         const newValue = sensor ? parseFloat(sensor.Value) : null;
-        let newData = [...series.data, !isNaN(newValue) ? newValue : null];
+        const stateNum = sensor?.StateNum; // Get StateNum for status
+
+        // Create data point with marker if status indicates calib/error
+        let newPoint;
+        if (stateNum === 1 || stateNum === 2) {
+          newPoint = {
+            y: !isNaN(newValue) ? newValue : null,
+            marker: {
+              enabled: true,
+              radius: 4,
+              fillColor: stateNum === 1 ? '#FFC107' : '#F44336',
+              lineColor: stateNum === 1 ? '#FFA000' : '#D32F2F',
+              lineWidth: 1,
+              symbol: 'circle'
+            },
+            status: stateNum
+          };
+        } else {
+          newPoint = !isNaN(newValue) ? newValue : null;
+        }
+
+        let newData = [...series.data, newPoint];
 
         if (newData.length > MAX_REALTIME_POINTS) {
           newData = newData.slice(-MAX_REALTIME_POINTS);
@@ -270,6 +360,23 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
 
         return { ...series, data: newData };
       });
+    });
+
+    // Update status stats for realtime data
+    setStatusStats(prevStats => {
+      let calibInc = 0;
+      let errorInc = 0;
+      sensorData.forEach(sensor => {
+        if (sensor.StateNum === 1) calibInc++;
+        else if (sensor.StateNum === 2) errorInc++;
+      });
+      if (calibInc > 0 || errorInc > 0) {
+        return {
+          calib: prevStats.calib + calibInc,
+          error: prevStats.error + errorInc
+        };
+      }
+      return prevStats;
     });
 
     // Update cumulative flow for flow sensors in live mode
@@ -355,6 +462,28 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
         tooltip: {
           crosshairs: true,
           shared: true,
+          useHTML: true,
+          formatter: function () {
+            let html = `<div style="font-size:12px;padding:8px;">`;
+            html += `<b>${this.x}</b><br/>`;
+
+            this.points.forEach(point => {
+              const value = typeof point.y === 'number' ? point.y.toFixed(2) : point.y;
+              const status = point.point.status;
+              let statusLabel = '';
+
+              if (status === 1) {
+                statusLabel = '<span style="color:#FFA000;font-weight:bold;margin-left:6px;">[Calib]</span>';
+              } else if (status === 2) {
+                statusLabel = '<span style="color:#D32F2F;font-weight:bold;margin-left:6px;">[Lỗi]</span>';
+              }
+
+              html += `<span style="color:${point.series.color}">●</span> ${point.series.name}: <b>${value}</b>${statusLabel}<br/>`;
+            });
+
+            html += '</div>';
+            return html;
+          }
         },
         xAxis: {
           categories: categoryTime.map(t => {
@@ -441,22 +570,96 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
 
   return (
     <>
-      {/* Phần hiển thị thông tin lưu lượng tích lũy (m³) */}
-      <Box sx={{ p: 2, display: "flex", alignItems: "center" }}>
+      {/* Phần hiển thị thông tin lưu lượng tích lũy (m³) và thống kê status */}
+      <Box sx={{ p: 2, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
         {listSensor && listSensor.length > 0
           ? listSensor.map((v) =>
             v.toLowerCase().includes("flow") && (
-              <div key={v} style={{ marginRight: 20 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mr: 2 }}>
+              <Box key={v} sx={{ mr: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                   {v}
                 </Typography>
                 <Typography variant="h6" sx={{ color: "blue" }}>
                   {chartData.length == 0 ? "..." : (cumulativeFlow[v] ? cumulativeFlow[v].toFixed(2) : 0)} m³
                 </Typography>
-              </div>
+              </Box>
             )
           )
           : null}
+
+        {/* Status Statistics - only show when there's calib or error data */}
+        {(statusStats.calib > 0 || statusStats.error > 0) && (
+          <Box sx={{
+            display: 'flex',
+            gap: 2,
+            ml: 2,
+            pl: 2,
+            borderLeft: '2px solid #e0e0e0'
+          }}>
+            {statusStats.calib > 0 && (
+              <Box
+                onClick={() => { setDialogType('calib'); setDialogOpen(true); }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  bgcolor: '#FFF8E1',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  border: '1px solid #FFE082',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: '#FFE082',
+                    transform: 'scale(1.02)',
+                  }
+                }}>
+                <Box sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: '#FFC107',
+                  border: '2px solid #FFA000'
+                }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#F57F17' }}>
+                  Calib: {statusStats.calib}
+                </Typography>
+              </Box>
+            )}
+            {statusStats.error > 0 && (
+              <Box
+                onClick={() => { setDialogType('error'); setDialogOpen(true); }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  bgcolor: '#FFEBEE',
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 2,
+                  border: '1px solid #FFCDD2',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    bgcolor: '#FFCDD2',
+                    transform: 'scale(1.02)',
+                  }
+                }}>
+                <Box sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: '#F44336',
+                  border: '2px solid #D32F2F'
+                }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: '#C62828' }}>
+                  Lỗi: {statusStats.error}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
       </Box>
       {/* Phần biểu đồ giữ nguyên như trước đó */}
       {chartData.length > 0 ? (
@@ -523,6 +726,77 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
           )}
         </Box>
       )}
+
+      {/* Status Details Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          bgcolor: dialogType === 'calib' ? '#FFF8E1' : '#FFEBEE',
+          borderBottom: '1px solid #e0e0e0'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              bgcolor: dialogType === 'calib' ? '#FFC107' : '#F44336',
+              border: `2px solid ${dialogType === 'calib' ? '#FFA000' : '#D32F2F'}`
+            }} />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Chi tiết {dialogType === 'calib' ? 'Calib' : 'Lỗi'} ({statusDetails.filter(d => d.status === (dialogType === 'calib' ? 1 : 2)).length} điểm)
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setDialogOpen(false)} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+            <Table stickyHeader size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, bgcolor: '#f5f5f5' }}>#</TableCell>
+                  <TableCell sx={{ fontWeight: 600, bgcolor: '#f5f5f5' }}>Sensor</TableCell>
+                  <TableCell sx={{ fontWeight: 600, bgcolor: '#f5f5f5' }}>Thời gian</TableCell>
+                  <TableCell sx={{ fontWeight: 600, bgcolor: '#f5f5f5' }}>Giá trị</TableCell>
+                  <TableCell sx={{ fontWeight: 600, bgcolor: '#f5f5f5' }}>Trạng thái</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {statusDetails
+                  .filter(d => d.status === (dialogType === 'calib' ? 1 : 2))
+                  .map((detail, index) => (
+                    <TableRow key={index} hover>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{detail.sensor}</TableCell>
+                      <TableCell>{detail.time}</TableCell>
+                      <TableCell>{typeof detail.value === 'number' ? detail.value.toFixed(2) : detail.value}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={detail.statusLabel}
+                          size="small"
+                          sx={{
+                            bgcolor: detail.status === 1 ? '#FFC107' : '#F44336',
+                            color: detail.status === 1 ? '#000' : '#fff',
+                            fontWeight: 600,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
