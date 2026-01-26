@@ -987,6 +987,7 @@ export const ChartSection = ({
   endDate,
   startDate,
   listSensor,
+  listSensorForChart,
   startDateTemp,
   endDateTemp,
   handleChangeStartDate,
@@ -997,14 +998,13 @@ export const ChartSection = ({
   isLiveMode,
   handleToggleLiveMode,
   ChartTab,
-  MainChart,
   ColumnChartSensor,
   MyDateRange,
   MyButton,
 }) => {
   if (!valueSelect) return null;
 
-  const ChartComponent =ChartTab;
+  const ChartComponent = ChartTab;
 
   return (
     <ResponsiveGridItem gridConfig={gridConfig}>
@@ -1025,7 +1025,7 @@ export const ChartSection = ({
               startDate={startDate}
               deviceId={valueSelect.id}
               deviceUser={valueSelect.id}
-              inputLstSensor={listSensor}
+              inputLstSensor={isShowColChart && listSensorForChart ? listSensorForChart : listSensor}
               dataRealTime={dataRealTime}
               isLiveMode={isLiveMode}
             />

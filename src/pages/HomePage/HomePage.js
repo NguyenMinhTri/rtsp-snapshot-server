@@ -491,7 +491,7 @@ function HomePage() {
     const [isNoButton, setIsNoButton] = useState(true);
 
     // Custom Hooks - NOW listDevice is defined
-    const { fullRS485Data, deviceType, IsDemoUI, isDeviceOffline, lastimeActive, listSensor, isShowColChart, dataRealTime } = useDeviceData(valueSelect, listDevice);
+    const { fullRS485Data, deviceType, IsDemoUI, isDeviceOffline, lastimeActive, listSensor, listSensorForChart, isShowColChart, dataRealTime } = useDeviceData(valueSelect, listDevice);
     const { textList, inputText, setInputText, fetchDataNote, addNote } = useNotes(valueSelect, user);
     const { licenseDay, licenseMessage, licenseLockLV1, licenseLockLV2, fetchLicense } = useLicense();
     const { sendCommand } = useDeviceControl(fullRS485Data, user);
@@ -1798,6 +1798,7 @@ function HomePage() {
                                                 endDate={endDate}
                                                 startDate={startDate}
                                                 listSensor={listSensor}
+                                                listSensorForChart={listSensorForChart}
                                                 startDateTemp={startDateTemp}
                                                 endDateTemp={endDateTemp}
                                                 handleChangeStartDate={handleChangeStartDate}

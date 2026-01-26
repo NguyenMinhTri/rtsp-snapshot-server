@@ -14,15 +14,16 @@ export const useDeviceData = (valueSelect, listDevice) => {
   const [isDeviceOffline, setIsDeviceOffline] = useState(false);
   const [lastimeActive, setLastimeActive] = useState("");
   const [listSensor, setListSensor] = useState([]);
+  const [listSensorForChart, setListSensorForChart] = useState([]);
   const [isShowColChart, setIsShowColChart] = useState(false);
   const dataRealTimeRef = useRef([]);
-  
+
   const unsubscribeRef = useRef(null);
 
   // Process sensor settings from Firestore
   const processSensorSettings = useCallback(async (RS485Data, Location, newData) => {
     const groupNameArray = {};
-    
+
     // Group sensors by GroupName
     RS485Data.forEach(sensor => {
       groupNameArray[sensor.GroupName] = sensor.GroupName;
@@ -43,32 +44,32 @@ export const useDeviceData = (valueSelect, listDevice) => {
     // Apply settings to sensors
     RS485Data.forEach(sensorItem => {
       sensorItem.AlarmSetting = {};
-      
+
       for (const groupName in groupNameArray) {
         groupNameArray[groupName].forEach(doc => {
           if (doc.id === sensorItem.Name) {
             const dataSetting = doc.data();
             sensorItem.AlarmSetting = dataSetting;
-            
+
             // Check alarm coils
             const isNotZero = dataSetting.HighAlarmSetting === 0 && dataSetting.LowAlarmSetting === 0;
-            
+
             const coilLow = newData.RS485Data?.filter(item =>
               item.Name?.toLowerCase().includes(sensorItem.Name.toLowerCase()) &&
               item.Name?.toLowerCase().includes("low") &&
               item.Type === "bool"
             );
-            
+
             if (coilLow && coilLow.length > 0) {
               sensorItem.AlarmSetting.IsSendLowAlarm = isNotZero ? false : coilLow[0].CoilValue;
             }
-            
+
             const coilHigh = newData.RS485Data?.filter(item =>
               item.Name?.toLowerCase().includes(sensorItem.Name.toLowerCase()) &&
               item.Name?.toLowerCase().includes("high") &&
               item.Type === "bool"
             );
-            
+
             if (coilHigh && coilHigh.length > 0) {
               sensorItem.AlarmSetting.IsSendHighAlarm = isNotZero ? false : coilHigh[0].CoilValue;
             }
@@ -85,14 +86,14 @@ export const useDeviceData = (valueSelect, listDevice) => {
     if (!valueSelect?.id) return;
 
     const db = getDatabase();
-    
+
     // Cleanup previous subscription
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
     }
 
     const deviceRef = ref(db, `Devices/DAIVIET-RS485/${valueSelect.id}`);
-    
+
     unsubscribeRef.current = onValue(deviceRef, async (snapshot) => {
       const newData = snapshot.val();
       if (!newData) return;
@@ -100,14 +101,14 @@ export const useDeviceData = (valueSelect, listDevice) => {
       try {
         // Process device data
         newData.Id = valueSelect.id;
-        
+
         let { RS485Data = [], Location, LastTime, Ip, DeviceType, IsDemoUI: isDemoUI } = newData;
-        
+
         // Set device metadata
         setDeviceType(DeviceType || 0);
         setIsDemoUI(isDemoUI || false);
         setLastimeActive(LastTime || "");
-        
+
         if (Ip) {
           localStorage.setItem("ip_camera", Ip);
         }
@@ -118,9 +119,9 @@ export const useDeviceData = (valueSelect, listDevice) => {
         const dateC = moment(LastTime?.slice(0, -1)).format("MM/DD/YYYY");
         const dateP = moment(Date()).format("MM/DD/YYYY");
         const compare = compareDate(dateC, dateP);
-        
+
         const isOffline = newData.IsSendingAlarm || (moment(timeC).isBefore(timeP) && !newData.IsSendingAlarm) || compare === 1;
-        
+
         setIsDeviceOffline(isOffline);
 
         // Separate sensors and coils
@@ -142,6 +143,12 @@ export const useDeviceData = (valueSelect, listDevice) => {
         const sensorNames = filteredSensors.map(v => v.Name);
         setListSensor(sensorNames);
 
+        // Get sensor names for ChartTab (exclude sensors shown in ColumnChart)
+        const sensorNamesForChart = filteredSensors
+          .filter(item => !item.IsColumn && !(item.Unit?.toLowerCase().includes("kwh")))
+          .map(v => v.Name);
+        setListSensorForChart(sensorNamesForChart);
+
         // Process sensor settings
         const processedSensors = await processSensorSettings(filteredSensors, Location || valueSelect.id, newData);
 
@@ -161,7 +168,7 @@ export const useDeviceData = (valueSelect, listDevice) => {
 
         // Update full data
         setFullRS485Data({ ...newData });
-        
+
       } catch (error) {
         console.error("Error processing device data:", error);
       }
@@ -183,6 +190,7 @@ export const useDeviceData = (valueSelect, listDevice) => {
     isDeviceOffline,
     lastimeActive,
     listSensor,
+    listSensorForChart,
     isShowColChart,
     dataRealTime: dataRealTimeRef.current,
   };
