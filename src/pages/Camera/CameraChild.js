@@ -1,18 +1,24 @@
 import { useState, useEffect, useCallback, memo } from "react";
-import { Grid, Box, Typography } from "@mui/material";
+import { Grid, Box, Typography, IconButton } from "@mui/material";
 import React from "react";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
 import "./Camera.scss";
 import asyncLocalStorage from "../../utils/async_localstorage";
-import OptimizedCameraPlayer from "../../components/OptimizedCameraPlayer";
+import OptimizedCameraPlayer, { VideoStatus } from "../../components/OptimizedCameraPlayer";
 
 /**
  * CameraChild - Optimized camera grid component
  * Uses OptimizedCameraPlayer for faster load time with skeleton loading
+ * Shows consolidated error message when all cameras fail
  */
 const CameraChild = memo(({ cameraList, resDialog }) => {
     const [ipCamera, setValueIP] = useState("");
     const [isReady, setIsReady] = useState(false);
+    // Track error status for each camera
+    const [cameraStatuses, setCameraStatuses] = useState({});
+    const [retryKey, setRetryKey] = useState(0);
 
     const deviceUser = localStorage.getItem("device_user");
     const listDevice = deviceUser ? JSON.parse(deviceUser) : null;
@@ -24,6 +30,13 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
             setIsReady(true);
         });
     }, []);
+
+    // Reset camera statuses when camera list changes
+    useEffect(() => {
+        if (cameraList && cameraList.length > 0) {
+            setCameraStatuses({});
+        }
+    }, [cameraList, retryKey]);
 
     // Handle navis-cloud-camera monitor activation/deactivation
     useEffect(() => {
@@ -74,6 +87,25 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
     const getRtspUrl = useCallback((cameraUrl) => {
         return cameraUrl.replace("[ip]", ipCamera);
     }, [ipCamera]);
+
+    // Handle camera status change
+    const handleCameraStatusChange = useCallback((index, status) => {
+        setCameraStatuses(prev => ({
+            ...prev,
+            [index]: status
+        }));
+    }, []);
+
+    // Check if all cameras have error
+    const allCamerasError = cameraList && cameraList.length > 0 &&
+        Object.keys(cameraStatuses).length === cameraList.length &&
+        Object.values(cameraStatuses).every(status => status === VideoStatus.ERROR);
+
+    // Handle retry all cameras
+    const handleRetryAll = useCallback(() => {
+        setCameraStatuses({});
+        setRetryKey(prev => prev + 1);
+    }, []);
 
     // Calculate grid size based on camera count and dialog mode
     // 1-3 cameras: 1 per row (full width)
@@ -130,6 +162,94 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
         return null; // OptimizedCameraPlayer will show skeleton
     }
 
+    // Show consolidated error message when all cameras fail
+    if (allCamerasError) {
+        return (
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 280,
+                    backgroundColor: "#1a1a2e",
+                    borderRadius: 2,
+                    p: 4,
+                }}
+            >
+                <VideocamOffIcon
+                    sx={{
+                        fontSize: 56,
+                        color: "rgba(255,150,100,0.8)",
+                        mb: 2
+                    }}
+                />
+
+                <Typography
+                    variant="h6"
+                    sx={{
+                        color: "rgba(255,255,255,0.95)",
+                        fontWeight: 600,
+                        textAlign: "center",
+                        mb: 1
+                    }}
+                >
+                    🔧 Hệ thống camera web đang bảo trì
+                </Typography>
+
+                <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5,
+                    bgcolor: 'rgba(78, 204, 163, 0.15)',
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    border: '1px solid rgba(78, 204, 163, 0.3)'
+                }}>
+                    <PhoneAndroidIcon sx={{ color: "#4ecca3", fontSize: 20 }} />
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: "rgba(255,255,255,0.9)",
+                            textAlign: "center"
+                        }}
+                    >
+                        Vui lòng xem camera trên <strong style={{ color: "#4ecca3" }}>ứng dụng NAVIS</strong>
+                    </Typography>
+                </Box>
+
+                <Typography
+                    variant="caption"
+                    sx={{
+                        color: "rgba(255,255,255,0.5)",
+                        textAlign: "center",
+                        mb: 2,
+                        maxWidth: 300
+                    }}
+                >
+                    Chúng tôi đang nâng cấp hệ thống để mang đến trải nghiệm tốt hơn. Xin lỗi vì sự bất tiện!
+                </Typography>
+
+                <IconButton
+                    onClick={handleRetryAll}
+                    sx={{
+                        backgroundColor: "rgba(78, 204, 163, 0.2)",
+                        "&:hover": { backgroundColor: "rgba(78, 204, 163, 0.4)" },
+                        px: 2,
+                        borderRadius: 2,
+                    }}
+                >
+                    <RefreshIcon sx={{ color: "#4ecca3", mr: 0.5 }} />
+                    <Typography variant="body2" sx={{ color: "#4ecca3", fontWeight: 500 }}>
+                        Thử lại
+                    </Typography>
+                </IconButton>
+            </Box>
+        );
+    }
+
     const gridSize = getGridSize(cameraList.length);
     const videoHeight = getVideoHeight(cameraList.length);
 
@@ -147,7 +267,7 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
             >
                 {cameraList.map((cameraUrl, index) => (
                     <Grid
-                        key={`camera-${index}`}
+                        key={`camera-${index}-${retryKey}`}
                         item
                         xl={gridSize}
                         lg={gridSize}
@@ -164,6 +284,7 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
                             controls
                             maxRetries={3}
                             retryDelay={3000}
+                            onStatusChange={(status) => handleCameraStatusChange(index, status)}
                         />
                     </Grid>
                 ))}

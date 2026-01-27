@@ -39,7 +39,7 @@ function ChartV2({ listSensor, deviceId, startDate, endDate, isLiveMode, dataRea
   const prevDeviceIdRef = useRef(deviceId);
 
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Reset chart when device changes
   useEffect(() => {

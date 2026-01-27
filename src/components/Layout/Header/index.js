@@ -64,6 +64,7 @@ function Header({ handleOpenSidebar }) {
   const [isLoading, setIsLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [deviceId, setDeviceId] = useState("");
+  const [deviceName, setDeviceName] = useState("");
 
   // Modbus Settings dialog state
   const [openModbus, setOpenModbus] = useState(false);
@@ -118,6 +119,7 @@ function Header({ handleOpenSidebar }) {
           }
           return stationUser.id;
         });
+        setDeviceName(stationUser.label || listDevice?.[stationUser.id]?.FullName || stationUser.id);
       } else {
         let deviceIdTemp = Object.keys(listDevice || {})[0];
         if (qDeviceId !== null && typeof (listDevice || {})[qDeviceId] !== "undefined") {
@@ -130,6 +132,7 @@ function Header({ handleOpenSidebar }) {
           }
           return deviceIdTemp;
         });
+        setDeviceName(listDevice?.[deviceIdTemp]?.FullName || deviceIdTemp);
       }
     });
     setOpenModbus(true);
@@ -145,12 +148,14 @@ function Header({ handleOpenSidebar }) {
       if (station && qDeviceId === null) {
         const stationUser = JSON.parse(station);
         setDeviceId(stationUser.id);
+        setDeviceName(stationUser.label || listDevice?.[stationUser.id]?.FullName || stationUser.id);
       } else {
         let deviceIdTemp = Object.keys(listDevice || {})[0];
         if (qDeviceId !== null && typeof (listDevice || {})[qDeviceId] !== "undefined") {
           deviceIdTemp = qDeviceId;
         }
         setDeviceId(deviceIdTemp);
+        setDeviceName(listDevice?.[deviceIdTemp]?.FullName || deviceIdTemp);
       }
     });
   }, []);
@@ -378,12 +383,12 @@ function Header({ handleOpenSidebar }) {
           }}
         >
           <DialogTitle id="modbus-dialog-title" sx={{ pb: 1 }}>
-            Modbus Configurations
+            Modbus Configurations - {deviceName || deviceId}
           </DialogTitle>
           <DialogContent dividers sx={{ p: 0 }}>
             <div style={{ height: "100%", minHeight: 0 }}>
               {deviceId ? (
-                <DeviceConfigPage deviceId={deviceId} userEmail={email} />
+                <DeviceConfigPage deviceId={deviceId} deviceName={deviceName} userEmail={email} />
               ) : (
                 <div
                   style={{

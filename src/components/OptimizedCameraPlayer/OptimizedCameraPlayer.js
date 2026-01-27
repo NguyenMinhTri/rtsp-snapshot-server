@@ -143,30 +143,52 @@ const CameraError = memo(({ height, onRetry, retryCount, maxRetries }) => (
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
+            padding: 2,
         }}
     >
         <VideocamOffIcon
             sx={{
                 fontSize: 48,
-                color: "rgba(255,100,100,0.7)",
+                color: "rgba(255,150,100,0.8)",
                 mb: 2,
             }}
         />
 
         <Typography
-            variant="body2"
-            sx={{ color: "rgba(255,255,255,0.7)", mb: 1 }}
+            variant="body1"
+            sx={{
+                color: "rgba(255,255,255,0.9)",
+                mb: 1,
+                fontWeight: 600,
+                textAlign: "center"
+            }}
         >
-            Không thể kết nối camera
+            🔧 Hệ thống camera web đang bảo trì
+        </Typography>
+
+        <Typography
+            variant="body2"
+            sx={{
+                color: "rgba(255,255,255,0.7)",
+                mb: 1,
+                textAlign: "center",
+                maxWidth: 280
+            }}
+        >
+            Để xem camera, vui lòng sử dụng <strong style={{ color: "#4ecca3" }}>ứng dụng di động NAVIS</strong> trên điện thoại.
         </Typography>
 
         <Typography
             variant="caption"
-            sx={{ color: "rgba(255,255,255,0.5)", mb: 2 }}
+            sx={{
+                color: "rgba(255,255,255,0.5)",
+                mb: 2,
+                textAlign: "center"
+            }}
         >
             {retryCount < maxRetries
-                ? `Đang thử lại... (${retryCount}/${maxRetries})`
-                : "Vui lòng thử lại sau"}
+                ? `Đang thử kết nối... (${retryCount}/${maxRetries})`
+                : "Chúng tôi đang nâng cấp hệ thống. Xin lỗi vì sự bất tiện!"}
         </Typography>
 
         <IconButton
