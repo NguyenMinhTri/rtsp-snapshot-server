@@ -88,6 +88,7 @@ function captureSnapshot(rtspUrl, outputPath) {
 
         activeCaptures++;
         const settings = getQualitySettings();
+        let cleanedUp = false; // Prevent double cleanup
 
         const args = [
             '-y',                           // Overwrite output
@@ -97,7 +98,7 @@ function captureSnapshot(rtspUrl, outputPath) {
             '-rtsp_transport', 'tcp',       // Use TCP for stability
             '-i', rtspUrl,                  // Input RTSP URL
             // === SKIP INITIAL GRAY FRAMES ===
-            '-ss', '2',                     // Skip first 2 seconds to avoid gray frames
+            '-ss', '1',                     // Skip first 1 second to avoid gray frames
             // === LOW QUALITY FOR FREE TIER ===
             '-vf', `scale=${settings.width}:-2`,  // Scale down (426x240 or 320x180)
             '-frames:v', '1',               // Capture 1 frame only
@@ -108,22 +109,27 @@ function captureSnapshot(rtspUrl, outputPath) {
 
         console.log(`[Capture] Starting (active: ${activeCaptures}, quality: ${settings.width}x, q=${settings.quality})`);
 
-        const ffmpeg = spawn('ffmpeg', args, {
-            timeout: SNAPSHOT_TIMEOUT_MS
-        });
+        const ffmpeg = spawn('ffmpeg', args);
 
         let stderr = '';
+        let resolved = false;
 
         ffmpeg.stderr.on('data', (data) => {
             stderr += data.toString();
         });
 
         const cleanup = () => {
-            activeCaptures--;
+            if (!cleanedUp) {
+                cleanedUp = true;
+                activeCaptures = Math.max(0, activeCaptures - 1); // Prevent negative
+            }
         };
 
         ffmpeg.on('close', (code) => {
             cleanup();
+            if (resolved) return;
+            resolved = true;
+
             if (code === 0 && fs.existsSync(outputPath)) {
                 const stats = fs.statSync(outputPath);
                 console.log(`[Capture] Success (size: ${Math.round(stats.size / 1024)}KB, active: ${activeCaptures})`);
@@ -136,15 +142,19 @@ function captureSnapshot(rtspUrl, outputPath) {
 
         ffmpeg.on('error', (err) => {
             cleanup();
+            if (resolved) return;
+            resolved = true;
             reject(err);
         });
 
-        // Timeout failsafe
+        // Timeout failsafe - 15 seconds (includes -ss 1 delay)
         setTimeout(() => {
+            if (resolved) return;
+            resolved = true;
             ffmpeg.kill('SIGKILL');
             cleanup();
             reject(new Error('FFmpeg timeout'));
-        }, SNAPSHOT_TIMEOUT_MS);
+        }, 15000);
     });
 }
 
