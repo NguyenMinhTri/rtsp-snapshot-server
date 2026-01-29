@@ -93,13 +93,11 @@ function captureSnapshot(rtspUrl, outputPath) {
             '-y',                           // Overwrite output
             '-hide_banner',
             '-loglevel', 'error',
-            // === FAST STARTUP OPTIONS ===
-            '-probesize', '32',             // Minimal probe size
-            '-analyzeduration', '0',        // No analysis delay
-            '-fflags', 'nobuffer+fastseek',
-            '-flags', 'low_delay',
+            // === WAIT FOR STREAM TO STABILIZE ===
             '-rtsp_transport', 'tcp',       // Use TCP for stability
             '-i', rtspUrl,                  // Input RTSP URL
+            // === SKIP INITIAL GRAY FRAMES ===
+            '-ss', '2',                     // Skip first 2 seconds to avoid gray frames
             // === LOW QUALITY FOR FREE TIER ===
             '-vf', `scale=${settings.width}:-2`,  // Scale down (426x240 or 320x180)
             '-frames:v', '1',               // Capture 1 frame only
