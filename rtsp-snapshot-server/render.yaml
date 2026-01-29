@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: rtsp-snapshot
+    env: node
+    region: singapore
+    plan: free
+    buildCommand: apt-get update && apt-get install -y ffmpeg && npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 3001
