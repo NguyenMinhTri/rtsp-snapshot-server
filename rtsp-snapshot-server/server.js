@@ -17,13 +17,35 @@ if (!fs.existsSync(SNAPSHOT_DIR)) {
 }
 
 // Camera snapshot cache
-// Key: camera URL hash, Value: { path, timestamp, capturing }
+// Key: camera URL hash, Value: { path, timestamp, capturing, lastAccessed }
 const cameraCache = new Map();
 
 // Config
-const SNAPSHOT_INTERVAL_MS = 10000; // 10 seconds
-const SNAPSHOT_TIMEOUT_MS = 8000;   // 8 seconds max for ffmpeg
-const MAX_CACHE_AGE_MS = 30000;     // 30 seconds before forced refresh
+const SNAPSHOT_INTERVAL_MS = 10000;  // 10 seconds
+const SNAPSHOT_TIMEOUT_MS = 8000;    // 8 seconds max for ffmpeg
+const MAX_CACHE_AGE_MS = 30000;      // 30 seconds before forced refresh
+const IDLE_TIMEOUT_MS = 60000;       // 60 seconds - stop caching if no requests
+
+// Cleanup idle cameras every 30 seconds
+setInterval(() => {
+    const now = Date.now();
+    let cleaned = 0;
+    for (const [hash, entry] of cameraCache.entries()) {
+        if (entry.lastAccessed && (now - entry.lastAccessed) > IDLE_TIMEOUT_MS) {
+            // Delete cached snapshot file
+            if (entry.path && fs.existsSync(entry.path)) {
+                try {
+                    fs.unlinkSync(entry.path);
+                } catch (e) { }
+            }
+            cameraCache.delete(hash);
+            cleaned++;
+        }
+    }
+    if (cleaned > 0) {
+        console.log(`[Cleanup] Removed ${cleaned} idle camera(s)`);
+    }
+}, 30000);
 
 /**
  * Generate a simple hash for camera URL (for filename)
@@ -131,6 +153,7 @@ function captureSnapshot(rtspUrl, outputPath) {
 /**
  * Get or create snapshot for a camera
  * Implements caching and sharing across multiple clients
+ * Tracks lastAccessed for idle camera cleanup
  */
 async function getSnapshot(rtspUrl) {
     const urlHash = hashUrl(rtspUrl);
@@ -138,6 +161,11 @@ async function getSnapshot(rtspUrl) {
 
     let cacheEntry = cameraCache.get(urlHash);
     const now = Date.now();
+
+    // Update lastAccessed time on every request
+    if (cacheEntry) {
+        cacheEntry.lastAccessed = now;
+    }
 
     // Check if we have a valid cached snapshot
     if (cacheEntry) {
@@ -171,7 +199,8 @@ async function getSnapshot(rtspUrl) {
     cameraCache.set(urlHash, {
         path: snapshotPath,
         timestamp: cacheEntry?.timestamp || 0,
-        capturing: true
+        capturing: true,
+        lastAccessed: now
     });
 
     try {
@@ -180,7 +209,8 @@ async function getSnapshot(rtspUrl) {
         cameraCache.set(urlHash, {
             path: snapshotPath,
             timestamp: Date.now(),
-            capturing: false
+            capturing: false,
+            lastAccessed: now
         });
 
         return {
@@ -194,7 +224,8 @@ async function getSnapshot(rtspUrl) {
         cameraCache.set(urlHash, {
             path: snapshotPath,
             timestamp: cacheEntry?.timestamp || 0,
-            capturing: false
+            capturing: false,
+            lastAccessed: now
         });
 
         // If we have old snapshot, return it
