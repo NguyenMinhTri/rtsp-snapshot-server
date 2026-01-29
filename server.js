@@ -94,11 +94,10 @@ function captureSnapshot(rtspUrl, outputPath) {
             '-y',                           // Overwrite output
             '-hide_banner',
             '-loglevel', 'error',
-            // === WAIT FOR STREAM TO STABILIZE ===
+            // === RTSP SETTINGS ===
             '-rtsp_transport', 'tcp',       // Use TCP for stability
+            '-skip_frame', 'nokey',         // Skip to next keyframe (avoids gray frames)
             '-i', rtspUrl,                  // Input RTSP URL
-            // === SKIP INITIAL GRAY FRAMES ===
-            '-ss', '1',                     // Skip first 1 second to avoid gray frames
             // === LOW QUALITY FOR FREE TIER ===
             '-vf', `scale=${settings.width}:-2`,  // Scale down (426x240 or 320x180)
             '-frames:v', '1',               // Capture 1 frame only
