@@ -7,6 +7,15 @@ import PhoneAndroidIcon from "@mui/icons-material/PhoneAndroid";
 import "./Camera.scss";
 import asyncLocalStorage from "../../utils/async_localstorage";
 import OptimizedCameraPlayer, { VideoStatus } from "../../components/OptimizedCameraPlayer";
+import SnapshotCameraPlayer, { SnapshotStatus } from "../../components/SnapshotCameraPlayer";
+
+// Toggle between video streaming and snapshot mode
+// Set to true to use Render.com snapshot server (free, lightweight)
+// Set to false to use Vercel video streaming (higher quality, may hit limits)
+const USE_SNAPSHOT_MODE = true;
+
+// Snapshot refresh interval in milliseconds (10 seconds default)
+const SNAPSHOT_INTERVAL_MS = 10000;
 
 /**
  * CameraChild - Optimized camera grid component
@@ -96,10 +105,12 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
         }));
     }, []);
 
-    // Check if all cameras have error
+    // Check if all cameras have error (works for both video and snapshot modes)
     const allCamerasError = cameraList && cameraList.length > 0 &&
         Object.keys(cameraStatuses).length === cameraList.length &&
-        Object.values(cameraStatuses).every(status => status === VideoStatus.ERROR);
+        Object.values(cameraStatuses).every(status =>
+            status === VideoStatus.ERROR || status === SnapshotStatus.ERROR
+        );
 
     // Handle retry all cameras
     const handleRetryAll = useCallback(() => {
@@ -275,17 +286,28 @@ const CameraChild = memo(({ cameraList, resDialog }) => {
                         sm={12}
                         xs={12}
                     >
-                        <OptimizedCameraPlayer
-                            rtspUrl={getRtspUrl(cameraUrl)}
-                            height={videoHeight}
-                            cameraName={`Camera ${index + 1}`}
-                            autoPlay
-                            muted
-                            controls
-                            maxRetries={3}
-                            retryDelay={3000}
-                            onStatusChange={(status) => handleCameraStatusChange(index, status)}
-                        />
+                        {USE_SNAPSHOT_MODE ? (
+                            <SnapshotCameraPlayer
+                                rtspUrl={getRtspUrl(cameraUrl)}
+                                height={videoHeight}
+                                cameraName={`Camera ${index + 1}`}
+                                refreshInterval={SNAPSHOT_INTERVAL_MS}
+                                maxRetries={3}
+                                onStatusChange={(status) => handleCameraStatusChange(index, status)}
+                            />
+                        ) : (
+                            <OptimizedCameraPlayer
+                                rtspUrl={getRtspUrl(cameraUrl)}
+                                height={videoHeight}
+                                cameraName={`Camera ${index + 1}`}
+                                autoPlay
+                                muted
+                                controls
+                                maxRetries={3}
+                                retryDelay={3000}
+                                onStatusChange={(status) => handleCameraStatusChange(index, status)}
+                            />
+                        )}
                     </Grid>
                 ))}
             </Grid>

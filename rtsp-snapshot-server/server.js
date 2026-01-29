@@ -37,22 +37,56 @@ function hashUrl(url) {
     }
     return Math.abs(hash).toString(16);
 }
+// ============ LOAD BALANCING ============
+let activeCaptures = 0;
+const MAX_CAPTURES_BEFORE_THROTTLE = 3;
+const MAX_CAPTURES_HARD_LIMIT = 8;
+
+// Get quality settings based on current load
+function getQualitySettings() {
+    // Under load: reduce quality to prevent server overload
+    if (activeCaptures >= MAX_CAPTURES_BEFORE_THROTTLE) {
+        return { width: 320, quality: 8 }; // Ultra low: 320x180, lower quality
+    }
+    return { width: 426, quality: 5 }; // Normal: 426x240, decent quality
+}
 
 /**
  * Capture snapshot from RTSP using ffmpeg
+ * Optimized for free tier: low resolution, fast startup
  * Returns Promise<string> with snapshot file path
  */
 function captureSnapshot(rtspUrl, outputPath) {
     return new Promise((resolve, reject) => {
+        // Check hard limit
+        if (activeCaptures >= MAX_CAPTURES_HARD_LIMIT) {
+            reject(new Error('Server overloaded. Please try again later.'));
+            return;
+        }
+
+        activeCaptures++;
+        const settings = getQualitySettings();
+
         const args = [
             '-y',                           // Overwrite output
+            '-hide_banner',
+            '-loglevel', 'error',
+            // === FAST STARTUP OPTIONS ===
+            '-probesize', '32',             // Minimal probe size
+            '-analyzeduration', '0',        // No analysis delay
+            '-fflags', 'nobuffer+fastseek',
+            '-flags', 'low_delay',
             '-rtsp_transport', 'tcp',       // Use TCP for stability
             '-i', rtspUrl,                  // Input RTSP URL
+            // === LOW QUALITY FOR FREE TIER ===
+            '-vf', `scale=${settings.width}:-2`,  // Scale down (426x240 or 320x180)
             '-frames:v', '1',               // Capture 1 frame only
-            '-q:v', '3',                    // Quality (2-5, lower = better)
+            '-q:v', String(settings.quality), // Quality (2-10, lower = better, higher = smaller)
             '-f', 'image2',                 // Output format
             outputPath                      // Output file
         ];
+
+        console.log(`[Capture] Starting (active: ${activeCaptures}, quality: ${settings.width}x, q=${settings.quality})`);
 
         const ffmpeg = spawn('ffmpeg', args, {
             timeout: SNAPSHOT_TIMEOUT_MS
@@ -64,21 +98,31 @@ function captureSnapshot(rtspUrl, outputPath) {
             stderr += data.toString();
         });
 
+        const cleanup = () => {
+            activeCaptures--;
+        };
+
         ffmpeg.on('close', (code) => {
+            cleanup();
             if (code === 0 && fs.existsSync(outputPath)) {
+                const stats = fs.statSync(outputPath);
+                console.log(`[Capture] Success (size: ${Math.round(stats.size / 1024)}KB, active: ${activeCaptures})`);
                 resolve(outputPath);
             } else {
-                reject(new Error(`FFmpeg failed with code ${code}: ${stderr.slice(-200)}`));
+                console.error(`[Capture] Failed: ${stderr.slice(-100)}`);
+                reject(new Error(`FFmpeg failed with code ${code}`));
             }
         });
 
         ffmpeg.on('error', (err) => {
+            cleanup();
             reject(err);
         });
 
         // Timeout failsafe
         setTimeout(() => {
             ffmpeg.kill('SIGKILL');
+            cleanup();
             reject(new Error('FFmpeg timeout'));
         }, SNAPSHOT_TIMEOUT_MS);
     });
