@@ -4,7 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
-
+/rtsp-snapshot-server
 # testing
 /coverage
 
